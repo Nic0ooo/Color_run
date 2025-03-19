@@ -1,13 +1,12 @@
 package fr.esgi.color_run.business;
 
-import java.util.List;
 import lombok.Data;
 
 /**
  * Représente un utilisateur sur l'app
  */
 @Data
-public class User {
+public class Member {
     private Long id;
     private Role role;
     private String name;
@@ -23,10 +22,10 @@ public class User {
 
     private static Long compteur = 0L;
     /**
-     * Constructeur par défaut de la classe User.
+     * Constructeur par défaut de la classe Member.
      * Initialise l'identifiant, le role à coureur et les coordonnées à celle de Paris.
      */
-    public User() {
+    public Member() {
         this.id = compteur++;
         this.role = Role.RUNNER;
         this.positionLatitude = 48.8566;
