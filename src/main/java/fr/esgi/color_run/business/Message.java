@@ -6,7 +6,7 @@ import lombok.Data;
 public class Message {
     private Long id;
     private Long discussionId;
-    private Long userId;
+    private Long memberId;
     private String content;
     private String date;
     private boolean isPin;
