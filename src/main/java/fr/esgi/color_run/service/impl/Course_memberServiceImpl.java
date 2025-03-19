@@ -1,4 +1,4 @@
 package fr.esgi.color_run.service.impl;
 
-public class Association_userServiceImpl {
+public class Course_memberServiceImpl {
 }
