@@ -1,0 +1,888 @@
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:02:31 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:06:39 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:07:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:09:45 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:13:50 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:14:08 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MEMBER" existe déjà
+Table "MEMBER" already exists; SQL statement:
+ CREATE TABLE Member (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ role VARCHAR(255),
+ name VARCHAR(255),
+ firstname VARCHAR(255),
+ email VARCHAR(255),
+ password VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ positionLatitude DOUBLE,
+ positionLongitude DOUBLE
+  [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATION" existe déjà
+Table "ASSOCIATION" already exists; SQL statement:
+ 
+ CREATE TABLE Association (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ websiteLink VARCHAR(255),
+ logoPath VARCHAR(255),
+ email VARCHAR(255),
+ phoneNumber VARCHAR(15),
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSE" existe déjà
+Table "COURSE" already exists; SQL statement:
+ 
+ CREATE TABLE Course (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(255),
+ description VARCHAR(255),
+ associationId INTEGER,
+ memberCreatorId INTEGER,
+ startDate VARCHAR(255),
+ endDate VARCHAR(255),
+ startpositionLatitude DOUBLE,
+ startpositionLongitude DOUBLE,
+ endpositionLatitude DOUBLE,
+ endpositionLongitude DOUBLE,
+ address VARCHAR(255),
+ city VARCHAR(255),
+ zipCode INTEGER,
+ maxOfRunners INTEGER,
+ currentNumberOfRunners INTEGER,
+ price DOUBLE,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberCreatorId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "COURSEMEMBER" existe déjà
+Table "COURSEMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE CourseMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ memberId INTEGER,
+ registrationDate VARCHAR(255),
+ registrationStatus VARCHAR(255),
+ FOREIGN KEY (courseId) REFERENCES Course(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "ASSOCIATIONMEMBER" existe déjà
+Table "ASSOCIATIONMEMBER" already exists; SQL statement:
+ 
+ CREATE TABLE AssociationMember (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ memberId INTEGER,
+ associationId INTEGER,
+ FOREIGN KEY (associationId) REFERENCES Association(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "DISCUSSION" existe déjà
+Table "DISCUSSION" already exists; SQL statement:
+ 
+ CREATE TABLE Discussion (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ courseId INTEGER,
+ isActive BOOLEAN DEFAULT TRUE,
+ FOREIGN KEY (courseId) REFERENCES Course(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "MESSAGE" existe déjà
+Table "MESSAGE" already exists; SQL statement:
+ 
+ CREATE TABLE Message (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ discussionId INTEGER,
+ memberId INTEGER,
+ content VARCHAR(255),
+ date VARCHAR(32),
+ isPin BOOLEAN DEFAULT FALSE,
+ isHidden BOOLEAN DEFAULT FALSE,
+ FOREIGN KEY (discussionId) REFERENCES Discussion(id),
+ FOREIGN KEY (memberId) REFERENCES Member(id) [42101-214]
+2025-03-19 18:17:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: La table "PAIEMENT" existe déjà
+Table "PAIEMENT" already exists; SQL statement:
+ 
+ CREATE TABLE Paiement (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ couseMemberId INTEGER,
+ date VARCHAR(32),
+ amount DOUBLE,
+ FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id) [42101-214]
