@@ -6,7 +6,7 @@ CREATE TABLE Member (
                       firstname VARCHAR(255),
                       email VARCHAR(255),
                       password VARCHAR(255),
-                      phoneNumber INTEGER,
+                      phoneNumber VARCHAR(15),
                       address VARCHAR(255),
                       city VARCHAR(255),
                       zipCode INTEGER,
@@ -21,7 +21,7 @@ CREATE TABLE Association (
                     websiteLink VARCHAR(255),
                     logoPath VARCHAR(255),
                     email VARCHAR(255),
-                    phoneNumber INTEGER,
+                    phoneNumber VARCHAR(15),
                     address VARCHAR(255),
                     city VARCHAR(255),
                     zipCode INTEGER
@@ -71,7 +71,7 @@ CREATE TABLE Discussion (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 courseId INTEGER,
                 isActive BOOLEAN DEFAULT TRUE,
-                FOREIGN KEY (courseId) REFERENCES Course(id),
+                FOREIGN KEY (courseId) REFERENCES Course(id)
 );
 
 CREATE TABLE Message (

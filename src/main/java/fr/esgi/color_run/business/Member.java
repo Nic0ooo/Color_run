@@ -13,7 +13,7 @@ public class Member {
     private String firstname;
     private String email;
     private String password;
-    private Integer phoneNumber;
+    private String phoneNumber;
     private String address;
     private String city;
     private Integer zipCode;
