@@ -1,4 +1,4 @@
 package fr.esgi.color_run.servlet;
 
-public class UserServlet {
+public class MemberServlet {
 }

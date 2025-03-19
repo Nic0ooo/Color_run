@@ -1,4 +1,4 @@
 package fr.esgi.color_run.repository.impl;
 
-public class UserRepositoryImpl {
+public class MemberRepositoryImpl {
 }

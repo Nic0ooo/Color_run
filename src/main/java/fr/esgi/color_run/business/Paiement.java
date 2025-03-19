@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 @Data
 public class Paiement {
     private Long id;
-    private Long couseUserId;
+    private Long couseMemberId;
     private LocalDateTime date;
-    private float amount;
+    private Double amount;
 
     private static Long compteur = 0L;
 
