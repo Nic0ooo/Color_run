@@ -1,6 +1,5 @@
 package fr.esgi.color_run.business;
 
-import java.util.List;
 import lombok.Data;
 
 /**
