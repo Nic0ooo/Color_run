@@ -13,7 +13,7 @@ public class Association {
     private String websiteLink;
     private String logoPath;
     private String email;
-    private Integer phoneNumber;
+    private String phoneNumber;
     private String address;
     private String city;
     private Integer zipCode;
