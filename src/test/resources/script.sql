@@ -6,7 +6,7 @@ CREATE TABLE Member (
                         firstname VARCHAR(255),
                         email VARCHAR(255),
                         password VARCHAR(255),
-                        phoneNumber INTEGER,
+                        phoneNumber VARCHAR(15),
                         address VARCHAR(255),
                         city VARCHAR(255),
                         zipCode INTEGER,
@@ -21,7 +21,7 @@ CREATE TABLE Association (
                              websiteLink VARCHAR(255),
                              logoPath VARCHAR(255),
                              email VARCHAR(255),
-                             phoneNumber INTEGER,
+                             phoneNumber VARCHAR(15),
                              address VARCHAR(255),
                              city VARCHAR(255),
                              zipCode INTEGER
@@ -70,8 +70,8 @@ CREATE TABLE AssociationMember (
 CREATE TABLE Discussion (
                             id BIGINT AUTO_INCREMENT PRIMARY KEY,
                             courseId INTEGER,
-                            isActive BOOLEAN,
-                            FOREIGN KEY (courseId) REFERENCES Course(id),
+                            isActive BOOLEAN DEFAULT TRUE,
+                            FOREIGN KEY (courseId) REFERENCES Course(id)
 );
 
 CREATE TABLE Message (
@@ -80,8 +80,8 @@ CREATE TABLE Message (
                          memberId INTEGER,
                          content VARCHAR(255),
                          date VARCHAR(32),
-                         isPin BOOLEAN,
-                         isHidden BOOLEAN,
+                         isPin BOOLEAN DEFAULT FALSE,
+                         isHidden BOOLEAN DEFAULT FALSE,
                          FOREIGN KEY (discussionId) REFERENCES Discussion(id),
                          FOREIGN KEY (memberId) REFERENCES Member(id)
 );
@@ -92,4 +92,4 @@ CREATE TABLE Paiement (
                           date VARCHAR(32),
                           amount DOUBLE,
                           FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id)
-)
+);
