@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MemberService {
-    Member createMember(String pseudo, String mail, String password);
+    Member createMember(Member member);
     Optional<Member> connectMember(String mail, String password);
     boolean deleteMember(Long id);
     Member updateMember(Long id, Member updatedMember);
