@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Inscription</title>
+</head>
+<body>
+<h1>Créer un compte</h1>
+
+<form method="post"  th:action="@{/register}">
+    <label>Nom: <input type="text" name="name" required></label><br>
+    <label>Prénom: <input type="text" name="firstname" required></label><br>
+    <label>Email: <input type="email" name="email" required></label><br>
+    <label>Mot de passe: <input type="password" name="password" required></label><br>
+    <label>Téléphone: <input type="text" name="phoneNumber"></label><br>
+    <label>Adresse: <input type="text" name="address"></label><br>
+    <label>Ville: <input type="text" name="city"></label><br>
+    <label>Code Postal: <input type="text" name="zipCode"></label><br>
+    <button type="submit">S'inscrire</button>
+</form>
+
+</body>
+</html>

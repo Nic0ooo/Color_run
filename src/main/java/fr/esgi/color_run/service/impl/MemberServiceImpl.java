@@ -1,65 +1,51 @@
 package fr.esgi.color_run.service.impl;
 
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.repository.MemberRepository;
+import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class MemberServiceImpl implements MemberService {
-    private final List<Member> members = new ArrayList<>();
+
+    private final MemberRepository memberRepository = new MemberRepositoryImpl();
 
     @Override
-    public Member createMember(String pseudo, String mail, String password) {
-        Member member = new Member();
-        member.setId((long) (members.size() + 1));
-        member.setName(pseudo);
-        member.setEmail(mail);
-        member.setPassword(password);
-        members.add(member);
-        return member;
+    public Member createMember(Member member) {
+        return memberRepository.save(member);
     }
+
+
 
     @Override
     public Optional<Member> connectMember(String mail, String password) {
-        return members.stream()
-                .filter(member -> member.getEmail().trim().equalsIgnoreCase(mail.trim()) && member.getPassword().equals(password))
-                .findFirst();
+        Optional<Member> memberOpt = memberRepository.findByEmail(mail);
+        if (memberOpt.isPresent() && memberOpt.get().getPassword().equals(password)) {
+            return memberOpt;
+        }
+        return Optional.empty();
     }
 
     @Override
     public boolean deleteMember(Long id) {
-        return members.removeIf(member -> member.getId().equals(id));
+        return memberRepository.deleteById(id);
     }
 
     @Override
     public Member updateMember(Long id, Member updatedMember) {
-        Optional<Member> memberOpt = getMember(id);
-        if (memberOpt.isPresent()) {
-            Member member = memberOpt.get();
-            member.setName(updatedMember.getName());
-            member.setFirstname(updatedMember.getFirstname());
-            member.setEmail(updatedMember.getEmail());
-            member.setPassword(updatedMember.getPassword());
-            member.setPhoneNumber(updatedMember.getPhoneNumber());
-            member.setAddress(updatedMember.getAddress());
-            member.setCity(updatedMember.getCity());
-            member.setZipCode(updatedMember.getZipCode());
-            member.setPositionLatitude(updatedMember.getPositionLatitude());
-            member.setPositionLongitude(updatedMember.getPositionLongitude());
-            return member;
-        }
-        return null;
+        updatedMember.setId(id);
+        return memberRepository.update(updatedMember);
     }
 
     @Override
     public List<Member> listAllMembers() {
-        return members;
+        return memberRepository.findAll();
     }
 
     @Override
     public Optional<Member> getMember(Long id) {
-        return members.stream().filter(member -> member.getId().equals(id)).findFirst();
+        return memberRepository.findById(id);
     }
 }
