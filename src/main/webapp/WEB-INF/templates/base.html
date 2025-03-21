@@ -1,0 +1,43 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Color Run</title>
+
+    <!-- Include the links fragment -->
+    <div th:replace="${links}">
+        <!-- Default links if fragment not found -->
+        <link rel="stylesheet" href="/css/default.css">
+    </div>
+</head>
+<body>
+<header>
+    <h1>Color Run</h1>
+    <nav>
+        <ul>
+            <li th:class="${currentPage == 'home' ? 'active' : ''}"><a href="/">Accueil</a></li>
+            <!-- Add more navigation items as needed -->
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <!-- Include the content fragment -->
+    <div th:replace="${content}">
+        <p>Contenu par défaut si le fragment n'est pas trouvé.</p>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; <span th:text="${currentYear}">2023</span> - Color Run</p>
+
+    <!-- Include the scripts fragment -->
+    <div th:replace="${scripts}">
+        <!-- Default scripts if fragment not found -->
+        <script src="/js/default.js"></script>
+    </div>
+</footer>
+</body>
+</html>

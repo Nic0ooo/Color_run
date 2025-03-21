@@ -3,6 +3,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+###BDD###
+/db_file/colorun.mv.db
+/db_file/colorun.trace.db
+/db_file/colorun_test.mv.db
+/db_file/colorun_test.trace.db
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

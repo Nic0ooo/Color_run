@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragment de la navbar -->
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">Mon Application</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/}" th:classappend="${currentPage == 'home'} ? 'active' : ''">Accueil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/about}" th:classappend="${currentPage == 'about'} ? 'active' : ''">À propos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/services}" th:classappend="${currentPage == 'services'} ? 'active' : ''">Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/contact}" th:classappend="${currentPage == 'contact'} ? 'active' : ''">Contact</a>
+                </li>
+            </ul>
+            <!-- Boutons à droite (connexion, etc.) -->
+            <div class="navbar-nav">
+                <a class="nav-link" th:href="@{/login}">Connexion</a>
+            </div>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

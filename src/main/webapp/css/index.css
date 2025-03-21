@@ -1,0 +1,91 @@
+/* Styles spécifiques pour la page d'accueil */
+
+/* Couleurs personnalisées */
+:root {
+    --color-pink: #f64c72;
+    --color-turquoise: #2ab7ca;
+    --color-yellow: #fed766;
+}
+
+/* Styles généraux */
+.bg-pink {
+    background-color: var(--color-pink);
+}
+
+.text-pink {
+    color: var(--color-pink);
+}
+
+/* Bannière principale */
+.main-banner {
+    border-radius: 0;
+    padding: 3rem 0;
+}
+
+/* Section de carte */
+.map-container {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.search-overlay {
+    width: 250px;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+/* Placeholder pour les images/vidéos */
+.placeholder-image {
+    border-radius: 8px;
+    border: 2px dashed #ccc;
+}
+
+/* Section pourquoi participer */
+.icon-box {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: rgba(246, 76, 114, 0.1);
+    color: var(--color-pink);
+}
+
+/* Section d'inscription et parrainage */
+.join-section, .sponsor-section {
+    border-radius: 8px;
+}
+
+.join-section {
+    background-color: var(--color-pink);
+}
+
+.sponsor-section {
+    background-color: var(--color-turquoise);
+}
+
+/* Section concept */
+.concept-section {
+    background-color: var(--color-yellow);
+    border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-overlay {
+        position: relative !important;
+        width: 100%;
+        margin: 0 !important;
+    }
+
+    .main-banner {
+        padding: 2rem 0;
+    }
+
+    .main-banner h1 {
+        font-size: 1.8rem;
+    }
+}
