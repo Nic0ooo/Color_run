@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public class MemberRepositoryImpl implements MemberRepository {
 
-    private final String jdbcUrl = "jdbc:h2:file:C:/Users/remis/Desktop/B3- ESGI/Projet annuelle/Color_run/db_file/colorun";
+    private final String jdbcUrl = "jdbc:h2:./db_file/colorun";
     private final String jdbcUser = "sa";
     private final String jdbcPassword = "";
 
