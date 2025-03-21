@@ -15,7 +15,6 @@ import org.thymeleaf.context.WebContext;
 import java.io.IOException;
 import java.util.Optional;
 
-// ...
 @WebServlet(urlPatterns = {"/login", "/register"})
 public class MemberServlet extends HttpServlet {
 
@@ -63,11 +62,11 @@ public class MemberServlet extends HttpServlet {
                 newMember.setAddress(address != null ? address : "");
                 newMember.setCity(city != null ? city : "");
                 newMember.setZipCode(zip != null && !zip.isEmpty() ? Integer.parseInt(zip) : 0);
-                // Coordonnées par défaut
+
                 newMember.setPositionLatitude(48.8566);
                 newMember.setPositionLongitude(2.3522);
 
-                memberService.createMember(newMember); // enregistre partiellement ou adapte
+                memberService.createMember(newMember);
                 resp.sendRedirect("login");
                 break;
 

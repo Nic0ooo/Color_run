@@ -82,11 +82,11 @@ public class MemberRepositoryImpl implements MemberRepository {
                 }
             }
 
-            System.out.println("✅ Membre enregistré : " + member.getEmail());
+            System.out.println("Membre enregistré : " + member.getEmail());
             return member;
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la sauvegarde du membre :");
+            System.err.println("Erreur lors de la sauvegarde du membre :");
             e.printStackTrace();
             return null;
         }
