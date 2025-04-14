@@ -1,11 +1,31 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Accueil</title>
+  <title th:text="${pageTitle}">Accueil</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<h2>Bienvenue</h2>
-<p th:text="'Bonjour, ' + ${session.member.name} + ' !'">Bonjour !</p>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+
+<div th:replace="fragments/header :: headerFragment('home', ${member})"></div>
+
+<!-- Main content -->
+<main class="flex-grow container mx-auto px-4 py-8 text-center">
+  <h1 class="text-2xl font-bold mb-4">Bienvenue sur la page d'accueil</h1>
+
+  <div th:if="${member != null}">
+    <p class="text-lg">Vous êtes connecté avec l'adresse : <span th:text="${member.email}"></span></p>
+  </div>
+
+  <div th:if="${member == null}">
+    <p class="text-lg">Veuillez vous <a href="/color_run_war/login" class="text-blue-600 underline">connecter</a> ou <a href="/color_run_war/register" class="text-blue-600 underline">créer un compte</a> pour accéder à plus de fonctionnalités.</p>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="bg-white border-t p-4 text-center text-sm text-gray-500">
+  &copy; 2025 Color Run. Tous droits réservés.
+</footer>
+
 </body>
 </html>

@@ -1,23 +1,50 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title th:text="${pageTitle}">Inscription</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body>
-<h1>Créer un compte</h1>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col items-center">
 
-<form method="post"  th:action="@{/register}">
-    <label>Nom: <input type="text" name="name" required></label><br>
-    <label>Prénom: <input type="text" name="firstname" required></label><br>
-    <label>Email: <input type="email" name="email" required></label><br>
-    <label>Mot de passe: <input type="password" name="password" required></label><br>
-    <label>Téléphone: <input type="text" name="phoneNumber"></label><br>
-    <label>Adresse: <input type="text" name="address"></label><br>
-    <label>Ville: <input type="text" name="city"></label><br>
-    <label>Code Postal: <input type="text" name="zipCode"></label><br>
-    <button type="submit">S'inscrire</button>
-</form>
+<div th:replace="fragments/header :: headerFragment('register', ${member})"></div>
+
+<!-- Form Container -->
+<main class="flex-grow w-full max-w-xl px-6 py-10">
+    <div class="bg-white shadow rounded-lg p-8">
+        <h2 class="text-center text-2xl font-bold mb-6">Créer un compte</h2>
+
+        <form method="post" th:action="@{/register}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="name" placeholder="Nom" required>
+            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="firstname" placeholder="Prénom" required>
+
+            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="email" name="email" placeholder="Email" required>
+            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="password" name="password" placeholder="Mot de passe" required>
+            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="password" placeholder="Répétez le mot de passe">
+
+            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="birthdate" placeholder="Date de naissance">
+            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="gender" placeholder="Genre">
+
+            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="sportLevel" placeholder="Niveau sportif">
+            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="zipCode" placeholder="Code postal">
+
+            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="address" placeholder="Adresse">
+
+            <button type="submit" class="col-span-1 md:col-span-2 mt-4 bg-yellow-400 hover:bg-yellow-500 transition text-white font-semibold py-2 rounded">
+                S'inscrire
+            </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-600 mt-6">
+            Déjà inscrit ? <a href="/login" class="text-blue-600 hover:underline">Cliquez ici !</a>
+        </p>
+    </div>
+</main>
 
 </body>
 </html>
