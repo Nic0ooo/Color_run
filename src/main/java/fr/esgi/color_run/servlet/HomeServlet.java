@@ -12,7 +12,7 @@ import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
 
-@WebServlet("/home")
+@WebServlet("/")
 public class HomeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
