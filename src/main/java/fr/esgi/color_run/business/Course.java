@@ -14,7 +14,7 @@ public class Course {
     private String name;
     private String description;
     private Integer associationId;
-    private Integer userCreatorId;
+    private Integer memberCreatorId;
     private String startDate;
     private String endDate;
     private double startpositionLatitude;
@@ -33,7 +33,7 @@ public class Course {
     public Course() {
         this.id = compteur++;
         this.associationId = 0;
-        this.userCreatorId = 0;
+        this.memberCreatorId = 0;
         this.startpositionLatitude = 48.8566;
         this.startpositionLongitude = 2.3522;
         this.endpositionLatitude = 49.8566;
