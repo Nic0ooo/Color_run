@@ -16,7 +16,7 @@ public class CourseRepositoryImpl implements CourseRepository {
 /*
     private final String jdbcUrl = "jdbc:h2:./db_file/color_run";
 */
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path");
+    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
     private final String jdbcUser = "sa";
     private final String jdbcPassword = "";
 

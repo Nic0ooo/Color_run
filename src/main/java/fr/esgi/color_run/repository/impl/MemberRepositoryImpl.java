@@ -11,7 +11,7 @@ import fr.esgi.color_run.util.Config;
 
 public class MemberRepositoryImpl implements MemberRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path");
+    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
     private final String jdbcUser = "sa";
     private final String jdbcPassword = "";
 
