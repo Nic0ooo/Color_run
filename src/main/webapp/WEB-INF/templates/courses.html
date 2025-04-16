@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Liste des Courses</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+<div class="max-w-7xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">Liste des Courses</h1>
+
+  <!-- Tableau des courses -->
+  <div class="overflow-x-auto rounded-lg shadow mb-8">
+    <table class="min-w-full bg-white text-left text-sm">
+      <thead class="bg-gray-200 uppercase text-gray-600 text-xs">
+      <tr>
+        <th class="px-6 py-3">ID</th>
+        <th class="px-6 py-3">Nom</th>
+        <th class="px-6 py-3">Date de début</th>
+        <th class="px-6 py-3">Date de fin</th>
+        <th class="px-6 py-3">Actions</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+      <tr th:each="course : ${courses}" class="hover:bg-gray-50">
+        <td class="px-6 py-4" th:text="${course.id}"></td>
+        <td class="px-6 py-4" th:text="${course.name}"></td>
+        <td class="px-6 py-4" th:text="${course.startDate}"></td>
+        <td class="px-6 py-4" th:text="${course.endDate}"></td>
+        <td class="px-6 py-4">
+          <button th:attr="onclick=|editCourse(${course.id}, '${course.name}', '${course.description}', '${course.city}', ${course.zipCode}, ${course.price}, '${course.startDate}', '${course.endDate}', '${course.address}', ${course.startpositionLatitude}, ${course.startpositionLongitude}, ${course.endpositionLatitude}, ${course.endpositionLongitude}, ${course.maxOfRunners}, ${course.associationId}, ${course.memberCreatorId})|"
+                  class="bg-yellow-600 text-black px-2 py-1 rounded hover:bg-yellow-700 transition">
+            Modifier
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bouton d'affichage du formulaire -->
+  <button onclick="toggleForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+    Ajouter une course
+  </button>
+
+  <!-- Formulaire masqué par défaut -->
+  <div id="courseForm" class="mt-6 hidden bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">Nouvelle Course</h2>
+    <form action="/color_run_war/courses" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <input type="hidden" name="action" value="create">
+      <input type="text" name="name" placeholder="Nom de la course" required class="input-style">
+      <input type="text" name="description" placeholder="Description" class="input-style">
+      <input type="text" name="city" placeholder="Ville" required class="input-style">
+      <input type="number" name="zipCode" placeholder="Code Postal" required class="input-style">
+      <input type="number" step="0.01" name="price" placeholder="Prix (€)" required class="input-style">
+      <input type="date" name="startDate" placeholder="Date de début" required class="input-style">
+      <input type="date" name="endDate" placeholder="Date de fin" required class="input-style">
+      <input type="text" name="address" placeholder="Adresse" required class="input-style">
+      <input type="number" step="0.000001" name="startLatitude" placeholder="Latitude départ" required class="input-style">
+      <input type="number" step="0.000001" name="startLongitude" placeholder="Longitude départ" required class="input-style">
+      <input type="number" step="0.000001" name="endLatitude" placeholder="Latitude arrivée" required class="input-style">
+      <input type="number" step="0.000001" name="endLongitude" placeholder="Longitude arrivée" required class="input-style">
+      <input type="number" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
+      <input type="number" name="associationId" placeholder="ID Association" required class="input-style">
+      <input type="number" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
+
+      <div class="md:col-span-2">
+        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
+          Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Formulaire de modification masqué par défaut -->
+  <div id="editCourseForm" class="mt-6 hidden bg-white p-6 rounded shadow fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded shadow max-w-4xl w-full max-h-screen overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Modifier Course</h2>
+        <button onclick="closeEditForm()" class="text-gray-600 hover:text-gray-900">×</button>
+      </div>
+      <form action="/color_run_war/courses" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" id="edit-id" name="courseId">
+        <input type="text" id="edit-name" name="name" placeholder="Nom de la course" required class="input-style">
+        <input type="text" id="edit-description" name="description" placeholder="Description" class="input-style">
+        <input type="text" id="edit-city" name="city" placeholder="Ville" required class="input-style">
+        <input type="number" id="edit-zipCode" name="zipCode" placeholder="Code Postal" required class="input-style">
+        <input type="number" step="0.01" id="edit-price" name="price" placeholder="Prix (€)" required class="input-style">
+        <input type="date" id="edit-startDate" name="startDate" placeholder="Date de début" required class="input-style">
+        <input type="date" id="edit-endDate" name="endDate" placeholder="Date de fin" required class="input-style">
+        <input type="text" id="edit-address" name="address" placeholder="Adresse" required class="input-style">
+        <input type="number" step="0.000001" id="edit-startLatitude" name="startLatitude" placeholder="Latitude départ" required class="input-style">
+        <input type="number" step="0.000001" id="edit-startLongitude" name="startLongitude" placeholder="Longitude départ" required class="input-style">
+        <input type="number" step="0.000001" id="edit-endLatitude" name="endLatitude" placeholder="Latitude arrivée" required class="input-style">
+        <input type="number" step="0.000001" id="edit-endLongitude" name="endLongitude" placeholder="Longitude arrivée" required class="input-style">
+        <input type="number" id="edit-maxOfRunners" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
+        <input type="number" id="edit-associationId" name="associationId" placeholder="ID Association" required class="input-style">
+        <input type="number" id="edit-memberCreatorId" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
+
+        <div class="md:col-span-2">
+          <button type="submit" class="bg-yellow-600 text-white px-6 py-2 rounded hover:bg-yellow-700 transition">
+            Mettre à jour
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggleForm() {
+    const form = document.getElementById("courseForm");
+    form.classList.toggle("hidden");
+  }
+
+  function editCourse(id, name, description, city, zipCode, price, startDate, endDate, address, startLat, startLong, endLat, endLong, maxRunners, associationId, memberCreatorId) {
+    // Remplir le formulaire avec les données existantes
+    document.getElementById("edit-id").value = id;
+    document.getElementById("edit-name").value = name;
+    document.getElementById("edit-description").value = description;
+    document.getElementById("edit-city").value = city;
+    document.getElementById("edit-zipCode").value = zipCode;
+    document.getElementById("edit-price").value = price;
+    document.getElementById("edit-startDate").value = startDate;
+    document.getElementById("edit-endDate").value = endDate;
+    document.getElementById("edit-address").value = address;
+    document.getElementById("edit-startLatitude").value = startLat;
+    document.getElementById("edit-startLongitude").value = startLong;
+    document.getElementById("edit-endLatitude").value = endLat;
+    document.getElementById("edit-endLongitude").value = endLong;
+    document.getElementById("edit-maxOfRunners").value = maxRunners;
+    document.getElementById("edit-associationId").value = associationId;
+    document.getElementById("edit-memberCreatorId").value = memberCreatorId;
+
+    // Afficher le formulaire de modification
+    const editForm = document.getElementById("editCourseForm");
+    editForm.classList.remove("hidden");
+  }
+
+  function closeEditForm() {
+    document.getElementById("editCourseForm").classList.add("hidden");
+  }
+</script>
+
+<style>
+  .input-style {
+    @apply border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+</style>
+</body>
+</html>
