@@ -7,10 +7,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import fr.esgi.color_run.util.Config;
 
 public class MemberRepositoryImpl implements MemberRepository {
 
-    private final String jdbcUrl = "jdbc:h2:./db_file/colorun";
+    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path");
     private final String jdbcUser = "sa";
     private final String jdbcPassword = "";
 

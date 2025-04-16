@@ -3,6 +3,7 @@ package fr.esgi.color_run.repository.impl;
 
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.repository.CourseRepository;
+import fr.esgi.color_run.util.Config;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -12,7 +13,10 @@ import static java.sql.DriverManager.getConnection;
 
 public class CourseRepositoryImpl implements CourseRepository {
 
+/*
     private final String jdbcUrl = "jdbc:h2:./db_file/color_run";
+*/
+    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path");
     private final String jdbcUser = "sa";
     private final String jdbcPassword = "";
 

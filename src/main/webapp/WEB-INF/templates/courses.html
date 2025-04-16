@@ -132,8 +132,8 @@
       <input type="text" name="city" placeholder="Ville" required class="input-style">
       <input type="number" name="zipCode" placeholder="Code Postal" required class="input-style">
       <input type="number" step="0.01" name="price" placeholder="Prix (€)" required class="input-style">
-      <input type="date" name="startDate" placeholder="Date de début" required class="input-style">
-      <input type="date" name="endDate" placeholder="Date de fin" required class="input-style">
+      <input type="datetime-local" name="startDate" placeholder="Date et heure de début" required class="input-style">
+      <input type="datetime-local" name="endDate" placeholder="Date et heure de fin" required class="input-style">
       <input type="text" name="address" placeholder="Adresse" required class="input-style">
       <input type="number" step="0.000001" name="startLatitude" placeholder="Latitude départ" required class="input-style">
       <input type="number" step="0.000001" name="startLongitude" placeholder="Longitude départ" required class="input-style">
@@ -168,8 +168,8 @@
         <input type="text" id="edit-city" name="city" placeholder="Ville" required class="input-style">
         <input type="number" id="edit-zipCode" name="zipCode" placeholder="Code Postal" required class="input-style">
         <input type="number" step="0.01" id="edit-price" name="price" placeholder="Prix (€)" required class="input-style">
-        <input type="date" id="edit-startDate" name="startDate" placeholder="Date de début" required class="input-style">
-        <input type="date" id="edit-endDate" name="endDate" placeholder="Date de fin" required class="input-style">
+        <input type="datetime-local" id="edit-startDate" name="startDate" placeholder="Date et heure de début" required class="input-style">
+        <input type="datetime-local" id="edit-endDate" name="endDate" placeholder="Date et heure de fin" required class="input-style">
         <input type="text" id="edit-address" name="address" placeholder="Adresse" required class="input-style">
         <input type="number" step="0.000001" id="edit-startLatitude" name="startLatitude" placeholder="Latitude départ" required class="input-style">
         <input type="number" step="0.000001" id="edit-startLongitude" name="startLongitude" placeholder="Longitude départ" required class="input-style">
@@ -259,6 +259,17 @@
   function closeEditForm() {
     document.getElementById("editCourseForm").classList.add("hidden");
   }
+
+  // Pré-remplit le champ "endDate" avec la valeur de "startDate" lors d'un changement
+  document.addEventListener("DOMContentLoaded", function() {
+    var startDateField = document.querySelector('input[name="startDate"]');
+    var endDateField = document.querySelector('input[name="endDate"]');
+    if (startDateField && endDateField) {
+      startDateField.addEventListener("change", function() {
+        endDateField.value = startDateField.value;
+      });
+    }
+  });
 </script>
 
 <style>
