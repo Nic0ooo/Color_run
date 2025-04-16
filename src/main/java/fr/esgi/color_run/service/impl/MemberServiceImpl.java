@@ -5,8 +5,7 @@ import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class MemberServiceImpl implements MemberService {
 
@@ -48,4 +47,26 @@ public class MemberServiceImpl implements MemberService {
     public Optional<Member> getMember(Long id) {
         return memberRepository.findById(id);
     }
+
+    private final Map<String, String> verificationCodes = new HashMap<>();
+
+    public String generateVerificationCodeForEmail(String email) {
+        String code = String.valueOf(new Random().nextInt(900000) + 100000); // Code à 6 chiffres
+        verificationCodes.put(email, code);
+        return code;
+    }
+
+    public boolean isCodeValid(String email, String code) {
+        return code.equals(verificationCodes.get(email));
+    }
+
+    public void removeCode(String email) {
+        verificationCodes.remove(email);
+    }
+
+    @Override
+    public Optional<Object> findByEmail(String email) {
+        return Optional.ofNullable(memberRepository.findByEmail(email));
+    }
+
 }

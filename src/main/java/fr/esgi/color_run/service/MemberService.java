@@ -11,4 +11,6 @@ public interface MemberService {
     Member updateMember(Long id, Member updatedMember);
     List<Member> listAllMembers();
     Optional<Member> getMember(Long id);
+    String generateVerificationCodeForEmail(String email);
+    Optional<Object> findByEmail(String email);
 }
