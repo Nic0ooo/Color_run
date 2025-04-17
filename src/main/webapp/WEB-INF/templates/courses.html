@@ -34,10 +34,8 @@
             <th class="px-6 py-3">Nom</th>
             <th class="px-6 py-3">Date</th>
             <th class="px-6 py-3">Ville</th>
-            <th class="px-6 py-3">Participants</th>
-  <!--
             <th class="px-6 py-3">Distance</th>
-  -->
+            <th class="px-6 py-3">Participants</th>
             <th class="px-6 py-3">Actions</th>
           </tr>
           </thead>
@@ -46,14 +44,12 @@
             <td class="px-6 py-4" th:text="${course.name}"></td>
             <td class="px-6 py-4" th:text="${course.formattedStartDate}"></td>
             <td class="px-6 py-4" th:text="${course.city}"></td>
+            <td class="px-6 py-4" th:text="${course.distance} + ' km'"></td>
             <td class="px-6 py-4">
               <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
             </td>
-  <!--
-            <td class="px-6 py-4" th:text="${course.distance} + ' km'"></td>
-  -->
             <td class="px-6 py-4 flex gap-2">
-              <button th:attr="onclick=|editCourse(${course.id}, '${course.name}', '${course.description}', '${course.city}', ${course.zipCode}, ${course.price}, '${course.startDate}', '${course.endDate}', '${course.address}', ${course.startpositionLatitude}, ${course.startpositionLongitude}, ${course.endpositionLatitude}, ${course.endpositionLongitude}, ${course.maxOfRunners}, ${course.associationId}, ${course.memberCreatorId})|"
+              <button th:attr="onclick=|editCourse(${course.id}, '${course.name}', '${course.description}', '${course.city}', ${course.zipCode}, ${course.price}, '${course.startDate}', '${course.endDate}', '${course.address}', ${course.startpositionLatitude}, ${course.startpositionLongitude}, ${course.endpositionLatitude}, ${course.endpositionLongitude}, ${course.distance}, ${course.maxOfRunners}, ${course.associationId}, ${course.memberCreatorId})|"
                       class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition">
                 Modifier
               </button>
@@ -76,10 +72,8 @@
             <th class="px-6 py-3">Nom</th>
             <th class="px-6 py-3">Date</th>
             <th class="px-6 py-3">Ville</th>
-            <th class="px-6 py-3">Participants</th>
-  <!--
             <th class="px-6 py-3">Distance</th>
-  -->
+            <th class="px-6 py-3">Participants</th>
             <th class="px-6 py-3">Actions</th>
           </tr>
           </thead>
@@ -88,12 +82,10 @@
             <td class="px-6 py-4" th:text="${course.name}"></td>
             <td class="px-6 py-4" th:text="${course.formattedStartDate}"></td>
             <td class="px-6 py-4" th:text="${course.city}"></td>
+            <td class="px-6 py-4" th:text="${course.distance}"></td>
             <td class="px-6 py-4">
               <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
             </td>
-  <!--
-            <td class="px-6 py-4" th:text="${course.distance} + ' km'"></td>
-  -->
             <td class="px-6 py-4">
               <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
                 Accès au chat
@@ -105,7 +97,7 @@
       </div>
     </div>
 
-    <div id="showFormButton" class="mt-4">
+    <div id="showFormButton" class="mt-4 flex justify-left">
       <!-- Bouton d'affichage du formulaire -->
       <button onclick="toggleForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
         Ajouter une course
@@ -113,7 +105,7 @@
     </div>
 
     <!-- Bouton annuler l'ajout d'une course -->
-    <div id="cancelButton" class="hidden mt-4">
+    <div id="cancelButton" class="hidden mt-4  flex justify-left">
       <button onclick="toggleForm()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
         Annuler
       </button>
@@ -138,10 +130,11 @@
         <input type="text" name="description" placeholder="Description" class="input-style">
         <input type="text" name="city" placeholder="Ville" required class="input-style">
         <input type="number" name="zipCode" placeholder="Code Postal" required class="input-style">
+        <input type="text" name="address" placeholder="Adresse" required class="input-style">
+        <input type="text" name="distance" placeholder="Distance (km)" required class="input-style">
         <input type="number" step="0.01" name="price" placeholder="Prix (€)" required class="input-style">
         <input type="datetime-local" name="startDate" placeholder="Date et heure de début" required class="input-style">
         <input type="datetime-local" name="endDate" placeholder="Date et heure de fin" required class="input-style">
-        <input type="text" name="address" placeholder="Adresse" required class="input-style">
         <input type="number" step="0.000001" name="startLatitude" placeholder="Latitude départ" required class="input-style">
         <input type="number" step="0.000001" name="startLongitude" placeholder="Longitude départ" required class="input-style">
         <input type="number" step="0.000001" name="endLatitude" placeholder="Latitude arrivée" required class="input-style">
@@ -174,10 +167,11 @@
           <input type="text" id="edit-description" name="description" placeholder="Description" class="input-style">
           <input type="text" id="edit-city" name="city" placeholder="Ville" required class="input-style">
           <input type="number" id="edit-zipCode" name="zipCode" placeholder="Code Postal" required class="input-style">
+          <input type="text" id="edit-address" name="address" placeholder="Adresse" required class="input-style">
+          <input type="text" id="edit-distance" name="distance" placeholder="Distance (km)" required class="input-style">
           <input type="number" step="0.01" id="edit-price" name="price" placeholder="Prix (€)" required class="input-style">
           <input type="datetime-local" id="edit-startDate" name="startDate" placeholder="Date et heure de début" required class="input-style">
           <input type="datetime-local" id="edit-endDate" name="endDate" placeholder="Date et heure de fin" required class="input-style">
-          <input type="text" id="edit-address" name="address" placeholder="Adresse" required class="input-style">
           <input type="number" step="0.000001" id="edit-startLatitude" name="startLatitude" placeholder="Latitude départ" required class="input-style">
           <input type="number" step="0.000001" id="edit-startLongitude" name="startLongitude" placeholder="Longitude départ" required class="input-style">
           <input type="number" step="0.000001" id="edit-endLatitude" name="endLatitude" placeholder="Latitude arrivée" required class="input-style">
@@ -245,17 +239,18 @@
     showFormButton.classList.toggle('hidden');
   }
 
-  function editCourse(id, name, description, city, zipCode, price, startDate, endDate, address, startLat, startLong, endLat, endLong, maxRunners, associationId, memberCreatorId) {
+  function editCourse(id, name, description, city, zipCode, price, address, distance, startDate, endDate, startLat, startLong, endLat, endLong, maxRunners, associationId, memberCreatorId) {
     // Remplir le formulaire avec les données existantes
     document.getElementById("edit-id").value = id;
     document.getElementById("edit-name").value = name;
     document.getElementById("edit-description").value = description;
     document.getElementById("edit-city").value = city;
     document.getElementById("edit-zipCode").value = zipCode;
+    document.getElementById("edit-address").value = address;
+    document.getElementById("edit-distance").value = distance;
     document.getElementById("edit-price").value = price;
     document.getElementById("edit-startDate").value = startDate;
     document.getElementById("edit-endDate").value = endDate;
-    document.getElementById("edit-address").value = address;
     document.getElementById("edit-startLatitude").value = startLat;
     document.getElementById("edit-startLongitude").value = startLong;
     document.getElementById("edit-endLatitude").value = endLat;

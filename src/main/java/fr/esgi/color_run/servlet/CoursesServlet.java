@@ -94,6 +94,7 @@ public class CoursesServlet extends HttpServlet {
         double startLongitude = Double.parseDouble(req.getParameter("startLongitude"));
         double endLatitude = Double.parseDouble(req.getParameter("endLatitude"));
         double endLongitude = Double.parseDouble(req.getParameter("endLongitude"));
+        double distance = Double.parseDouble(req.getParameter("distance"));
         int zipCode = Integer.parseInt(req.getParameter("zipCode"));
         int maxOfRunners = Integer.parseInt(req.getParameter("maxOfRunners"));
         int associationId = Integer.parseInt(req.getParameter("associationId"));
@@ -111,6 +112,7 @@ public class CoursesServlet extends HttpServlet {
         course.setStartpositionLongitude(startLongitude);
         course.setEndpositionLatitude(endLatitude);
         course.setEndpositionLongitude(endLongitude);
+        course.setDistance(distance);
         course.setZipCode(zipCode);
         course.setMaxOfRunners(maxOfRunners);
         course.setCurrentNumberOfRunners(0);
@@ -149,6 +151,7 @@ public class CoursesServlet extends HttpServlet {
         double startLongitude = Double.parseDouble(req.getParameter("startLongitude"));
         double endLatitude = Double.parseDouble(req.getParameter("endLatitude"));
         double endLongitude = Double.parseDouble(req.getParameter("endLongitude"));
+        double distance = Double.parseDouble(req.getParameter("distance"));
         int zipCode = Integer.parseInt(req.getParameter("zipCode"));
         int maxOfRunners = Integer.parseInt(req.getParameter("maxOfRunners"));
         int associationId = Integer.parseInt(req.getParameter("associationId"));
@@ -167,6 +170,7 @@ public class CoursesServlet extends HttpServlet {
         course.setStartpositionLongitude(startLongitude);
         course.setEndpositionLatitude(endLatitude);
         course.setEndpositionLongitude(endLongitude);
+        course.setDistance(distance);
         course.setZipCode(zipCode);
         course.setMaxOfRunners(maxOfRunners);
         course.setCurrentNumberOfRunners(0);

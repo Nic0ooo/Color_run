@@ -67,6 +67,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 "startpositionlongitude DOUBLE," +
                 "endpositionlatitude DOUBLE," +
                 "endpositionlongitude DOUBLE," +
+                "distance DOUBLE," +
                 "address VARCHAR(255)," +
                 "city VARCHAR(255)," +
                 "zipcode INT," +
@@ -163,7 +164,7 @@ public class CourseRepositoryImpl implements CourseRepository {
 
     @Override
     public Course save(Course course) {
-        String sql = "INSERT INTO PUBLIC.COURSE (name, description, associationid, membercreatorid, startdate, enddate, startpositionlatitude, startpositionlongitude, endpositionlatitude, endpositionlongitude, address, city, zipcode, maxofrunners, currentnumberofrunners, price) " +
+        String sql = "INSERT INTO PUBLIC.COURSE (name, description, associationid, membercreatorid, startdate, enddate, startpositionlatitude, startpositionlongitude, endpositionlatitude, endpositionlongitude, distance, address, city, zipcode, maxofrunners, currentnumberofrunners, price) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = getConnection();
 
@@ -181,12 +182,13 @@ public class CourseRepositoryImpl implements CourseRepository {
             stmt.setDouble(8, course.getStartpositionLongitude());
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setString(11, sanitize(course.getAddress()));
-            stmt.setString(12, sanitize(course.getCity()));
-            stmt.setInt(13, course.getZipCode());
-            stmt.setInt(14, course.getMaxOfRunners());
-            stmt.setInt(15, course.getCurrentNumberOfRunners());
-            stmt.setDouble(16, course.getPrice());
+            stmt.setDouble(11, course.getDistance());
+            stmt.setString(12, sanitize(course.getAddress()));
+            stmt.setString(13, sanitize(course.getCity()));
+            stmt.setInt(14, course.getZipCode());
+            stmt.setInt(15, course.getMaxOfRunners());
+            stmt.setInt(16, course.getCurrentNumberOfRunners());
+            stmt.setDouble(17, course.getPrice());
 
             stmt.executeUpdate();
 
@@ -213,7 +215,7 @@ public class CourseRepositoryImpl implements CourseRepository {
             System.out.println("❌ Course ID est nul, impossible de mettre à jour.");
             return null;
         }
-        String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
+        String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, distance = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, sanitize(course.getName()));
             stmt.setString(2, sanitize(course.getDescription()));
@@ -227,13 +229,14 @@ public class CourseRepositoryImpl implements CourseRepository {
             stmt.setDouble(8, course.getStartpositionLongitude());
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setString(11, sanitize(course.getAddress()));
-            stmt.setString(12, sanitize(course.getCity()));
-            stmt.setInt(13, course.getZipCode());
-            stmt.setInt(14, course.getMaxOfRunners());
-            stmt.setInt(15, course.getCurrentNumberOfRunners());
-            stmt.setDouble(16, course.getPrice());
-            stmt.setLong(17, course.getId());
+            stmt.setDouble(11, course.getDistance());
+            stmt.setString(12, sanitize(course.getAddress()));
+            stmt.setString(13, sanitize(course.getCity()));
+            stmt.setInt(14, course.getZipCode());
+            stmt.setInt(15, course.getMaxOfRunners());
+            stmt.setInt(16, course.getCurrentNumberOfRunners());
+            stmt.setDouble(17, course.getPrice());
+            stmt.setLong(18, course.getId());
 
             System.out.println("Données de mises à jour" + stmt.toString());
 
@@ -274,6 +277,7 @@ public class CourseRepositoryImpl implements CourseRepository {
         course.setStartpositionLongitude(resultSet.getDouble("startpositionlongitude"));
         course.setEndpositionLatitude(resultSet.getDouble("endpositionlatitude"));
         course.setEndpositionLongitude(resultSet.getDouble("endpositionlongitude"));
+        course.setDistance(resultSet.getDouble("distance"));
         course.setAddress(resultSet.getString("address"));
         course.setCity(resultSet.getString("city"));
         course.setZipCode(resultSet.getInt("zipcode"));

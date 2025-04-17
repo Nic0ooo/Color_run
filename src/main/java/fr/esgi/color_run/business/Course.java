@@ -23,6 +23,7 @@ public class Course {
     private double startpositionLongitude;
     private double endpositionLatitude;
     private double endpositionLongitude;
+    private Double distance;
     private String address;
     private String city;
     private Integer zipCode;
@@ -48,5 +49,25 @@ public class Course {
     public String getFormattedStartDate() {
         if (startDate == null) return "";
         return startDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"));
+    }
+
+    public String getFormattedEndDate() {
+        if (endDate == null) return "";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH'h'mm");
+        return endDate.format(formatter);
+    }
+
+    // Méthode pour afficher uniquement la date
+    public String getFormattedDate() {
+        if (startDate == null) return "";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        return startDate.format(formatter);
+    }
+
+    // Méthode pour afficher uniquement l'heure
+    public String getFormattedTime() {
+        if (startDate == null) return "";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH'h'mm");
+        return startDate.format(formatter);
     }
 }

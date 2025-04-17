@@ -35,10 +35,11 @@ CREATE TABLE Course (
                 memberCreatorId INTEGER,
                 startDate TIMESTAMP,
                 endDate TIMESTAMP,
-                startpositionLatitude DOUBLE,
-                startpositionLongitude DOUBLE,
-                endpositionLatitude DOUBLE,
-                endpositionLongitude DOUBLE,
+                startPositionLatitude DOUBLE,
+                startPositionLongitude DOUBLE,
+                endPositionLatitude DOUBLE,
+                endPositionLongitude DOUBLE,
+                distance DOUBLE,
                 address VARCHAR(255),
                 city VARCHAR(255),
                 zipCode INTEGER,
@@ -87,12 +88,13 @@ CREATE TABLE Message (
 );
 
 CREATE TABLE Paiement (
-                id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                couseMemberId INTEGER,
-                date VARCHAR(32),
-                amount DOUBLE,
-                FOREIGN KEY  (couseMemberId) REFERENCES CourseMember(id)
+                  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                  courseMemberId INTEGER,
+                  date VARCHAR(32),
+                  amount DOUBLE,
+                  FOREIGN KEY (courseMemberId) REFERENCES CourseMember(id)
 );
+
 -- Insérer des membres seulement si la table est vide
     INSERT INTO Member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
     SELECT 'Admin', 'Dupont', 'Jean', 'jean.dupont@email.com', 'password123', '0601020304', '12 rue de Paris', 'Paris', 75001, 48.8566, 2.3522
@@ -111,13 +113,12 @@ CREATE TABLE Paiement (
     SELECT 'Courir Ensemble', 'Organisation de courses caritatives', 'www.courirensemble.org', '/images/logo2.png', 'contact@courirensemble.org', '0187654321', '15 rue Lafayette', 'Marseille', 13001
     WHERE NOT EXISTS (SELECT 1 FROM Association LIMIT 2) AND EXISTS (SELECT 1 FROM Association LIMIT 1);
 
-    -- Insérer des courses seulement si la table est vide
-    INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
-    SELECT 'Marathon de Paris', 'Un marathon mythique au cœur de Paris', 1, 1, '2025-04-10', '2025-04-10', 48.8566, 2.3522, 48.8606, 2.3376, 'Champs Élysées', 'Paris', 75008, 5000, 1200, 50.0
-    WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 1);
+INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+SELECT 'Marathon de Paris', 'Un marathon mythique au cœur de Paris', 1, 1, '2025-04-10 17:00', '2025-04-10 18:00', 48.8566, 2.3522, 48.8606, 2.3376, 42.195, 'Champs Élysées', 'Paris', 75008, 5000, 1200, 50.0
+WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 1);
 
-    INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
-    SELECT 'Course des Héros', 'Course caritative pour la bonne cause', 2, 2, '2025-06-15', '2025-06-15', 45.764, 4.8357, 45.7700, 4.8300, 'Parc Blandant', 'Lyon', 69006, 3000, 800, 30.0
+    INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+    SELECT 'Course des Héros', 'Course caritative pour la bonne cause', 2, 2, '2025-06-15 13:00', '2025-06-15 15:30', 45.764, 4.8357, 45.7700, 4.8300, 5, 'Parc Blandant', 'Lyon', 69006, 3000, 800, 30.0
     WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 2) AND EXISTS (SELECT 1 FROM Course LIMIT 1);
 
     -- Insérer des membres dans les courses seulement si la table est vide
@@ -157,10 +158,10 @@ CREATE TABLE Paiement (
     WHERE NOT EXISTS (SELECT 1 FROM Message LIMIT 2) AND EXISTS (SELECT 1 FROM Message LIMIT 1);
 
     -- Insérer des paiements pour les courses seulement si la table est vide
-    INSERT INTO Paiement (couseMemberId, date, amount)
+    INSERT INTO Paiement (courseMemberId, date, amount)
     SELECT 1, '2025-03-02', 50.0
     WHERE NOT EXISTS (SELECT 1 FROM Paiement LIMIT 1);
 
-    INSERT INTO Paiement (couseMemberId, date, amount)
+    INSERT INTO Paiement (courseMemberId, date, amount)
     SELECT 2, '2025-03-06', 30.0
     WHERE NOT EXISTS (SELECT 1 FROM Paiement LIMIT 2) AND EXISTS (SELECT 1 FROM Paiement LIMIT 1);
