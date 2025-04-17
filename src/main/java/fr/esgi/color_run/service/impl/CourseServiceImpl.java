@@ -27,6 +27,28 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    public List<Course> listUpcomingCourses() {
+        List<Course> upcomingCourses = courseRepository.findUpcomingCourses();
+        if (upcomingCourses.isEmpty()) {
+            System.out.println("No upcoming courses found.");
+        } else {
+            System.out.println("Upcoming courses found: " + upcomingCourses);
+        }
+        return upcomingCourses;
+    }
+
+    @Override
+    public List<Course> listPastCourses() {
+        List<Course> pastCourses = courseRepository.findPastCourses();
+        if (pastCourses.isEmpty()) {
+            System.out.println("No past courses found.");
+        } else {
+            System.out.println("Past courses found: " + pastCourses);
+        }
+        return pastCourses;
+    }
+
+    @Override
     public Course createCourse(Course course) {
         return courseRepository.save(course);
     }

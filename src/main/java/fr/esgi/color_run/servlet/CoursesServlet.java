@@ -14,6 +14,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @WebServlet(urlPatterns = {"/courses"})
 public class CoursesServlet extends HttpServlet {
@@ -27,10 +28,20 @@ public class CoursesServlet extends HttpServlet {
         TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         WebContext context = new WebContext(ThymeleafConfiguration.getApplication().buildExchange(req, resp));
 
-        // Récupérer la liste des courses
+        // Récupérer la liste des courses passés
         var courses = courseService.listAllCourses();
         System.out.println("CoursesServlet: Nombre de courses récupérées = " + courses.size());
         context.setVariable("courses", courses);
+
+        // Récupérer la liste des courses à venir
+        var upcomingCourses = courseService.listUpcomingCourses();
+        System.out.println("CoursesServlet: Nombre de courses à venir récupérées = " + upcomingCourses.size());
+        context.setVariable("upcomingCourses", upcomingCourses);
+
+        // Récupérer la liste des courses passés
+        var pastCourses = courseService.listPastCourses();
+        System.out.println("CoursesServlet: Nombre de courses récupérées = " + pastCourses.size());
+        context.setVariable("pastCourses", pastCourses);
 
         // Configuration de la réponse
         resp.setContentType("text/html;charset=UTF-8");
@@ -63,8 +74,22 @@ public class CoursesServlet extends HttpServlet {
         String description = req.getParameter("description");
         String city = req.getParameter("city");
         String address = req.getParameter("address");
-        String startDate = req.getParameter("startDate");
-        String endDate = req.getParameter("endDate");
+
+        // Convertir les dates
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = null;
+        try {
+            if (req.getParameter("startDate") != null && !req.getParameter("startDate").isEmpty()) {
+                startDate = LocalDateTime.parse(req.getParameter("startDate").replace(" ", "T"));
+            }
+            if (req.getParameter("endDate") != null && !req.getParameter("endDate").isEmpty()) {
+                endDate = LocalDateTime.parse(req.getParameter("endDate").replace(" ", "T"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Gestion des erreurs de parsing
+        }
+
         double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
         double startLongitude = Double.parseDouble(req.getParameter("startLongitude"));
         double endLatitude = Double.parseDouble(req.getParameter("endLatitude"));
@@ -104,8 +129,22 @@ public class CoursesServlet extends HttpServlet {
         String description = req.getParameter("description");
         String city = req.getParameter("city");
         String address = req.getParameter("address");
-        String startDate = req.getParameter("startDate");
-        String endDate = req.getParameter("endDate");
+
+        // Convertir les dates
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = null;
+        try {
+            if (req.getParameter("startDate") != null && !req.getParameter("startDate").isEmpty()) {
+                startDate = LocalDateTime.parse(req.getParameter("startDate").replace(" ", "T"));
+            }
+            if (req.getParameter("endDate") != null && !req.getParameter("endDate").isEmpty()) {
+                endDate = LocalDateTime.parse(req.getParameter("endDate").replace(" ", "T"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Gestion des erreurs de parsing
+        }
+
         double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
         double startLongitude = Double.parseDouble(req.getParameter("startLongitude"));
         double endLatitude = Double.parseDouble(req.getParameter("endLatitude"));
@@ -140,3 +179,5 @@ public class CoursesServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/courses");
     }
 }
+
+

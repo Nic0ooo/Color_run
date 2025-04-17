@@ -3,6 +3,8 @@ package fr.esgi.color_run.business;
 import lombok.Data;
 
 import javax.print.attribute.DateTimeSyntax;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -15,8 +17,8 @@ public class Course {
     private String description;
     private Integer associationId;
     private Integer memberCreatorId;
-    private String startDate;
-    private String endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private double startpositionLatitude;
     private double startpositionLongitude;
     private double endpositionLatitude;
@@ -41,5 +43,10 @@ public class Course {
         this.maxOfRunners = 100;
         this.currentNumberOfRunners = 0;
         this.price = 0;
+    }
+
+    public String getFormattedStartDate() {
+        if (startDate == null) return "";
+        return startDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"));
     }
 }

@@ -13,9 +13,6 @@ import static java.sql.DriverManager.getConnection;
 
 public class CourseRepositoryImpl implements CourseRepository {
 
-/*
-    private final String jdbcUrl = "jdbc:h2:./db_file/color_run";
-*/
     private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
     private final String jdbcUser = "sa";
     private final String jdbcPassword = "";
@@ -51,6 +48,12 @@ public class CourseRepositoryImpl implements CourseRepository {
         }
     }
 
+    private String sanitize(String input) {
+        if (input == null) return null;
+        // Échapper les caractères spéciaux pour éviter les injections SQL
+        return input.replace("'", "''").replace("\\", "\\\\");
+    }
+
     private void createTableIfNotExists() {
         String sql = "CREATE TABLE IF NOT EXISTS course (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
@@ -58,8 +61,8 @@ public class CourseRepositoryImpl implements CourseRepository {
                 "description VARCHAR(255)," +
                 "associationid INT," +
                 "membercreatorid INT," +
-                "startdate VARCHAR(255)," +
-                "enddate VARCHAR(255)," +
+                "startdate TIMESTAMP," +
+                "enddate TIMESTAMP," +
                 "startpositionlatitude DOUBLE," +
                 "startpositionlongitude DOUBLE," +
                 "endpositionlatitude DOUBLE," +
@@ -115,6 +118,50 @@ public class CourseRepositoryImpl implements CourseRepository {
     }
 
     @Override
+    public List<Course> findUpcomingCourses() {
+        List<Course> upcomingCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE startdate > CURRENT_TIMESTAMP";
+        System.out.println("CourseRepositoryImpl: findUpcomingCourses() - Exécution de la requête pour récupérer les courses à venir.");
+
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
+            while (resultSet.next()) {
+                upcomingCourses.add(mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (upcomingCourses.isEmpty()) {
+            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + upcomingCourses.size() + " courses à venir trouvées dans la base de données.");
+            // System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + upcomingCourses);
+        }
+        return upcomingCourses;
+    }
+
+    @Override
+    public List<Course> findPastCourses() {
+        List<Course> pastCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE startdate < CURRENT_TIMESTAMP";
+        System.out.println("CourseRepositoryImpl: findPastCourses() - Exécution de la requête pour récupérer les courses passées.");
+
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
+            while (resultSet.next()) {
+                pastCourses.add(mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (pastCourses.isEmpty()) {
+            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + pastCourses.size() + " courses passées trouvées dans la base de données.");
+            // System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + pastCourses);
+        }
+        return pastCourses;
+    }
+
+    @Override
     public Course save(Course course) {
         String sql = "INSERT INTO PUBLIC.COURSE (name, description, associationid, membercreatorid, startdate, enddate, startpositionlatitude, startpositionlongitude, endpositionlatitude, endpositionlongitude, address, city, zipcode, maxofrunners, currentnumberofrunners, price) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -122,18 +169,20 @@ public class CourseRepositoryImpl implements CourseRepository {
 
              PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, course.getName());
-            stmt.setString(2, course.getDescription());
+            stmt.setString(1, sanitize(course.getName()));
+            stmt.setString(2, sanitize(course.getDescription()));
             stmt.setInt(3, course.getAssociationId());
             stmt.setInt(4, course.getMemberCreatorId());
-            stmt.setString(5, course.getStartDate());
-            stmt.setString(6, course.getEndDate());
+            stmt.setTimestamp(5, course.getStartDate() != null ?
+                    Timestamp.valueOf(course.getStartDate()) : null);
+            stmt.setTimestamp(6, course.getEndDate() != null ?
+                    Timestamp.valueOf(course.getEndDate()) : null);
             stmt.setDouble(7, course.getStartpositionLatitude());
             stmt.setDouble(8, course.getStartpositionLongitude());
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setString(11, course.getAddress());
-            stmt.setString(12, course.getCity());
+            stmt.setString(11, sanitize(course.getAddress()));
+            stmt.setString(12, sanitize(course.getCity()));
             stmt.setInt(13, course.getZipCode());
             stmt.setInt(14, course.getMaxOfRunners());
             stmt.setInt(15, course.getCurrentNumberOfRunners());
@@ -166,18 +215,20 @@ public class CourseRepositoryImpl implements CourseRepository {
         }
         String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, course.getName());
-            stmt.setString(2, course.getDescription());
+            stmt.setString(1, sanitize(course.getName()));
+            stmt.setString(2, sanitize(course.getDescription()));
             stmt.setInt(3, course.getAssociationId());
             stmt.setInt(4, course.getMemberCreatorId());
-            stmt.setString(5, course.getStartDate());
-            stmt.setString(6, course.getEndDate());
+            stmt.setTimestamp(5, course.getStartDate()!= null ?
+                    Timestamp.valueOf(course.getStartDate()) : null);
+            stmt.setTimestamp(6, course.getEndDate() != null ?
+                    Timestamp.valueOf(course.getEndDate()) : null);
             stmt.setDouble(7, course.getStartpositionLatitude());
             stmt.setDouble(8, course.getStartpositionLongitude());
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setString(11, course.getAddress());
-            stmt.setString(12, course.getCity());
+            stmt.setString(11, sanitize(course.getAddress()));
+            stmt.setString(12, sanitize(course.getCity()));
             stmt.setInt(13, course.getZipCode());
             stmt.setInt(14, course.getMaxOfRunners());
             stmt.setInt(15, course.getCurrentNumberOfRunners());
@@ -207,8 +258,18 @@ public class CourseRepositoryImpl implements CourseRepository {
         course.setDescription(resultSet.getString("description"));
         course.setAssociationId(resultSet.getInt("associationid"));
         course.setMemberCreatorId(resultSet.getInt("membercreatorid"));
-        course.setStartDate(resultSet.getString("startdate"));
-        course.setEndDate(resultSet.getString("enddate"));
+
+        // Conversion des Timestamp en LocalDateTime
+        Timestamp startTs = resultSet.getTimestamp("startdate");
+        if (startTs != null) {
+            course.setStartDate(startTs.toLocalDateTime());
+        }
+
+        Timestamp endTs = resultSet.getTimestamp("enddate");
+        if (endTs != null) {
+            course.setEndDate(endTs.toLocalDateTime());
+        }
+
         course.setStartpositionLatitude(resultSet.getDouble("startpositionlatitude"));
         course.setStartpositionLongitude(resultSet.getDouble("startpositionlongitude"));
         course.setEndpositionLatitude(resultSet.getDouble("endpositionlatitude"));

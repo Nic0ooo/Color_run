@@ -6,9 +6,11 @@ import java.util.List;
 
 public interface CourseRepository {
     List<Course> findAll();
-/*
-    List<Course> getAllCourses();
-*/
+
+     List<Course> findUpcomingCourses();
+
+     List <Course> findPastCourses();
+
     Course save(Course course);
 
     Course updateCourse(Course course);
