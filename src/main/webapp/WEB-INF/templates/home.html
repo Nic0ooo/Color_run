@@ -3,27 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <title th:text="${pageTitle}">Color Run | Accueil</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'pink': '#F9457A',
-            'teal': '#1EBEB0',
-            'yellow': '#FFCC00'
-          }
-        }
-      }
-    }
-  </script>
-</head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
-<div th:replace="fragments/header :: headerFragment('login', ${member})"></div>
+  <!-- Police Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CSS Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- JS Leaflet -->
+
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
+
+<div th:replace="fragments/header :: headerFragment(page='home', member=${member})"></div>
 
 <!-- Hero Section -->
-<section class="bg-pink text-white text-center py-8">
+<section class="bg-pink-500 text-white text-center py-8">
   <div class="container mx-auto px-4">
     <p class="mb-2">Venez vivre l'expérience unique de la Color run dans votre ville</p>
     <h1 class="text-3xl font-bold mb-4">Rejoignez un explosion de couleurs, de fun et d'énergie</h1>
@@ -34,41 +32,42 @@
 <!-- Search Courses Section -->
 <section class="py-8 text-center">
   <div class="container mx-auto px-4">
-    <h2 class="text-2xl font-bold text-teal mb-6">Découvrez les courses près de chez vous !</h2>
+    <h2 class="text-2xl font-bold text-teal-500 mb-6">Découvrez les courses près de chez vous !</h2>
 
     <div class="flex justify-center gap-2 mb-8">
-      <input type="text" placeholder="Date" class="border border-teal p-2 w-40">
-      <input type="text" placeholder="Code postal" class="border border-teal p-2 w-40">
-      <button class="bg-teal text-white px-4 py-2">Rayon de recherche</button>
+      <input type="text" id="postal-code" placeholder="Code postal" class="border border-teal p-2 w-40">
+      <select id="date-filter" class="border border-teal p-2 w-40">
+        <option value="all">Toutes les dates</option>
+        <option value="juin">Juin 2025</option>
+        <option value="juillet">Juillet 2025</option>
+      </select>
+      <button id="search-button" class="bg-teal text-white px-4 py-2 rounded">Rechercher</button>
     </div>
 
-    <!-- Map Section -->
-    <div class="relative h-96 w-full bg-gray-200 border rounded mb-8">
-      <!-- This would be replaced with your actual map implementation -->
-      <div class="absolute inset-0 bg-green-100 opacity-50"></div>
-      <img src="/assets/map-france.jpg" alt="Carte de France" class="w-full h-full object-cover">
+    <!-- Google Maps -->
+    <div id="map" class="h-96 w-full border rounded mb-8 relative shadow-md">
+      <!-- La carte Google Maps sera chargée ici -->
+      <div class="absolute inset-0 bg-gray-100 flex items-center justify-center z-0">
+        <p class="text-gray-500">Chargement de la carte...</p>
+      </div>
 
-      <!-- Event popup on map -->
-      <div class="absolute right-24 top-1/3 bg-white shadow-lg rounded-md w-64 p-3">
-        <h3 class="text-lg font-bold mb-2">The color Run Paris</h3>
-        <p class="text-sm mb-2">Plus d'informations:</p>
-        <p class="text-xs mb-1">Une super journée très colorée en perspective! La color run passera par divers endroits emblématiques avant de finir dans une explosion de couleurs!</p>
-        <button class="bg-yellow text-black px-2 py-1 rounded text-xs w-full mt-2">VOIR PLUS</button>
-
-        <div class="bg-indigo-100 mt-2 p-2 rounded">
-          <p class="text-sm font-medium">The Color Run Paris</p>
+      <!-- Légende de la carte -->
+      <div class="absolute bottom-4 left-4 bg-white p-3 rounded-md shadow-md z-10">
+        <h4 class="font-bold text-sm mb-2">Légende</h4>
+        <div class="flex items-center mb-1">
+          <div class="w-4 h-4 rounded-full bg-pink-500 mr-2"></div>
+          <p class="text-xs">Courses à venir</p>
         </div>
-        <div class="bg-indigo-100 mt-2 p-2 rounded">
-          <p class="text-sm font-medium">The color Run Paris</p>
-        </div>
-        <button class="bg-indigo-600 text-white px-2 py-1 rounded text-xs w-full mt-2">Fermer</button>
       </div>
     </div>
   </div>
 </section>
 
+<!-- Si vous voulez utiliser le fragment de carte à la place, décommentez cette ligne et commentez la section précédente -->
+<!-- <div th:replace="fragments/map-standalone :: mapFragmentStandalone('100%', '500px', 6, true, true, 'mb-8')"></div> -->
+
 <!-- Concept Section -->
-<section class="bg-yellow py-8">
+<section class="bg-yellow-500 py-8">
   <div class="container mx-auto px-4">
     <h2 class="text-2xl font-bold mb-6 text-center">Découvrez le concept de la Color Run</h2>
 
@@ -109,7 +108,7 @@
 </section>
 
 <!-- Join Adventure Section -->
-<section class="bg-pink text-white py-8">
+<section class="bg-pink-500 text-white py-8">
   <div class="container mx-auto px-4 flex flex-wrap items-center">
     <div class="w-full md:w-2/3">
       <h2 class="text-2xl font-bold mb-4">Rejoignez l'aventure !</h2>
@@ -122,7 +121,7 @@
       <p>Alors qu'attendez-vous ? Faites partie des milliers de coureurs qui partagent cette aventure incroyable.</p>
 
       <div class="flex gap-4 mt-6">
-        <a href="#" class="bg-white text-pink px-4 py-2 rounded font-medium">S'inscrire maintenant</a>
+        <a href="/color_run_war/register" class="bg-white text-pink-500 px-4 py-2 rounded font-medium">S'inscrire maintenant</a>
         <a href="#" class="bg-transparent border border-white text-white px-4 py-2 rounded font-medium">En savoir plus sur l'inscription</a>
       </div>
     </div>
@@ -134,64 +133,130 @@
   </div>
 </section>
 
-<!-- Volunteer Section -->
-<section class="bg-teal text-white py-8">
-  <div class="container mx-auto px-4 flex flex-wrap items-center">
-    <div class="w-full md:w-1/3 p-4">
-      <!-- Placeholder for image -->
-      <div class="bg-gray-200 h-48 w-full"></div>
-    </div>
-
-    <div class="w-full md:w-2/3">
-      <h2 class="text-2xl font-bold mb-4">Devenez un héros de la Color Run</h2>
-      <p class="mb-4">Envie de faire partie de l'envers du décor ? Rejoignez notre équipe de bénévoles et participez à l'organisation d'un événement inoubliable ! En tant de bénévole, vous pourrez :</p>
-      <ul class="mb-4">
-        <li>- Animer les zones de couleurs et créer une ambiance de folie</li>
-        <li>- Distribuer des kits ou des rafraîchissements</li>
-        <li>- Partager des moments uniques avec l'équipe et les coureurs</li>
-      </ul>
-      <p>En échange, vous vivrez une expérience enrichissante et recevrez un kit souvenir pour votre engagement. Merci de votre aide précieuse !</p>
-
-      <div class="flex gap-4 mt-6">
-        <a href="#" class="bg-white text-teal px-4 py-2 rounded font-medium">Rejoignez l'équipe bénévole</a>
-        <a href="#" class="bg-transparent border border-white text-white px-4 py-2 rounded font-medium">En savoir plus sur le bénévolat</a>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- Footer -->
-<footer class="bg-white border-t p-4">
-  <div class="container mx-auto px-4">
-    <div class="flex flex-wrap justify-between items-center">
-      <div class="mb-4 md:mb-0">
-        <div class="flex items-center gap-2">
-          <div class="relative h-8 w-8">
-            <div class="absolute top-0.5 left-0.5 h-6 w-6 bg-yellow rounded-full"></div>
-            <div class="absolute bottom-0.5 right-0.5 h-6 w-6 bg-pink rounded-full"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap gap-6 text-sm">
-        <a href="#" class="text-gray-600">FAQ</a>
-        <a href="#" class="text-gray-600">Contact</a>
-        <a href="#" class="text-gray-600">Mentions légales</a>
-        <a href="#" class="text-gray-600">À propos</a>
-      </div>
-
-      <div class="mt-4 md:mt-0 flex items-center gap-2">
-        <span class="text-sm">Inscrivez vous à notre newsletter pour recevoir les dernières actualités et offres exclusives</span>
-        <input type="email" placeholder="test@example.com" class="border border-gray-300 rounded px-2 py-1 w-48">
-        <button class="border border-gray-300 rounded px-2 py-1 text-sm">S'inscrire à la newsletter</button>
-      </div>
-    </div>
-
-    <div class="text-center text-sm text-gray-500 mt-6">
-      &copy; 2025 Color Run by CRN. Tous droits réservés.
-    </div>
+<footer class="bg-white border-t p-4 mt-auto">
+  <div class="container mx-auto px-4 text-center">
+    <p class="text-sm text-gray-500">&copy; 2025 Color Run. Tous droits réservés.</p>
   </div>
 </footer>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<script>
+  // Données des événements (normalement récupérées depuis un servlet)
+  const colorRunEvents = [
+    { id: 1, title: "The Color Run Paris", lat: 48.856614, lng: 2.352222, date: "6 juin 2025",
+      description: "Une super journée très colorée en perspective! La color run passera par divers endroits emblématiques avant de finir dans une explosion de couleurs!" },
+    { id: 2, title: "The Color Run Lyon", lat: 45.764043, lng: 4.835659, date: "20 juin 2025",
+      description: "Venez courir dans les rues de Lyon et profiter d'une ambiance festive et colorée!" },
+    { id: 3, title: "The Color Run Marseille", lat: 43.296482, lng: 5.369780, date: "4 juillet 2025",
+      description: "Course en bord de mer avec une vue imprenable sur le Vieux Port. Préparez-vous pour une explosion de couleurs!" },
+    { id: 4, title: "The Color Run Bordeaux", lat: 44.837789, lng: -0.579180, date: "18 juillet 2025",
+      description: "Parcours au cœur du centre historique bordelais, avec un final géant sur les quais de la Garonne!" }
+  ];
+
+  let map;
+
+  // Initialisation de la carte
+  function initMap() {
+    // Centrer sur la France
+    map = L.map('map').setView([46.603354, 1.888334], 6); // Coordonnées de la France avec zoom
+
+    // Ajouter le fond de carte
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Ajouter des marqueurs pour chaque course
+    colorRunEvents.forEach(event => {
+      addMarker(event);
+    });
+
+    // Initialiser le filtre de date
+    if (document.getElementById('date-filter')) {
+      document.getElementById('date-filter').addEventListener('change', function() {
+        filterEvents(this.value);
+      });
+    }
+
+    // Initialiser la recherche par code postal
+    if (document.getElementById('search-button')) {
+      document.getElementById('search-button').addEventListener('click', function() {
+        const postalCode = document.getElementById('postal-code').value;
+        searchByPostalCode(postalCode);
+      });
+    }
+  }
+
+  // Ajouter un marqueur pour un événement
+  function addMarker(event) {
+    const marker = L.marker([event.lat, event.lng]).addTo(map);
+
+    marker.bindPopup(`
+        <div style="font-family: 'Poppins', sans-serif; padding: 10px; max-width: 250px;">
+          <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${event.title}</h3>
+          <p style="font-size: 14px; margin-bottom: 5px;"><strong>Date:</strong> ${event.date}</p>
+          <p style="font-size: 12px; margin-bottom: 10px;">${event.description}</p>
+          <a href="/color_run_war/event?id=${event.id}"
+             style="background-color: #FFCC00; color: black; padding: 6px 12px;
+                    border-radius: 4px; text-decoration: none; display: inline-block;
+                    font-size: 12px; text-align: center; font-weight: 500;">
+            VOIR PLUS
+          </a>
+        </div>
+      `);
+  }
+
+  // Filtrer les événements par date
+  function filterEvents(month) {
+    // Afficher tous les événements
+    if (!month || month === 'all') {
+      colorRunEvents.forEach((event, index) => {
+        markers[index].setVisible(true);
+      });
+      return;
+    }
+
+    // Filtrer les événements selon la date
+    colorRunEvents.forEach((event, index) => {
+      const visible = event.date.includes(month);
+      markers[index].setVisible(visible);
+    });
+  }
+
+  // Rechercher par code postal
+  function searchByPostalCode(postalCode) {
+    if (!postalCode) {
+      alert('Veuillez entrer un code postal');
+      return;
+    }
+
+    // Simulation de la recherche
+    alert('Recherche pour le code postal: ' + postalCode);
+
+    // Centrer sur Paris pour l'exemple
+    map.setView([48.856614, 2.352222], 10);
+  }
+</script>
+<script type="module">
+
+  var map = L.map('map').setView([46.603354, 1.888334], 6);  // Centrer la carte sur la France avec un zoom de 6
+
+  // Ajouter le fond de carte
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  const colorRunEvents = [
+    { title: "The Color Run Paris", lat: 48.856614, lng: 2.352222, date: "6 juin 2025", description: "Une super journée..." },
+    // Ajouter d'autres événements ici
+  ];
+
+  colorRunEvents.forEach(event => {
+    L.marker([event.lat, event.lng]).addTo(map)
+            .bindPopup(`<b>${event.title}</b><br>${event.date}<br>${event.description}`)
+            .openPopup();
+  });
+
+</script>
 </body>
 </html>

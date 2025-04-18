@@ -11,20 +11,54 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
-
+//
+//@WebServlet("/")
+//public class HomeServlet extends HttpServlet {
+//    @Override
+//    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+//            throws ServletException, IOException {
+//
+//        TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
+//        WebContext context = new WebContext(
+//                ThymeleafConfiguration.getApplication().buildExchange(req, resp)
+//        );
+//
+//        // Récupérer le membre de la session
+//        Member member = (Member) req.getSession().getAttribute("member");
+//        context.setVariable("member", member);
+//
+//        context.setVariable("pageTitle", "Accueil");
+//
+//        engine.process("home", context, resp.getWriter());
+//    }
+//
+//
+//}
 @WebServlet("/")
 public class HomeServlet extends HttpServlet {
+
+    private TemplateEngine engine;
+
+    @Override
+    public void init() throws ServletException {
+        engine = ThymeleafConfiguration.getTemplateEngine();
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         WebContext context = new WebContext(
                 ThymeleafConfiguration.getApplication().buildExchange(req, resp)
         );
 
         // Récupérer le membre de la session
         Member member = (Member) req.getSession().getAttribute("member");
+//        if (member == null) {
+//            member = new Member(); // Valeur par défaut si pas connecté
+//            resp.sendRedirect("login");  // Redirection si membre non connecté
+//            return;
+//        }
         context.setVariable("member", member);
 
         context.setVariable("pageTitle", "Accueil");

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- CSS Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- JS Leaflet -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+<div th:fragment="mapFragment(width, height, zoom, showFilters, showLegend, className)">
+    <!-- Filtres -->
+    <div th:if="${showFilters}" class="flex justify-center gap-2 mb-4">
+        <input type="text" id="postal-code" placeholder

@@ -20,6 +20,12 @@
             <a th:if="${page} == 'login'" href="/color_run_war/register"
                class="px-4 py-2 border rounded hover:bg-gray-100">S'inscrire</a>
         </div>
+        <div th:if="${member == null and page == 'home'}">
+            <a href="/color_run_war/login"
+               class="px-4 py-2 border rounded hover:bg-gray-100">Connexion</a>
+            <a href="/color_run_war/register"
+               class="px-4 py-2 border rounded hover:bg-gray-100">S'inscrire</a>
+        </div>
     </div>
 </header>
 </html>
