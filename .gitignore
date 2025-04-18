@@ -42,3 +42,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Pour la variable d'environnement:
+src/main/resources/config.properties
