@@ -42,4 +42,27 @@ public class Course {
         this.currentNumberOfRunners = 0;
         this.price = 0;
     }
+
+    public String getMonthName() {
+        // Si startDate est au format "yyyy-MM-dd" ou similaire
+        if (startDate != null && startDate.length() >= 7) {
+            String monthNumber = startDate.substring(5, 7); // Extrait "MM" de "yyyy-MM-dd"
+            switch (monthNumber) {
+                case "01": return "january";
+                case "02": return "february";
+                case "03": return "march";
+                case "04": return "april";
+                case "05": return "may";
+                case "06": return "june";
+                case "07": return "july";
+                case "08": return "august";
+                case "09": return "september";
+                case "10": return "october";
+                case "11": return "november";
+                case "12": return "december";
+                default: return "";
+            }
+        }
+        return "";
+    }
 }
