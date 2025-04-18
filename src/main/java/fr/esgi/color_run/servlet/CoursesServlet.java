@@ -1,6 +1,7 @@
 package fr.esgi.color_run.servlet;
 
 import fr.esgi.color_run.business.Course;
+import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.service.CourseService;
 import fr.esgi.color_run.service.impl.CourseServiceImpl;
@@ -10,7 +11,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
@@ -42,6 +42,11 @@ public class CoursesServlet extends HttpServlet {
         var pastCourses = courseService.listPastCourses();
         System.out.println("CoursesServlet: Nombre de courses récupérées = " + pastCourses.size());
         context.setVariable("pastCourses", pastCourses);
+
+        // Récupérer le membre de la session
+        Member member = (Member) req.getSession().getAttribute("member");
+        context.setVariable("member", member);
+        System.out.println("Connécté en tant que :" + member);
 
         // Configuration de la réponse
         resp.setContentType("text/html;charset=UTF-8");
