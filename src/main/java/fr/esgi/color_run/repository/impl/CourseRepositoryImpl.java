@@ -48,12 +48,6 @@ public class CourseRepositoryImpl implements CourseRepository {
         }
     }
 
-    private String sanitize(String input) {
-        if (input == null) return null;
-        // Échapper les caractères spéciaux pour éviter les injections SQL
-        return input.replace("'", "''").replace("\\", "\\\\");
-    }
-
     private void createTableIfNotExists() {
         String sql = "CREATE TABLE IF NOT EXISTS course (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
@@ -165,13 +159,13 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public Course save(Course course) {
         String sql = "INSERT INTO PUBLIC.COURSE (name, description, associationid, membercreatorid, startdate, enddate, startpositionlatitude, startpositionlongitude, endpositionlatitude, endpositionlongitude, distance, address, city, zipcode, maxofrunners, currentnumberofrunners, price) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = getConnection();
 
              PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, sanitize(course.getName()));
-            stmt.setString(2, sanitize(course.getDescription()));
+            stmt.setString(1, course.getName());
+            stmt.setString(2, course.getDescription());
             stmt.setInt(3, course.getAssociationId());
             stmt.setInt(4, course.getMemberCreatorId());
             stmt.setTimestamp(5, course.getStartDate() != null ?
@@ -183,8 +177,8 @@ public class CourseRepositoryImpl implements CourseRepository {
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
             stmt.setDouble(11, course.getDistance());
-            stmt.setString(12, sanitize(course.getAddress()));
-            stmt.setString(13, sanitize(course.getCity()));
+            stmt.setString(12, course.getAddress());
+            stmt.setString(13, course.getCity());
             stmt.setInt(14, course.getZipCode());
             stmt.setInt(15, course.getMaxOfRunners());
             stmt.setInt(16, course.getCurrentNumberOfRunners());
@@ -217,8 +211,8 @@ public class CourseRepositoryImpl implements CourseRepository {
         }
         String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, distance = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, sanitize(course.getName()));
-            stmt.setString(2, sanitize(course.getDescription()));
+            stmt.setString(1, course.getName());
+            stmt.setString(2, course.getDescription());
             stmt.setInt(3, course.getAssociationId());
             stmt.setInt(4, course.getMemberCreatorId());
             stmt.setTimestamp(5, course.getStartDate()!= null ?
@@ -230,8 +224,8 @@ public class CourseRepositoryImpl implements CourseRepository {
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
             stmt.setDouble(11, course.getDistance());
-            stmt.setString(12, sanitize(course.getAddress()));
-            stmt.setString(13, sanitize(course.getCity()));
+            stmt.setString(12, course.getAddress());
+            stmt.setString(13, course.getCity());
             stmt.setInt(14, course.getZipCode());
             stmt.setInt(15, course.getMaxOfRunners());
             stmt.setInt(16, course.getCurrentNumberOfRunners());

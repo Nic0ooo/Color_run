@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <title>Liste des Courses</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Ajout des fichiers Leaflet sans les attributs integrity qui causent des erreurs -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
@@ -49,7 +52,25 @@
               <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
             </td>
             <td class="px-6 py-4 flex gap-2">
-              <button th:attr="onclick=|editCourse(${course.id}, '${course.name}', '${course.description}', '${course.city}', ${course.zipCode}, ${course.price}, '${course.startDate}', '${course.endDate}', '${course.address}', ${course.startpositionLatitude}, ${course.startpositionLongitude}, ${course.endpositionLatitude}, ${course.endpositionLongitude}, ${course.distance}, ${course.maxOfRunners}, ${course.associationId}, ${course.memberCreatorId})|"
+              <!-- <button th:attr="onclick=|editCourse(${course.id}, '${course.name}', '${course.description}', '${course.city}', ${course.zipCode}, '${course.address}', ${course.distance}, ${course.price}, '${course.startDate}', '${course.endDate}', ${course.startpositionLatitude}, ${course.startpositionLongitude}, ${course.endpositionLatitude}, ${course.endpositionLongitude}, ${course.maxOfRunners}, ${course.associationId}, ${course.memberCreatorId})|" -->
+              <button th:data-id="${course.id}"
+                      th:data-name="${course.name}"
+                      th:data-description="${course.description}"
+                      th:data-city="${course.city}"
+                      th:data-zip-code="${course.zipCode}"
+                      th:data-address="${course.address}"
+                      th:data-distance="${course.distance}"
+                      th:data-price="${course.price}"
+                      th:data-start-date="${course.startDate}"
+                      th:data-end-date="${course.endDate}"
+                      th:data-start-lat="${course.startpositionLatitude}"
+                      th:data-start-long="${course.startpositionLongitude}"
+                      th:data-end-lat="${course.endpositionLatitude}"
+                      th:data-end-long="${course.endpositionLongitude}"
+                      th:data-max-runners="${course.maxOfRunners}"
+                      th:data-association-id="${course.associationId}"
+                      th:data-member-id="${course.memberCreatorId}"
+                      onclick="editCourseFromData(this)"
                       class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition">
                 Modifier
               </button>
@@ -135,22 +156,43 @@
         <input type="number" step="0.01" name="price" placeholder="Prix (€)" required class="input-style">
         <input type="datetime-local" name="startDate" placeholder="Date et heure de début" required class="input-style">
         <input type="datetime-local" name="endDate" placeholder="Date et heure de fin" required class="input-style">
-        <input type="number" step="0.000001" name="startLatitude" placeholder="Latitude départ" required class="input-style">
-        <input type="number" step="0.000001" name="startLongitude" placeholder="Longitude départ" required class="input-style">
-        <input type="number" step="0.000001" name="endLatitude" placeholder="Latitude arrivée" required class="input-style">
-        <input type="number" step="0.000001" name="endLongitude" placeholder="Longitude arrivée" required class="input-style">
+
+        <!-- Coordonnées via carte Leaflet -->
+        <input type="hidden" id="startLatitude" name="startLatitude" />
+        <input type="hidden" id="startLongitude" name="startLongitude" />
+        <input type="hidden" id="endLatitude" name="endLatitude" />
+        <input type="hidden" id="endLongitude" name="endLongitude" />
+        <div class="md:col-span-2 flex space-x-4 items-center">
+          <button type="button" onclick="openMap()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+            Définir les points sur la carte
+          </button>
+          <span id="coordsPreview" class="text-sm text-gray-600"></span>
+        </div>
+
         <input type="number" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
         <input type="number" name="associationId" placeholder="ID Association" required class="input-style">
         <input type="number" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
-        <!--
-        <input type="number" name="distance" placeholder="Distance (km)" required class="input-style">
-  -->
         <div class="md:col-span-2">
           <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
             Enregistrer
           </button>
         </div>
       </form>
+    </div>
+
+    <!-- Modal Carte Leaflet -->
+    <div id="mapModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 hidden items-center justify-center">
+      <div class="bg-white p-4 rounded-lg shadow-lg w-3/4 h-3/4 flex flex-col">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-lg font-semibold">Sélectionner les points de départ et d'arrivée</h3>
+          <button onclick="closeMap()" class="text-gray-600 hover:text-gray-900">×</button>
+        </div>
+        <div id="map" class="flex-grow w-full h-full"></div>
+        <div class="mt-2 text-sm text-gray-700">Cliquez pour définir le départ, puis l'arrivée.<br>Sélectionnez ensuite "Valider".</div>
+        <button type="button" onclick="closeMap()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+          Valider
+        </button>
+      </div>
     </div>
 
     <!-- Formulaire de modification masqué par défaut -->
@@ -172,14 +214,11 @@
           <input type="number" step="0.01" id="edit-price" name="price" placeholder="Prix (€)" required class="input-style">
           <input type="datetime-local" id="edit-startDate" name="startDate" placeholder="Date et heure de début" required class="input-style">
           <input type="datetime-local" id="edit-endDate" name="endDate" placeholder="Date et heure de fin" required class="input-style">
-          <input type="number" step="0.000001" id="edit-startLatitude" name="startLatitude" placeholder="Latitude départ" required class="input-style">
-          <input type="number" step="0.000001" id="edit-startLongitude" name="startLongitude" placeholder="Longitude départ" required class="input-style">
-          <input type="number" step="0.000001" id="edit-endLatitude" name="endLatitude" placeholder="Latitude arrivée" required class="input-style">
-          <input type="number" step="0.000001" id="edit-endLongitude" name="endLongitude" placeholder="Longitude arrivée" required class="input-style">
+          <input type="number" step="0.0000000000000001" id="edit-startLatitude" name="startLatitude" placeholder="Latitude départ" required class="input-style">
+          <input type="number" step="0.0000000000000001" id="edit-startLongitude" name="startLongitude" placeholder="Longitude départ" required class="input-style">
+          <input type="number" step="0.0000000000000001" id="edit-endLatitude" name="endLatitude" placeholder="Latitude arrivée" required class="input-style">
+          <input type="number" step="0.0000000000000001" id="edit-endLongitude" name="endLongitude" placeholder="Longitude arrivée" required class="input-style">
           <input type="number" id="edit-maxOfRunners" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
-  <!--
-          <input type="number" id="edit-distance" name="distance" placeholder="Distance (km)" required class="input-style">
-  -->
           <input type="number" id="edit-associationId" name="associationId" placeholder="ID Association" required class="input-style">
           <input type="number" id="edit-memberCreatorId" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
 
@@ -239,7 +278,7 @@
     showFormButton.classList.toggle('hidden');
   }
 
-  function editCourse(id, name, description, city, zipCode, price, address, distance, startDate, endDate, startLat, startLong, endLat, endLong, maxRunners, associationId, memberCreatorId) {
+  function editCourse(id, name, description, city, zipCode, address, distance, price, startDate, endDate, startLat, startLong, endLat, endLong, maxRunners, associationId, memberCreatorId) {
     // Remplir le formulaire avec les données existantes
     document.getElementById("edit-id").value = id;
     document.getElementById("edit-name").value = name;
@@ -264,6 +303,30 @@
     editForm.classList.remove("hidden");
   }
 
+  function editCourseFromData(button) {
+    const dataset = button.dataset;
+
+    editCourse(
+            parseInt(dataset.id),
+            dataset.name,
+            dataset.description,
+            dataset.city,
+            parseInt(dataset.zipCode),
+            dataset.address,
+            parseFloat(dataset.distance),
+            parseFloat(dataset.price),
+            dataset.startDate,
+            dataset.endDate,
+            parseFloat(dataset.startLat),
+            parseFloat(dataset.startLong),
+            parseFloat(dataset.endLat),
+            parseFloat(dataset.endLong),
+            parseInt(dataset.maxRunners),
+            parseInt(dataset.associationId),
+            parseInt(dataset.memberId)
+    );
+  }
+
   function closeEditForm() {
     document.getElementById("editCourseForm").classList.add("hidden");
   }
@@ -278,11 +341,93 @@
       });
     }
   });
+
+  // Leaflet map pour définir les points
+  let map, startMarker, endMarker, clickCount = 0;
+  
+  function openMap() {
+    document.getElementById('mapModal').classList.remove('hidden');
+    document.getElementById('mapModal').classList.add('flex');
+    
+    const city = document.querySelector('input[name="city"]').value || '';
+    const address = document.querySelector('input[name="address"]').value || '';
+    const zip = document.querySelector('input[name="zipCode"]').value || '';
+    const query = `${address}, ${zip} ${city}, France`;
+    
+    // Initialiser la carte si elle n'existe pas déjà
+    setTimeout(() => {
+      if (!map) {
+        map = L.map('map').setView([46.2276, 2.2137], 6); // Centre de la France par défaut
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        map.on('click', function(e) {
+          clickCount++;
+          if (clickCount === 1) {
+            if (startMarker) map.removeLayer(startMarker);
+            startMarker = L.marker(e.latlng).addTo(map).bindPopup('Départ').openPopup();
+            document.getElementById('startLatitude').value = e.latlng.lat;
+            document.getElementById('startLongitude').value = e.latlng.lng;
+          } else if (clickCount === 2) {
+            if (endMarker) map.removeLayer(endMarker);
+            endMarker = L.marker(e.latlng).addTo(map).bindPopup('Arrivée').openPopup();
+            document.getElementById('endLatitude').value = e.latlng.lat;
+            document.getElementById('endLongitude').value = e.latlng.lng;
+            
+            // Mettre à jour l'aperçu des coordonnées
+            updateCoordsPreview();
+          }
+        });
+      }
+      
+      // Forcer un rafraîchissement de la carte
+      map.invalidateSize();
+      
+      // Rechercher les coordonnées de l'adresse si elle est spécifiée
+      if (city || address) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              map.setView([data[0].lat, data[0].lon], 13);
+            }
+          })
+          .catch(err => console.error("Erreur lors de la recherche d'adresse:", err));
+      }
+    }, 100); // Petit délai pour s'assurer que le modal est affiché
+  }
+  
+  function closeMap() {
+    document.getElementById('mapModal').classList.add('hidden');
+    document.getElementById('mapModal').classList.remove('flex');
+    updateCoordsPreview();
+  }
+  
+  function updateCoordsPreview() {
+    const startLat = document.getElementById('startLatitude').value;
+    const startLng = document.getElementById('startLongitude').value;
+    const endLat = document.getElementById('endLatitude').value;
+    const endLng = document.getElementById('endLongitude').value;
+
+    console.log(`Départ: [${startLat}, ${startLng}], Arrivée: [${endLat}, ${endLng}]`);
+    
+    if (startLat && startLng && endLat && endLng) {
+      document.getElementById('coordsPreview').textContent = 
+        `Départ: [${startLat.substring(0, 6)}, ${startLng.substring(0, 6)}], Arrivée: [${endLat.substring(0, 6)}, ${endLng.substring(0, 6)}]`;
+    }
+  }
 </script>
 
 <style>
   .input-style {
     @apply border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+
+  /* S'assurer que la carte prend toute la hauteur disponible */
+  #map {
+    height: 100%;
+    min-height: 400px;
   }
 </style>
 </body>
