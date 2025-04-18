@@ -14,4 +14,8 @@ public interface CourseService {
     Course createCourse(Course course);
 
     Course updateCourse(Course course);
+
+    List<Course> searchCourseByName(String name);
+
+    Course getCourseById(Integer id);
 }

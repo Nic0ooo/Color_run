@@ -11,6 +11,10 @@ public interface CourseRepository {
 
      List <Course> findPastCourses();
 
+    List <Course> searchCourseByName(String name);
+
+    Course findById(Integer id);
+
     Course save(Course course);
 
     Course updateCourse(Course course);

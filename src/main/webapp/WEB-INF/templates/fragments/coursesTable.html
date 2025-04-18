@@ -26,6 +26,57 @@
       </div>
     </div>
 
+    <!-- Formulaire de recherche -->
+    <form th:action="@{/courses}" id="searchParamForm" method="get" class="hidden mb-8 p-4 bg-white rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="flex flex-col">
+        <label class="mb-1 text-sm font-medium text-gray-700">Nom</label>
+        <input type="text" name="name" th:value="${param.name}" placeholder="Nom de la course" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex flex-col">
+        <label class="mb-1 text-sm font-medium text-gray-700">Date début</label>
+        <input type="date" name="fromDate" th:value="${param.fromDate}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex flex-col">
+        <label class="mb-1 text-sm font-medium text-gray-700">Date fin</label>
+        <input type="date" name="toDate" th:value="${param.toDate}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex flex-col">
+        <label class="mb-1 text-sm font-medium text-gray-700">Ville</label>
+        <input type="text" name="city" th:value="${param.city}" placeholder="Ville" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex flex-col">
+        <label class="mb-1 text-sm font-medium text-gray-700">Code Postal</label>
+        <input type="text" name="zipCode" th:value="${param.zipCode}" placeholder="CP" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex flex-col">
+        <label class="mb-1 text-sm font-medium text-gray-700">Trier par</label>
+        <select name="sortBy" th:value="${param.sortBy}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">— Sans tri —</option>
+          <option value="name">Nom</option>
+          <option value="date">Date</option>
+          <option value="city">Ville</option>
+        </select>
+      </div>
+      <div class="flex items-center pt-6 md:pt-0">
+        <input type="checkbox" id="onlyMine" name="onlyMine" th:checked="${param.onlyMine != null}" class="h-4 w-4 text-blue-600">
+        <label for="onlyMine" class="ml-2 text-sm text-gray-700">Afficher uniquement mes courses</label>
+      </div>
+      <div class="flex items-between md:col-span-3">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+          Rechercher
+        </button>
+        <button type="button" onclick="toglleSearchParam()" class="bg-neutral-500 text-white ml-5 px-4 py-2 rounded hover:bg-neutral-600 transition">
+          Annuler
+        </button>
+      </div>
+    </form>
+
+    <div id="showSearchParamFormButton" class="flex items-end md:col-span-3 my-5">
+      <button onclick="toglleSearchParam()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+        Rechercher / Trier les courses
+      </button>
+    </div>
+
     <!-- Tableau des courses à venir -->
     <div id="courses-upcoming" class="mb-8">
       <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
@@ -256,6 +307,14 @@
     form.classList.toggle("hidden");
     cancelButton.classList.toggle("hidden");
     showFormButton.classList.toggle('hidden');
+  }
+
+  function toglleSearchParam() {
+    const form = document.getElementById("searchParamForm");
+    const showSearchParamFormButton = document.getElementById("showSearchParamFormButton");
+
+    form.classList.toggle("hidden");
+    showSearchParamFormButton.classList.toggle('hidden');
   }
 
   function editCourseFromData(button) {

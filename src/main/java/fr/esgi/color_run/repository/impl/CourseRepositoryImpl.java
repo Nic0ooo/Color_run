@@ -157,6 +157,48 @@ public class CourseRepositoryImpl implements CourseRepository {
     }
 
     @Override
+    public List<Course> searchCourseByName(String name) {
+        List<Course> searchedCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE name LIKE ?";
+
+        System.out.println("CourseRepositoryImpl: searchCourseByName() - Exécution de la requête pour rechercher les courses par nom.");
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, "%" + name + "%");
+            ResultSet resultSet = stmt.executeQuery();
+            while (resultSet.next()) {
+                searchedCourses.add(mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (searchedCourses.isEmpty()) {
+            System.out.println("❌ Aucune course avec pour nom :" + name + " trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + searchedCourses.size() + " courses avec pour nom :" + name + "  trouvées dans la base de données.");
+        }
+        return searchedCourses;
+    }
+
+    @Override
+    public Course findById(Integer id) {
+        Course course = new Course();
+        String sql = "SELECT * FROM course WHERE id = ?";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                course = mapRowToCourse(resultSet);
+            } else {
+                System.out.println("❌ Aucune course trouvée avec l'ID : " + id);
+            }
+            System.out.println("CourseRepositoryImpl: findById() - Course trouvée avec l'ID : " + id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return course;
+    }
+
+    @Override
     public Course save(Course course) {
         String sql = "INSERT INTO PUBLIC.COURSE (name, description, associationid, membercreatorid, startdate, enddate, startpositionlatitude, startpositionlongitude, endpositionlatitude, endpositionlongitude, distance, address, city, zipcode, maxofrunners, currentnumberofrunners, price) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";

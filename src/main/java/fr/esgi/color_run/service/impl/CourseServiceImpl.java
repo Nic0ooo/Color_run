@@ -63,4 +63,26 @@ public class CourseServiceImpl implements CourseService {
         }
         return updatedCourse;
     }
+
+    @Override
+    public List<Course> searchCourseByName(String name) {
+        List<Course> searchedCourses = courseRepository.searchCourseByName(name);
+        if (searchedCourses.isEmpty()) {
+            System.out.println("No courses found with the name: " + name);
+        } else {
+            System.out.println("Courses found with the name " + name + ": " + searchedCourses);
+        }
+        return searchedCourses;
+    }
+
+    @Override
+    public Course getCourseById(Integer id) {
+        Course course = courseRepository.findById(id);
+        if (course != null) {
+            System.out.println("Course found: " + course);
+        } else {
+            System.out.println("No course found with the ID: " + id);
+        }
+        return course;
+    }
 }
