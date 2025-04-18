@@ -1,6 +1,7 @@
 package fr.esgi.color_run.servlet;
 
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.service.EmailService;
 import fr.esgi.color_run.service.MemberService;
@@ -76,6 +77,7 @@ public class MemberServlet extends HttpServlet {
                 newMember.setAddress(address != null ? address : "");
                 newMember.setCity(city != null ? city : "");
                 newMember.setZipCode(zip != null && !zip.isEmpty() ? Integer.parseInt(zip) : 0);
+                newMember.setRole(Role.valueOf("RUNNER"));
                 newMember.setPositionLatitude(48.8566);
                 newMember.setPositionLongitude(2.3522);
 

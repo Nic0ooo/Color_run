@@ -4,6 +4,7 @@ import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
+import fr.esgi.color_run.utils.VerificationCodeStorage;
 
 import java.util.*;
 
@@ -52,7 +53,7 @@ public class MemberServiceImpl implements MemberService {
 
     public String generateVerificationCodeForEmail(String email) {
         String code = String.valueOf(new Random().nextInt(900000) + 100000); // Code à 6 chiffres
-        verificationCodes.put(email, code);
+        VerificationCodeStorage.storeCode(email, code);
         return code;
     }
 
@@ -65,8 +66,8 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public Optional<Object> findByEmail(String email) {
-        return Optional.ofNullable(memberRepository.findByEmail(email));
+    public Optional<Member> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
     }
 
 }
