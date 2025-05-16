@@ -6,7 +6,11 @@ import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
 import fr.esgi.color_run.utils.VerificationCodeStorage;
 
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.*;
+import java.sql.Connection;
 
 public class MemberServiceImpl implements MemberService {
 
@@ -66,8 +70,25 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    public void updatePasswordByEmail(String email, String password) {
+            memberRepository.updatePasswordByEmail(email, password);
+    }
+
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return memberRepository.findByEmail(email).isPresent();
+    }
+
+
+    @Override
     public Optional<Member> findByEmail(String email) {
         return memberRepository.findByEmail(email);
     }
 
+
+
+
 }
+
+

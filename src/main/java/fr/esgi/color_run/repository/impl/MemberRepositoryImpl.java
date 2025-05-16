@@ -194,4 +194,24 @@ public class MemberRepositoryImpl implements MemberRepository {
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
         return m;
     }
+
+    @Override
+    public void updatePasswordByEmail(String email, String password) {
+        String sql = "UPDATE member SET password = ? WHERE email = ?";
+
+        try (Connection connection = getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, password);
+            stmt.setString(2, email);
+            stmt.executeUpdate();
+
+            System.out.println("✅ Mot de passe mis à jour pour : " + email);
+
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la mise à jour du mot de passe pour " + email);
+            e.printStackTrace();
+        }
+    }
+
 }

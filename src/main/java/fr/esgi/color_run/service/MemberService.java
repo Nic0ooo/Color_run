@@ -13,5 +13,7 @@ public interface MemberService {
     Optional<Member> getMember(Long id);
     String generateVerificationCodeForEmail(String email);
     Optional<Member> findByEmail(String email);
+    void updatePasswordByEmail(String email, String newPassword);
+    boolean existsByEmail(String email);
 
 }
