@@ -20,32 +20,10 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
-//
-//@WebServlet("/")
-//public class HomeServlet extends HttpServlet {
-//    @Override
-//    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-//            throws ServletException, IOException {
-//
-//        TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
-//        WebContext context = new WebContext(
-//                ThymeleafConfiguration.getApplication().buildExchange(req, resp)
-//        );
-//
-//        // Récupérer le membre de la session
-//        Member member = (Member) req.getSession().getAttribute("member");
-//        context.setVariable("member", member);
-//
-//        context.setVariable("pageTitle", "Accueil");
-//
-//        engine.process("home", context, resp.getWriter());
-//    }
-//
-//
-//}
 @WebServlet("/")
 public class HomeServlet extends HttpServlet {
 
@@ -58,11 +36,8 @@ public class HomeServlet extends HttpServlet {
         engine = ThymeleafConfiguration.getTemplateEngine();
 
         GeocodingService geocodingService = new GeocodingServiceImpl();
-
         CourseRepository courseRepository = new CourseRepositoryImpl(geocodingService);
-
         courseService = new CourseServiceImpl(courseRepository, geocodingService);
-
         searchStrategyFactory = new CourseSearchStrategyFactory(courseService, geocodingService);
     }
 
@@ -84,49 +59,149 @@ public class HomeServlet extends HttpServlet {
 
         context.setVariable("pageTitle", "Accueil");
 
+        resp.setContentType("text/html;charset=UTF-8");
         engine.process("home", context, resp.getWriter());
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("=== POST REQUEST RECEIVED ===");
 
-        System.out.println("POST request received");
-        System.out.println("Parameters: " + req.getParameterMap());
+        // Debug: afficher TOUS les paramètres reçus
+        System.out.println("Tous les paramètres reçus:");
+        req.getParameterMap().forEach((key, values) -> {
+            System.out.println("  " + key + " = " + java.util.Arrays.toString(values));
+        });
+
+        // Vérifier si c'est une requête AJAX - améliorer la détection
+        String acceptHeader = req.getHeader("Accept");
+        String xRequestedWith = req.getHeader("X-Requested-With");
+        String contentType = req.getContentType();
+        boolean isAjaxRequest = "XMLHttpRequest".equals(xRequestedWith) ||
+                (acceptHeader != null && acceptHeader.contains("application/json"));
+
+        // Debug: afficher les en-têtes pour comprendre le type de requête
+        System.out.println("Headers reçus:");
+        System.out.println("  Accept: " + acceptHeader);
+        System.out.println("  X-Requested-With: " + xRequestedWith);
+        System.out.println("  Content-Type: " + contentType);
+        System.out.println("  Is AJAX request: " + isAjaxRequest);
+
+        // Récupérer les membres de la session
+        Member member = (Member) req.getSession().getAttribute("member");
+
+        // Sélectionner la stratégie de recherche appropriée
+        CourseSearchStrategy searchStrategy = searchStrategyFactory.getStrategy(req);
+        System.out.println("Selected strategy: " + searchStrategy.getClass().getSimpleName());
+
+        // Récupérer les courses via la stratégie
+        List<Course> courses = searchStrategy.search(req);
+        System.out.println("Found " + courses.size() + " courses");
+
+        // Afficher les noms des courses trouvées pour debug
+        courses.forEach(course -> System.out.println("  - " + course.getName() + " (" + course.getCity() + ", " + course.getZipCode() + ")"));
+
+        if (isAjaxRequest) {
+            // Répondre en JSON pour les requêtes AJAX
+            System.out.println("Traitement en mode AJAX (JSON)");
+            handleAjaxRequest(req, resp, courses, searchStrategy);
+        } else {
+            // Répondre en HTML pour les requêtes normales
+            System.out.println("Traitement en mode normal (HTML)");
+            handleNormalRequest(req, resp, member, courses, searchStrategy);
+        }
+
+        System.out.println("=== END POST REQUEST ===");
+    }
+
+    private void handleAjaxRequest(HttpServletRequest req, HttpServletResponse resp,
+                                   List<Course> courses, CourseSearchStrategy searchStrategy)
+            throws IOException {
+
+        resp.setContentType("application/json;charset=UTF-8");
+
+        // Créer la réponse JSON manuellement (plus simple et plus fiable)
+        StringBuilder jsonResponse = new StringBuilder();
+        jsonResponse.append("{");
+
+        // Ajouter les courses
+        jsonResponse.append("\"courses\":[");
+        for (int i = 0; i < courses.size(); i++) {
+            Course course = courses.get(i);
+            if (i > 0) jsonResponse.append(",");
+
+            jsonResponse.append("{");
+            jsonResponse.append("\"id\":").append(course.getId()).append(",");
+            jsonResponse.append("\"name\":\"").append(escapeJson(course.getName())).append("\",");
+            jsonResponse.append("\"description\":\"").append(escapeJson(course.getDescription())).append("\",");
+            jsonResponse.append("\"city\":\"").append(escapeJson(course.getCity())).append("\",");
+            jsonResponse.append("\"zipCode\":").append(course.getZipCode()).append(",");
+            jsonResponse.append("\"startDate\":\"").append(escapeJson(course.getStartDate())).append("\",");
+            jsonResponse.append("\"price\":").append(course.getPrice()).append(",");
+            jsonResponse.append("\"startpositionLatitude\":").append(course.getStartpositionLatitude()).append(",");
+            jsonResponse.append("\"startpositionLongitude\":").append(course.getStartpositionLongitude());
+            jsonResponse.append("}");
+        }
+        jsonResponse.append("]");
+
+        // Ajouter les paramètres de contexte
+        Map<String, Object> contextParams = searchStrategy.getContextParameters(req);
+        for (Map.Entry<String, Object> entry : contextParams.entrySet()) {
+            jsonResponse.append(",");
+            jsonResponse.append("\"").append(entry.getKey()).append("\":");
+
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                jsonResponse.append("\"").append(escapeJson((String) value)).append("\"");
+            } else if (value instanceof Number) {
+                jsonResponse.append(value);
+            } else if (value instanceof Boolean) {
+                jsonResponse.append(value);
+            } else {
+                jsonResponse.append("null");
+            }
+        }
+
+        jsonResponse.append("}");
+
+        // Envoyer la réponse
+        PrintWriter out = resp.getWriter();
+        out.print(jsonResponse.toString());
+        out.flush();
+
+        System.out.println("JSON response sent: " + jsonResponse.toString());
+    }
+
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
+    private void handleNormalRequest(HttpServletRequest req, HttpServletResponse resp,
+                                     Member member, List<Course> courses,
+                                     CourseSearchStrategy searchStrategy)
+            throws ServletException, IOException {
 
         WebContext context = new WebContext(
                 ThymeleafConfiguration.getApplication().buildExchange(req, resp)
         );
 
-        // Récupérer les membres de la session
-        Member member =  (Member) req.getSession().getAttribute("member");
         context.setVariable("member", member);
-
-        // Avant de sélectionner la stratégie
-        System.out.println("Selecting search strategy...");
-
-        // Selectionner la stratégie de recherche appropriée
-        CourseSearchStrategy searchStrategy = searchStrategyFactory.getStrategy(req);
-
-        // Après avoir sélectionné la stratégie
-        System.out.println("Selected strategy: " + searchStrategy.getClass().getSimpleName());
-
-        // Récupérer toutes les courses depuis le service
-        List<Course> courses = searchStrategy.search(req);
         context.setVariable("courses", courses);
 
-        // Après avoir récupéré les courses
-        System.out.println("Found " + courses.size() + " courses");
-
-        // ajouter les paramètres de contexte spécifiques à la stratégie
-        Map<String,  Object> contextParams = searchStrategy.getContextParameters(req);
-        for (Map.Entry<String, Object> entry: contextParams.entrySet()) {
+        // Ajouter les paramètres de contexte spécifiques à la stratégie
+        Map<String, Object> contextParams = searchStrategy.getContextParameters(req);
+        for (Map.Entry<String, Object> entry : contextParams.entrySet()) {
             context.setVariable(entry.getKey(), entry.getValue());
         }
 
-        context.setVariable("pageTitle", "Resultats de la recherche");
+        context.setVariable("pageTitle", "Résultats de la recherche");
 
-        // Traiter la réponse
+        resp.setContentType("text/html;charset=UTF-8");
         engine.process("home", context, resp.getWriter());
     }
-
 }

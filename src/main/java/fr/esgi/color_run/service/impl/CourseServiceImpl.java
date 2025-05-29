@@ -49,31 +49,59 @@ public class CourseServiceImpl implements CourseService {
                 .collect(Collectors.toList());
     }
 
+    // Ajouter cette méthode dans CourseServiceImpl.java dans la méthode findCoursesByPostalCodeAndDate
+
     @Override
     public List<Course> findCoursesByPostalCodeAndDate(String postalCode, String dateFilter, int radiusInKm,
                                                        String startDate, String endDate) {
+        System.out.println("=== CourseServiceImpl.findCoursesByPostalCodeAndDate ===");
+        System.out.println("Paramètres:");
+        System.out.println("  - postalCode: '" + postalCode + "'");
+        System.out.println("  - dateFilter: '" + dateFilter + "'");
+        System.out.println("  - radiusInKm: " + radiusInKm);
+        System.out.println("  - startDate: '" + startDate + "'");
+        System.out.println("  - endDate: '" + endDate + "'");
+
         List<Course> filteredCourses;
 
         // Si radiusInKm > 0, utiliser la recherche par proximité
-        if (postalCode != null && !postalCode.isEmpty() && radiusInKm > 0) {
+        if (postalCode != null && !postalCode.isEmpty() && !postalCode.equals("null") && radiusInKm > 0) {
+            System.out.println("Recherche par proximité (rayon: " + radiusInKm + " km)");
+
             // Convertir le code postal en coordonnées géographiques
             GeoLocation location = geocodingService.getCoordinatesFromPostalCode(postalCode);
+            System.out.println("Coordonnées du code postal " + postalCode + ": " + location.getLatitude() + ", " + location.getLongitude());
+
             filteredCourses = courseRepository.findByProximity(
                     location.getLatitude(), location.getLongitude(), radiusInKm);
-        } else {
+            System.out.println("Courses trouvées par proximité: " + filteredCourses.size());
+        } else if (postalCode != null && !postalCode.isEmpty() && !postalCode.equals("null")) {
+            System.out.println("Recherche classique par code postal exacte");
             // Sinon recherche classique par code postal
             filteredCourses = courseRepository.findByPostalCode(postalCode);
+            System.out.println("Courses trouvées par code postal: " + filteredCourses.size());
+        } else {
+            System.out.println("Recherche de toutes les courses (aucun code postal fourni)");
+            filteredCourses = courseRepository.findAll();
+            System.out.println("Toutes les courses: " + filteredCourses.size());
         }
 
+        System.out.println("Courses avant filtrage par date:");
+        filteredCourses.forEach(course -> System.out.println("  - " + course.getName() + " (" + course.getCity() + ", " + course.getZipCode() + ") - " + course.getStartDate()));
+
         // Appliquer le filtre par mois si nécessaire
-        if (dateFilter != null && !dateFilter.isEmpty() && !"all".equals(dateFilter)) {
+        if (dateFilter != null && !dateFilter.isEmpty() && !"all".equals(dateFilter) && !dateFilter.equals("null")) {
+            System.out.println("Application du filtre par mois: " + dateFilter);
             filteredCourses = filteredCourses.stream()
                     .filter(course -> course.getMonthName().equalsIgnoreCase(dateFilter))
                     .collect(Collectors.toList());
+            System.out.println("Courses après filtrage par mois: " + filteredCourses.size());
         }
 
         // Appliquer le filtre par plage de dates si nécessaire
-        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+        if (startDate != null && !startDate.isEmpty() && !startDate.equals("null") &&
+                endDate != null && !endDate.isEmpty() && !endDate.equals("null")) {
+            System.out.println("Application du filtre par plage de dates: " + startDate + " à " + endDate);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate start = LocalDate.parse(startDate, formatter);
             LocalDate end = LocalDate.parse(endDate, formatter);
@@ -87,10 +115,16 @@ public class CourseServiceImpl implements CourseService {
                         return !courseDate.isBefore(start) && !courseDate.isAfter(end);
                     })
                     .collect(Collectors.toList());
+            System.out.println("Courses après filtrage par plage de dates: " + filteredCourses.size());
         }
+
+        System.out.println("Résultat final: " + filteredCourses.size() + " courses");
+        filteredCourses.forEach(course -> System.out.println("  - " + course.getName() + " (" + course.getCity() + ", " + course.getZipCode() + ")"));
+        System.out.println("=== FIN CourseServiceImpl.findCoursesByPostalCodeAndDate ===");
 
         return filteredCourses;
     }
+
 
     // Compatibilité avec l'ancienne méthode
     @Override

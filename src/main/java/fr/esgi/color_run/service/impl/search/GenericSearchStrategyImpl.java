@@ -26,6 +26,8 @@ public class GenericSearchStrategyImpl implements CourseSearchStrategy {
 
     @Override
     public List<Course> search(HttpServletRequest request) {
+        System.out.println("=== GenericSearchStrategyImpl - DEBUT RECHERCHE ===");
+
         // Récupérer tous les paramètres du formulaire
         String postalCode = request.getParameter("postalCode");
         String dateFilter = request.getParameter("dateFilter");
@@ -33,62 +35,91 @@ public class GenericSearchStrategyImpl implements CourseSearchStrategy {
         String startDate = request.getParameter("startDate");
         String endDate = request.getParameter("endDate");
 
+        // Debug : afficher les valeurs EXACTES reçues
+        System.out.println("Paramètres reçus:");
+        System.out.println("  - postalCode: '" + postalCode + "'");
+        System.out.println("  - dateFilter: '" + dateFilter + "'");
+        System.out.println("  - postalRadiusStr: '" + postalRadiusStr + "'");
+        System.out.println("  - startDate: '" + startDate + "'");
+        System.out.println("  - endDate: '" + endDate + "'");
+
         // Traiter le rayon
         int postalRadius = 0;
-        if (postalRadiusStr != null && !postalRadiusStr.isEmpty()) {
+        if (postalRadiusStr != null && !postalRadiusStr.isEmpty() && !postalRadiusStr.equals("null")) {
             try {
                 postalRadius = Integer.parseInt(postalRadiusStr);
+                System.out.println("  - postalRadius: " + postalRadius);
             } catch (NumberFormatException e) {
                 System.err.println("Erreur de conversion du rayon: " + e.getMessage());
             }
         }
 
-        // Traiter le code postal pour gérer les arrondissements
-        if (postalCode != null && postalCode.length() == 5) {
-            try {
-                int cp = Integer.parseInt(postalCode);
-                // Si les deux derniers chiffres sont différents de 00 et que le rayon est > 0
-                // (ex: 69008 pour Lyon 8ème)
-                if (cp % 100 != 0 && postalRadius > 0) {
-                    // Arrondir au code postal de la ville (69000 pour Lyon)
-                    postalCode = String.format("%d00", cp / 100);
-                    System.out.println("Code postal d'arrondissement détecté, conversion en: " + postalCode);
-                }
-            } catch (NumberFormatException e) {
-                // Ignorer si ce n'est pas un nombre
-            }
-        }
+        // Vérifier si les paramètres sont réellement vides ou juste "null" en string
+        boolean postalCodeEmpty = (postalCode == null || postalCode.trim().isEmpty() || postalCode.equals("null"));
+        boolean dateFilterEmpty = (dateFilter == null || "all".equals(dateFilter) || dateFilter.equals("null"));
+        boolean startDateEmpty = (startDate == null || startDate.trim().isEmpty() || startDate.equals("null"));
+        boolean endDateEmpty = (endDate == null || endDate.trim().isEmpty() || endDate.equals("null"));
 
-        // Logs pour debug
-        System.out.println("GenericSearchStrategyImpl - postalCode: " + postalCode);
-        System.out.println("GenericSearchStrategyImpl - dateFilter: " + dateFilter);
-        System.out.println("GenericSearchStrategyImpl - postalRadius: " + postalRadius);
-        System.out.println("GenericSearchStrategyImpl - startDate: " + startDate);
-        System.out.println("GenericSearchStrategyImpl - endDate: " + endDate);
+        System.out.println("Analyse des paramètres:");
+        System.out.println("  - postalCodeEmpty: " + postalCodeEmpty);
+        System.out.println("  - dateFilterEmpty: " + dateFilterEmpty);
+        System.out.println("  - startDateEmpty: " + startDateEmpty);
+        System.out.println("  - endDateEmpty: " + endDateEmpty);
+        System.out.println("  - postalRadius: " + postalRadius);
 
         // Si tous les paramètres sont vides, retourner toutes les courses
-        boolean allEmpty = (postalCode == null || postalCode.trim().isEmpty()) &&
-                (dateFilter == null || "all".equals(dateFilter)) &&
-                (startDate == null || startDate.trim().isEmpty()) &&
-                (endDate == null || endDate.trim().isEmpty());
+        boolean allEmpty = postalCodeEmpty && dateFilterEmpty && startDateEmpty && endDateEmpty;
+
+        System.out.println("Tous les paramètres sont vides? " + allEmpty);
 
         if (allEmpty) {
-            return courseService.listAllCourses();
+            System.out.println("Retour de toutes les courses");
+            List<Course> allCourses = courseService.listAllCourses();
+            System.out.println("Nombre total de courses: " + allCourses.size());
+            return allCourses;
         }
 
+        // Nettoyer les paramètres (remplacer "null" par null)
+        String cleanPostalCode = postalCodeEmpty ? null : postalCode;
+        String cleanDateFilter = dateFilterEmpty ? null : dateFilter;
+        String cleanStartDate = startDateEmpty ? null : startDate;
+        String cleanEndDate = endDateEmpty ? null : endDate;
+
+        System.out.println("Paramètres nettoyés:");
+        System.out.println("  - cleanPostalCode: '" + cleanPostalCode + "'");
+        System.out.println("  - cleanDateFilter: '" + cleanDateFilter + "'");
+        System.out.println("  - cleanStartDate: '" + cleanStartDate + "'");
+        System.out.println("  - cleanEndDate: '" + cleanEndDate + "'");
+
         // Utiliser le service pour rechercher avec tous les paramètres
-        return courseService.findCoursesByPostalCodeAndDate(
-                postalCode, dateFilter, postalRadius, startDate, endDate);
+        List<Course> results = courseService.findCoursesByPostalCodeAndDate(
+                cleanPostalCode, cleanDateFilter, postalRadius, cleanStartDate, cleanEndDate);
+
+        System.out.println("Nombre de résultats trouvés: " + results.size());
+        results.forEach(course -> System.out.println("  - " + course.getName() + " (" + course.getCity() + ", " + course.getZipCode() + ")"));
+
+        System.out.println("=== GenericSearchStrategyImpl - FIN RECHERCHE ===");
+
+        return results;
     }
 
     @Override
     public Map<String, Object> getContextParameters(HttpServletRequest request) {
         Map<String, Object> params = new HashMap<>();
-        params.put("searchPostalCode", request.getParameter("postalCode"));
-        params.put("searchDateFilter", request.getParameter("dateFilter"));
-        params.put("searchPostalRadius", request.getParameter("postalRadius"));
-        params.put("searchStartDate", request.getParameter("startDate"));
-        params.put("searchEndDate", request.getParameter("endDate"));
+
+        String postalCode = request.getParameter("postalCode");
+        String dateFilter = request.getParameter("dateFilter");
+        String postalRadius = request.getParameter("postalRadius");
+        String startDate = request.getParameter("startDate");
+        String endDate = request.getParameter("endDate");
+
+        // Nettoyer les paramètres pour éviter les "null" en string
+        params.put("searchPostalCode", (postalCode != null && !postalCode.equals("null")) ? postalCode : null);
+        params.put("searchDateFilter", (dateFilter != null && !dateFilter.equals("null")) ? dateFilter : null);
+        params.put("searchPostalRadius", (postalRadius != null && !postalRadius.equals("null")) ? postalRadius : null);
+        params.put("searchStartDate", (startDate != null && !startDate.equals("null")) ? startDate : null);
+        params.put("searchEndDate", (endDate != null && !endDate.equals("null")) ? endDate : null);
+
         return params;
     }
 }

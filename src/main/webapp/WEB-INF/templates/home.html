@@ -9,7 +9,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- CSS Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JS Leaflet -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
 
@@ -33,46 +38,48 @@
       <input type="hidden" id="search-type" name="searchType" value="generic">
       <input type="hidden" id="latitude" name="latitude" value="">
       <input type="hidden" id="longitude" name="longitude" value="">
+      <div class="flex flex-wrap justify-center">
 
-      <div class="flex flex-wrap justify-center gap-2 mb-4">
-        <!-- Code postal -->
-        <div class="w-full md:w-auto">
-          <input type="text" id="postal-code" name="postalCode" data-field="searchPostalCode" placeholder="Code postal"
-                 class="border border-teal p-2 w-full"
-                 th:value="${searchPostalCode != null ? searchPostalCode : ''}">
-        </div>
-
-        <!-- Rayon autour du code postal -->
-        <div class="w-full md:w-auto">
-          <select id="postal-radius" name="postalRadius" data-field="searchPostalRadius" class="border border-teal p-2 w-full">
-            <option value="0" th:selected="${searchPostalRadius == 0}">Exactement ce CP</option>
-            <option value="5" th:selected="${searchPostalRadius == 5}">Dans un rayon de 5 km</option>
-            <option value="10" th:selected="${searchPostalRadius == 10}">Dans un rayon de 10 km</option>
-            <option value="25" th:selected="${searchPostalRadius == 25}">Dans un rayon de 25 km</option>
-            <option value="50" th:selected="${searchPostalRadius == 50}">Dans un rayon de 50 km</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap justify-center gap-2 mb-4">
-        <!-- Plage de dates avec étiquettes -->
-        <div class="w-full md:w-auto flex flex-col md:flex-row gap-2">
-          <div class="flex flex-col">
-            <label for="start-date" class="text-sm text-gray-700 mb-1 text-left">Date de début</label>
-            <input type="date" id="start-date" name="startDate" data-field="searchStartDate"
-                   class="border border-teal p-2"
-                   th:value="${searchStartDate}">
+        <div class="flex flex-wrap justify-center gap-2 mb-4">
+          <!-- Code postal -->
+          <div class="w-full md:w-auto">
+            <div class="flex flex-col">
+              <label for="postal-code" class="text-sm text-gray-700 mb-1 text-left">Code Postal</label>
+              <input type="text" id="postal-code" name="postalCode" data-field="searchPostalCode" placeholder="Code postal"
+                     class="border border-teal p-2 w-full"
+                     th:value="${searchPostalCode != null ? searchPostalCode : ''}">
+            </div>
           </div>
 
-          <div class="md:flex md:items-end md:pb-0 pb-2">
-            <span class="text-sm text-gray-500 mx-2">à</span>
+          <!-- Rayon autour du code postal -->
+          <div class="w-full md:w-auto">
+            <div class="flex flex-col">
+              <label for="postal-radius" class="text-sm text-gray-700 mb-1 text-left">Rayon de recherche</label>
+              <select id="postal-radius" name="postalRadius" data-field="searchPostalRadius" class="border border-teal p-2 w-full">
+                <option value="0" th:selected="${searchPostalRadius == 0}">Exactement ce CP</option>
+                <option value="5" th:selected="${searchPostalRadius == 5}">Dans un rayon de 5 km</option>
+                <option value="10" th:selected="${searchPostalRadius == 10}">Dans un rayon de 10 km</option>
+                <option value="25" th:selected="${searchPostalRadius == 25}">Dans un rayon de 25 km</option>
+                <option value="50" th:selected="${searchPostalRadius == 50}">Dans un rayon de 50 km</option>
+              </select>
+            </div>
           </div>
 
-          <div class="flex flex-col">
-            <label for="end-date" class="text-sm text-gray-700 mb-1 text-left">Date de fin</label>
-            <input type="date" id="end-date" name="endDate" data-field="searchEndDate"
-                   class="border border-teal p-2"
-                   th:value="${searchEndDate}">
+          <!-- Plage de dates avec étiquettes -->
+          <div class="w-full md:w-auto flex flex-col md:flex-row gap-2">
+            <div class="flex flex-col">
+              <label for="start-date" class="text-sm text-gray-700 mb-1 text-left">Date de début de recherche</label>
+              <input type="date" id="start-date" name="startDate" data-field="searchStartDate"
+                     class="border border-teal p-2"
+                     th:value="${searchStartDate}">
+            </div>
+
+            <div class="flex flex-col">
+              <label for="end-date" class="text-sm text-gray-700 mb-1 text-left">Date de fin de recherche</label>
+              <input type="date" id="end-date" name="endDate" data-field="searchEndDate"
+                     class="border border-teal p-2"
+                     th:value="${searchEndDate}">
+            </div>
           </div>
         </div>
       </div>
@@ -102,8 +109,19 @@
     <div class="flex flex-col md:flex-row gap-4 mb-8">
       <!-- Carte -->
       <div class="w-full md:w-2/3">
-        <div id="map-container">
-          <div th:replace="fragments/map :: mapFragmentStandalone('100%', '96', 4, ${courses}, true, '')"></div>
+        <div id="map-container" class="h-96 w-full border rounded relative shadow-md">
+          <div class="absolute inset-0 bg-gray-100 flex items-center justify-center z-0">
+            <p class="text-gray-500">Chargement de la carte...</p>
+          </div>
+
+          <!-- Légende de la carte -->
+          <div class="absolute bottom-4 left-4 bg-white p-3 rounded-md shadow-md z-10">
+            <h4 class="font-bold text-sm mb-2">Légende</h4>
+            <div class="flex items-center mb-1">
+              <div class="w-4 h-4 rounded-full bg-pink-500 mr-2"></div>
+              <p class="text-xs">Courses à venir</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -111,17 +129,17 @@
       <div class="w-full md:w-1/3 bg-white rounded-lg shadow-md">
         <div class="p-4 border-b">
           <h3 class="font-bold text-lg text-teal-500">Résultats</h3>
-          <p class="text-xs text-gray-500" th:if="${courses != null && !courses.isEmpty()}" th:text="${courses.size() + ' course(s) trouvée(s)'}">0 course trouvée</p>
+          <p class="text-xs text-gray-500" id="courses-count" th:if="${courses != null && !courses.isEmpty()}" th:text="${courses.size() + ' course(s) trouvée(s)'}">0 course trouvée</p>
         </div>
 
         <!-- Message si aucun résultat -->
-        <div th:if="${courses == null || courses.isEmpty()}" class="p-4 text-center">
+        <div id="no-results" th:if="${courses == null || courses.isEmpty()}" class="p-4 text-center">
           <p class="text-gray-600 mb-2">Aucune course ne correspond à votre recherche.</p>
           <p class="text-gray-500 text-sm">Essayez d'élargir vos critères de recherche.</p>
         </div>
 
         <!-- Liste des courses si résultats -->
-        <div th:if="${courses != null && !courses.isEmpty()}" class="max-h-96 overflow-y-auto" id="courses-list">
+        <div id="courses-list" th:if="${courses != null && !courses.isEmpty()}" class="max-h-96 overflow-y-auto">
           <div th:each="course, courseStat : ${courses}"
                th:id="'course-item-' + ${course.id}"
                th:data-id="${course.id}"
@@ -161,8 +179,15 @@
 
     <div class="flex flex-wrap">
       <div class="w-full md:w-1/3 p-4">
-        <!-- Placeholder for image -->
-        <div class="bg-gray-200 h-48 w-full"></div>
+        <div class="w-full aspect-[4/3] overflow-hidden rounded-lg shadow-md">
+          <img src="/color_run_war/images/colorrun_img3.jpg"
+               alt="Participants à la Color Run couverts de poudre colorée"
+               class="w-full h-full object-cover"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <div class="w-full h-full bg-gradient-to-r from-pink-400 to-yellow-400 flex items-center justify-center text-white font-bold" style="display:none;">
+            Image Color Run
+          </div>
+        </div>
       </div>
       <div class="w-full md:w-2/3 p-4">
         <p>La Color Run est une course accessible à tous, où le chrono n'a aucune importance. Laissez-vous emporter par une vague de couleurs à chaque kilomètre et terminez rayonnant dans une ambiance de fête. Une seule règle : partir blanc et finir complètement coloré.</p>
@@ -178,17 +203,33 @@
 
     <div class="flex flex-wrap justify-center gap-8">
       <div class="w-full md:w-1/4 text-center">
-        <div class="bg-gray-200 h-32 w-32 mx-auto mb-4"></div>
+<!--        <div class="bg-gray-200 h-32 w-32 mx-auto mb-4"></div>-->
+        <div class="w-full aspect-[1/1] overflow-hidden rounded-lg shadow-md">
+          <img src="/color_run_war/images/colorrun_img1.webp"
+               alt="Participants à la Color Run couverts de poudre colorée"
+               class="w-full h-full object-cover"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        </div>
         <h3 class="font-bold mb-2">Une ambiance fun et conviviale</h3>
       </div>
 
       <div class="w-full md:w-1/4 text-center">
-        <div class="bg-gray-200 h-32 w-32 mx-auto mb-4"></div>
+        <div class="w-full aspect-[1/1] overflow-hidden rounded-lg shadow-md">
+          <img src="/color_run_war/images/colorrun_img4.png"
+               alt="Participants à la Color Run couverts de poudre colorée"
+               class="w-full h-full object-cover"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        </div>
         <h3 class="font-bold mb-2">Aucune pression, juste du plaisir</h3>
       </div>
 
       <div class="w-full md:w-1/4 text-center">
-        <div class="bg-gray-200 h-32 w-32 mx-auto mb-4"></div>
+        <div class="w-full aspect-[1/1] overflow-hidden rounded-lg shadow-md">
+          <img src="/color_run_war/images/colorrun_img1.webp"
+               alt="Participants à la Color Run couverts de poudre colorée"
+               class="w-full h-full object-cover"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        </div>
         <h3 class="font-bold mb-2">Accessible à tous les âges et niveaux</h3>
       </div>
     </div>
@@ -216,8 +257,52 @@
 
     <div class="w-full md:w-1/3 p-4">
       <!-- Placeholder for image -->
-      <div class="bg-gray-200 h-48 w-full"></div>
+      <div class="w-full aspect-[4/3] overflow-hidden rounded-lg shadow-md">
+        <img src="/color_run_war/images/colorrun_img3.webp"
+             alt="Participants à la Color Run couverts de poudre colorée"
+             class="w-full h-full object-cover"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="w-full h-full bg-gradient-to-r from-pink-400 to-yellow-400 flex items-center justify-center text-white font-bold" style="display:none;">
+          Image Color Run
+        </div>
+      </div>
     </div>
+  </div>
+</section>
+
+<!-- Join Adventure Section -->
+<section class="bg-teal-500 text-white py-8">
+  <div class="container mx-auto px-4 flex flex-wrap items-center">
+    <div class="w-full md:w-1/3 p-4">
+      <!-- Placeholder for image -->
+      <div class="w-full aspect-[4/3] overflow-hidden rounded-lg shadow-md">
+        <img src="/color_run_war/images/colorrun_img5.jpg"
+             alt="Participants à la Color Run couverts de poudre colorée"
+             class="w-full h-full object-cover"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="w-full h-full bg-gradient-to-r from-pink-400 to-yellow-400 flex items-center justify-center text-white font-bold" style="display:none;">
+          Image Color Run
+        </div>
+      </div>
+    </div>
+    <div class="w-full md:w-2/3">
+      <h2 class="text-2xl font-bold mb-4">Devenez un héros de la Color Run</h2>
+      <p class="mb-4">Envie de faire partie de l'envers du décor ? *Rejoignez notre équipe de bénévoles et participez à l'organisation d'un évènement inoubliable ! En tant que bénévole, vous pourrez ::</p>
+      <ul class="mb-4">
+        <li>- Accueillir et guider les participants</li>
+        <li>- Animer les zones colorées et assurer une ambiance de folie</li>
+        <li>- Distribuer des kits ou des rafraîchissements</li>
+        <li>- Partager des moments uniques avec l'équipe et les coureurs</li>
+      </ul>
+      <p>En échange, vous vivrez une expérience enrichissante et recevrez un kit souvenir pour votre engagement. Merci pour votre aide précieuse !.</p>
+
+      <div class="flex gap-4 mt-6">
+        <a th:href="@{/register}" class="bg-white text-teal-500 px-4 py-2 rounded font-medium">Rejoindre l'équipe bénévole</a>
+        <a href="#" class="bg-transparent border border-white text-white px-4 py-2 rounded font-medium">En savoir plus sur le bénévolat</a>
+      </div>
+    </div>
+
+
   </div>
 </section>
 
@@ -228,44 +313,187 @@
   </div>
 </footer>
 
-<!-- Script pour l'interaction carte-liste -->
+<!-- Script principal pour la carte et les interactions -->
 <script th:inline="javascript">
-  document.addEventListener('DOMContentLoaded', function() {
-    // Attendre que la carte soit chargée
-    setTimeout(function() {
-      // Récupérer les éléments de la liste de courses
-      const courseItems = document.querySelectorAll('.course-item');
+  // Variables globales pour la carte
+  let map = null;
+  let mapMarkers = {};
 
-      // Vérifier si les marqueurs de la carte sont disponibles via la fenêtre globale
-      if (window.mapMarkers && courseItems.length > 0) {
+  // Données initiales des courses
+  let currentCourses = /*[[${courses}]]*/ [];
 
-        // Pour chaque élément de la liste
-        courseItems.forEach(item => {
-          // Ajouter un événement de clic sur l'élément de la liste
-          item.addEventListener('click', function() {
-            // Récupérer l'ID de la course
-            const courseId = this.getAttribute('data-id');
+  // Fonction pour initialiser la carte
+  function initializeMap(courses) {
+    console.log('Initialisation de la carte avec', courses.length, 'courses');
 
-            // Trouver le marqueur correspondant
-            if (window.mapMarkers[courseId]) {
-              // Ouvrir le popup du marqueur
-              window.mapMarkers[courseId].openPopup();
+    // Si la carte existe déjà, la détruire
+    if (map) {
+      map.remove();
+      map = null;
+      mapMarkers = {};
+    }
 
-              // Mettre en évidence cet élément
-              highlightCourseItem(courseId);
+    // Paramètres de la carte
+    let initialZoom = 6;
+    let initialCenter = [46.603354, 1.888334]; // Coordonnées par défaut (France)
 
-              // Ajuster la hauteur de la carte pour voir à la fois le pin et la carte
-              if (window.adjustMapHeight) {
-                window.adjustMapHeight();
-              }
-            }
+    // Initialiser la nouvelle carte
+    map = L.map('map-container').setView(initialCenter, initialZoom);
+
+    // Exposer la carte pour pouvoir l'utiliser depuis l'extérieur
+    window.map = map;
+    window.mapMarkers = mapMarkers;
+
+    // Ajouter le fond de carte
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Si aucune course, arrêter ici
+    if (!courses || courses.length === 0) {
+      console.log("Aucune course à afficher sur la carte");
+      return;
+    }
+
+    // Ajouter des marqueurs pour chaque course
+    const bounds = L.latLngBounds();
+    let hasValidBounds = false;
+
+    courses.forEach(course => {
+      // Vérifier que les coordonnées sont valides
+      if (course.startpositionLatitude && course.startpositionLongitude) {
+        console.log("Ajout du marqueur pour:", course.name, "à", course.startpositionLatitude, course.startpositionLongitude);
+
+        const marker = L.marker([course.startpositionLatitude, course.startpositionLongitude])
+                .addTo(map);
+
+        // Créer le popup avec les infos de l'événement
+        marker.bindPopup(`
+          <div style="font-family: 'Poppins', sans-serif; padding: 10px; max-width: 250px;">
+            <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${course.name}</h3>
+            <p style="font-size: 14px; margin-bottom: 5px;"><strong>Date:</strong> ${course.startDate}</p>
+            <p style="font-size: 12px; margin-bottom: 10px;">${course.description}</p>
+            <a href="/course-detail?id=${course.id}"
+                style="background-color: #14b8a6; color: white; padding: 6px 12px;
+                    border-radius: 4px; text-decoration: none; display: inline-block;
+                    font-size: 12px; text-align: center; font-weight: 500;">
+                VOIR DÉTAILS
+            </a>
+          </div>
+        `);
+
+        // Ajouter l'événement pour lier le marqueur à l'élément de la liste
+        marker.on('click', function() {
+          // Ouvrir le popup immédiatement
+          marker.openPopup();
+
+          // Calculer la position cible : 50% largeur, 70% hauteur (30% à partir du bas)
+          const mapContainer = map.getContainer();
+          const containerWidth = mapContainer.offsetWidth;
+          const containerHeight = mapContainer.offsetHeight;
+
+          // Position cible en pixels
+          const targetX = containerWidth * 0.5;  // 50% de la largeur
+          const targetY = containerHeight * 0.7; // 70% de la hauteur (30% du bas)
+
+          // Position actuelle du marqueur en pixels
+          const currentPoint = map.latLngToContainerPoint([course.startpositionLatitude, course.startpositionLongitude]);
+
+          // Calculer le décalage nécessaire
+          const offsetX = targetX - currentPoint.x;
+          const offsetY = targetY - currentPoint.y;
+
+          // Appliquer le décalage avec un mouvement fluide
+          map.panBy([-offsetX, -offsetY], {
+            animate: true,
+            duration: 0.5,
+            easeLinearity: 0.25
           });
+
+          // Mettre en surbrillance l'élément de la liste
+          highlightCourseItem(course.id);
+        });
+
+        // Stocker le marqueur par ID de course
+        mapMarkers[course.id] = marker;
+
+        // Étendre les limites pour inclure ce marqueur
+        bounds.extend([course.startpositionLatitude, course.startpositionLongitude]);
+        hasValidBounds = true;
+      }
+    });
+
+    // Ajuster la vue si on a des marqueurs
+    if (hasValidBounds) {
+      if (courses.length === 1) {
+        // Si un seul résultat, zoom modéré sur ce point
+        const course = courses[0];
+        map.setView([course.startpositionLatitude, course.startpositionLongitude], 10);
+      } else {
+        // Plusieurs résultats, afficher tous les marqueurs
+        map.fitBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 12
         });
       }
-    }, 1000); // Délai pour s'assurer que la carte et ses marqueurs sont chargés
-  });
+    }
 
-  // Fonction pour mettre en évidence un élément de la liste et centrer la carte sur le marqueur
+    // Forcer le redimensionnement de la carte
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+  }
+
+  // Fonction pour mettre à jour la liste des courses
+  function updateCoursesList(courses) {
+    console.log('Mise à jour de la liste avec', courses.length, 'courses');
+
+    const coursesListContainer = document.getElementById('courses-list');
+    const noResultsContainer = document.getElementById('no-results');
+    const coursesCount = document.getElementById('courses-count');
+
+    if (!courses || courses.length === 0) {
+      // Aucun résultat
+      if (coursesListContainer) coursesListContainer.style.display = 'none';
+      if (noResultsContainer) noResultsContainer.style.display = 'block';
+      if (coursesCount) coursesCount.style.display = 'none';
+    } else {
+      // Il y a des résultats
+      if (noResultsContainer) noResultsContainer.style.display = 'none';
+      if (coursesCount) {
+        coursesCount.style.display = 'block';
+        coursesCount.textContent = courses.length + ' course(s) trouvée(s)';
+      }
+
+      // Construire le HTML de la liste
+      let coursesHTML = '';
+      courses.forEach((course, index) => {
+        const borderClass = index === 0 ? '' : 'border-t';
+        coursesHTML += `
+          <div id="course-item-${course.id}"
+               data-id="${course.id}"
+               class="p-4 hover:bg-gray-50 transition-colors cursor-pointer course-item ${borderClass}">
+            <h4 class="font-bold text-teal-600">${course.name}</h4>
+            <p class="text-sm text-gray-500">${course.city} (${course.zipCode})</p>
+            <div class="flex justify-between items-center">
+              <p class="text-xs text-gray-400">${course.startDate}</p>
+              <p class="text-xs font-medium bg-pink-100 text-pink-800 px-2 py-1 rounded-full">${course.price}€</p>
+            </div>
+          </div>
+        `;
+      });
+
+      if (coursesListContainer) {
+        coursesListContainer.innerHTML = coursesHTML;
+        coursesListContainer.style.display = 'block';
+      }
+    }
+
+    // Attacher les événements aux nouveaux éléments
+    attachCourseItemEvents();
+  }
+
+  // Fonction pour mettre en évidence un élément de la liste
   function highlightCourseItem(courseId) {
     // Supprimer les surbrillances existantes
     document.querySelectorAll('.course-item').forEach(item => {
@@ -276,26 +504,75 @@
     const selectedItem = document.getElementById('course-item-' + courseId);
     if (selectedItem) {
       selectedItem.classList.add('bg-teal-50', 'border-l-4', 'border-teal-500');
-
-      // Faire défiler jusqu'à l'élément si nécessaire
       selectedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // Centrer la carte sur le marqueur si disponible
-    if (window.mapMarkers && window.mapMarkers[courseId] && window.map) {
-      // Récupérer la position du marqueur
-      const markerPosition = window.mapMarkers[courseId].getLatLng();
+    // Centrer la carte sur le marqueur avec offset personnalisé
+    if (mapMarkers && mapMarkers[courseId] && map) {
+      const markerPosition = mapMarkers[courseId].getLatLng();
 
-      // Centrer la carte sur le marqueur avec une animation fluide
-      window.map.setView(markerPosition, window.map.getZoom(), {
+      // Calculer la position cible : 50% largeur, 70% hauteur (30% à partir du bas)
+      const mapContainer = map.getContainer();
+      const containerWidth = mapContainer.offsetWidth;
+      const containerHeight = mapContainer.offsetHeight;
+
+      // Position cible en pixels
+      const targetX = containerWidth * 0.5;  // 50% de la largeur
+      const targetY = containerHeight * 0.7; // 70% de la hauteur (30% du bas)
+
+      // Position actuelle du marqueur en pixels
+      const currentPoint = map.latLngToContainerPoint(markerPosition);
+
+      // Calculer le décalage nécessaire
+      const offsetX = targetX - currentPoint.x;
+      const offsetY = targetY - currentPoint.y;
+
+      // Appliquer le décalage avec un mouvement fluide
+      map.panBy([-offsetX, -offsetY], {
         animate: true,
-        duration: 0.5
+        duration: 0.5,
+        easeLinearity: 0.25
       });
     }
   }
 
-  // Exposer la fonction pour qu'elle soit accessible depuis la carte
+  // Fonction pour attacher les événements aux éléments de la liste
+  function attachCourseItemEvents() {
+    const courseItems = document.querySelectorAll('.course-item');
+
+    courseItems.forEach(item => {
+      // Supprimer les anciens événements
+      const newItem = item.cloneNode(true);
+      item.parentNode.replaceChild(newItem, item);
+    });
+
+    // Attacher les nouveaux événements
+    document.querySelectorAll('.course-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const courseId = this.getAttribute('data-id');
+
+        if (mapMarkers && mapMarkers[courseId]) {
+          mapMarkers[courseId].openPopup();
+          highlightCourseItem(courseId);
+        }
+      });
+    });
+  }
+
+  // Exposer les fonctions globalement
   window.highlightCourseItem = highlightCourseItem;
+  window.initializeMap = initializeMap;
+  window.updateCoursesList = updateCoursesList;
+
+  // Initialisation au chargement de la page
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initialisation...');
+    // Initialiser la carte avec les courses actuelles
+    initializeMap(currentCourses);
+
+    // Attacher les événements initiaux
+    attachCourseItemEvents();
+  });
 </script>
 
 <!-- JavaScript pour la géolocalisation -->
@@ -304,6 +581,8 @@
     const proximityButton = document.getElementById('proximity-search');
     if (proximityButton) {
       proximityButton.addEventListener('click', function() {
+        console.log('Bouton géolocalisation cliqué');
+
         // Changer le texte du bouton
         this.textContent = 'Localisation en cours...';
         this.disabled = true;
@@ -313,14 +592,13 @@
 
         // Options de géolocalisation pour plus de précision
         const options = {
-          enableHighAccuracy: true,  // Demander la meilleure précision possible
-          timeout: 10000,            // Attendre jusqu'à 10 secondes
-          maximumAge: 0              // Ne pas utiliser le cache de position
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         };
 
         // Vérifier la prise en charge de la géolocalisation
         if (navigator.geolocation) {
-          // Obtenir la position actuelle
           navigator.geolocation.getCurrentPosition(
                   function(position) {
                     console.log("Position obtenue:", position.coords.latitude, position.coords.longitude);
@@ -334,7 +612,7 @@
                       const radiusInput = document.createElement('input');
                       radiusInput.type = 'hidden';
                       radiusInput.name = 'radius';
-                      radiusInput.value = '50'; // 50km par défaut
+                      radiusInput.value = '50';
                       document.getElementById('search-form').appendChild(radiusInput);
                     } else {
                       document.querySelector('input[name="radius"]').value = '50';
@@ -367,11 +645,10 @@
                     alert(errorMessage);
                     console.error("Erreur de géolocalisation:", error.code, error.message);
                   },
-                  options // Utiliser les options pour une meilleure précision
+                  options
           );
         } else {
           alert("La géolocalisation n'est pas prise en charge par votre navigateur.");
-          // Réinitialiser le bouton
           proximityButton.textContent = 'Chercher autour de moi';
           proximityButton.disabled = false;
         }
@@ -387,136 +664,368 @@
 
     // Remplacer l'événement de soumission du formulaire
     searchForm.addEventListener('submit', function(e) {
-      e.preventDefault(); // Empêcher la soumission normale du formulaire
+      e.preventDefault();
 
-      // Récupérer les données du formulaire
-      const formData = new FormData(searchForm);
+      console.log('=== FORMULAIRE SOUMIS ===');
+
+      // Récupérer les valeurs directement des champs
+      const postalCode = document.getElementById('postal-code').value.trim();
+      const postalRadius = document.getElementById('postal-radius').value;
+      const startDate = document.getElementById('start-date').value;
+      const endDate = document.getElementById('end-date').value;
+      const searchType = document.getElementById('search-type').value;
+      const latitude = document.getElementById('latitude').value;
+      const longitude = document.getElementById('longitude').value;
+
+      // Récupérer le rayon s'il existe (pour la géolocalisation)
+      const radiusElement = document.querySelector('input[name="radius"]');
+      const radius = radiusElement ? radiusElement.value : '';
+
+      console.log('Valeurs récupérées:');
+      console.log('  postalCode:', "'" + postalCode + "'");
+      console.log('  postalRadius:', postalRadius);
+      console.log('  startDate:', "'" + startDate + "'");
+      console.log('  endDate:', "'" + endDate + "'");
+      console.log('  searchType:', searchType);
+      console.log('  latitude:', latitude);
+      console.log('  longitude:', longitude);
+      console.log('  radius:', radius);
+
+      // Créer les données en format URL-encoded
+      const formData = new URLSearchParams();
+      formData.append('postalCode', postalCode);
+      formData.append('postalRadius', postalRadius);
+      formData.append('startDate', startDate);
+      formData.append('endDate', endDate);
+      formData.append('searchType', searchType);
+      formData.append('latitude', latitude);
+      formData.append('longitude', longitude);
+      if (radius) {
+        formData.append('radius', radius);
+      }
+
+      console.log('FormData envoyée:', formData.toString());
 
       // Afficher un indicateur de chargement
-      document.getElementById('courses-list').innerHTML = '<div class="p-4 text-center"><p>Recherche en cours...</p></div>';
+      const coursesListContainer = document.getElementById('courses-list');
+      if (coursesListContainer) {
+        coursesListContainer.innerHTML = '<div class="p-4 text-center"><p>Recherche en cours...</p></div>';
+        coursesListContainer.style.display = 'block';
+      }
+
+      const noResultsContainer = document.getElementById('no-results');
+      if (noResultsContainer) {
+        noResultsContainer.style.display = 'none';
+      }
 
       // Effectuer la requête AJAX
       fetch(searchForm.action, {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData.toString()
       })
-              .then(response => response.text())
-              .then(html => {
-                // Analyser le HTML pour extraire les sections pertinentes
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
+              .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response content-type:', response.headers.get('content-type'));
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                  return response.json();
+                } else {
+                  // Si ce n'est pas du JSON, refaire la requête pour récupérer le HTML
+                  return response.text().then(html => {
+                    console.log('Parsing HTML response...');
+                    // Parser le HTML pour extraire les données des courses
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Extraire les données des courses depuis les attributs data ou le script
+                    const courseElements = doc.querySelectorAll('.course-item');
+                    const courses = [];
+
+                    courseElements.forEach(element => {
+                      const courseId = element.getAttribute('data-id');
+                      const nameElement = element.querySelector('.font-bold');
+                      const cityElement = element.querySelector('.text-gray-500');
+                      const dateElement = element.querySelector('.text-gray-400');
+                      const priceElement = element.querySelector('.bg-pink-100');
+
+                      if (courseId && nameElement) {
+                        courses.push({
+                          id: courseId,
+                          name: nameElement.textContent.trim(),
+                          city: cityElement ? cityElement.textContent.trim().split('(')[0].trim() : '',
+                          zipCode: cityElement ? cityElement.textContent.trim().match(/\((\d+)\)/)?.[1] || '' : '',
+                          startDate: dateElement ? dateElement.textContent.trim() : '',
+                          price: priceElement ? priceElement.textContent.trim().replace('€', '') : '0',
+                          startpositionLatitude: null,
+                          startpositionLongitude: null,
+                          description: ''
+                        });
+                      }
+                    });
+
+                    // Essayer d'extraire les coordonnées depuis le script th:inline
+                    const scripts = doc.querySelectorAll('script');
+                    scripts.forEach(script => {
+                      const content = script.textContent;
+                      if (content.includes('currentCourses')) {
+                        const match = content.match(/currentCourses\s*=\s*(\[.*?\]);/s);
+                        if (match) {
+                          try {
+                            const coursesData = JSON.parse(match[1]);
+                            console.log('Courses extraites du script:', coursesData.length);
+
+                            // Fusionner les données
+                            coursesData.forEach(courseData => {
+                              const course = courses.find(c => c.id == courseData.id);
+                              if (course) {
+                                course.startpositionLatitude = courseData.startpositionLatitude;
+                                course.startpositionLongitude = courseData.startpositionLongitude;
+                                course.description = courseData.description;
+                              }
+                            });
+                          } catch (e) {
+                            console.error('Erreur parsing JSON:', e);
+                          }
+                        }
+                      }
+                    });
+
+                    return { courses: courses };
+                  });
+                }
+              })
+              .then(data => {
+                console.log('Data received:', data);
+                let courses = [];
+
+                if (data.courses) {
+                  courses = data.courses;
+                }
+
+                console.log('Courses à afficher:', courses.length);
 
                 // Mettre à jour la liste des courses
-                const newCoursesList = doc.getElementById('courses-list');
-                if (newCoursesList) {
-                  document.getElementById('courses-list').innerHTML = newCoursesList.innerHTML;
+                updateCoursesList(courses);
+
+                // Mettre à jour la carte avec les nouvelles courses
+                initializeMap(courses);
+
+                // Mettre à jour les valeurs du formulaire si nécessaire
+                if (data.searchPostalCode !== undefined) {
+                  document.getElementById('postal-code').value = data.searchPostalCode || '';
                 }
-
-                // Mettre à jour la carte
-                const newMapContainer = doc.getElementById('map-container');
-                if (newMapContainer) {
-                  // Remplacer le conteneur de carte
-                  document.getElementById('map-container').innerHTML = newMapContainer.innerHTML;
-
-                  // Réinitialiser la carte (le script Leaflet se chargera de l'initialiser)
-                  // Nous devons attendre que les scripts Leaflet se chargent
-                  setTimeout(() => {
-                    if (window.map) {
-                      window.map.invalidateSize();
-                    }
-                  }, 500);
+                if (data.searchPostalRadius !== undefined) {
+                  document.getElementById('postal-radius').value = data.searchPostalRadius || '0';
                 }
-
-                // Mettre à jour les paramètres de recherche (pour maintenir l'état du formulaire)
-                updateFormValues(doc);
-
-                // Réattacher les événements aux éléments de la liste
-                setTimeout(() => {
-                  attachCourseItemEvents();
-                }, 500);
+                if (data.searchStartDate !== undefined) {
+                  document.getElementById('start-date').value = data.searchStartDate || '';
+                }
+                if (data.searchEndDate !== undefined) {
+                  document.getElementById('end-date').value = data.searchEndDate || '';
+                }
               })
               .catch(error => {
                 console.error('Erreur lors de la recherche:', error);
-                document.getElementById('courses-list').innerHTML =
-                        '<div class="p-4 text-center text-red-500"><p>Une erreur est survenue. Veuillez réessayer.</p></div>';
+                const coursesListContainer = document.getElementById('courses-list');
+                if (coursesListContainer) {
+                  coursesListContainer.innerHTML = '<div class="p-4 text-center text-red-500"><p>Une erreur est survenue. Veuillez réessayer.</p></div>';
+                }
               });
     });
-
-    // Fonction pour mettre à jour les valeurs du formulaire
-    function updateFormValues(doc) {
-      // Extraire les paramètres de recherche du nouveau document
-      const fields = {
-        'searchPostalCode': '#postal-code',
-        'searchPostalRadius': '#postal-radius',
-        'searchStartDate': '#start-date',
-        'searchEndDate': '#end-date'
-      };
-
-      for (const [dataField, selector] of Object.entries(fields)) {
-        const newValue = doc.querySelector(`[data-field="${dataField}"]`)?.value;
-        const field = document.querySelector(selector);
-
-        if (newValue && field) {
-          field.value = newValue;
-        }
-      }
-    }
-
-    // Fonction pour attacher les événements aux éléments de la liste
-    function attachCourseItemEvents() {
-      const courseItems = document.querySelectorAll('.course-item');
-
-      courseItems.forEach(item => {
-        item.addEventListener('click', function() {
-          const courseId = this.getAttribute('data-id');
-
-          if (window.mapMarkers && window.mapMarkers[courseId]) {
-            window.mapMarkers[courseId].openPopup();
-            highlightCourseItem(courseId);
-
-            // Ajuster la hauteur de la carte
-            if (window.adjustMapHeight) {
-              window.adjustMapHeight();
-            }
-          }
-        });
-      });
-    }
 
     // Gérer la réinitialisation du formulaire
     const resetButton = searchForm.querySelector('button[type="reset"]');
     if (resetButton) {
       resetButton.addEventListener('click', function(e) {
-        e.preventDefault(); // Empêcher le comportement par défaut
+        e.preventDefault();
+        e.stopPropagation();
 
-        // Vider explicitement tous les champs du formulaire
-        document.getElementById('postal-code').value = '';
-        document.getElementById('postal-radius').value = '0';
-        document.getElementById('start-date').value = '';
-        document.getElementById('end-date').value = '';
+        console.log('=== REINITIALISATION COMPLETE DU FORMULAIRE ===');
 
-        // Réinitialiser les champs cachés
-        document.getElementById('search-type').value = 'generic';
-        document.getElementById('latitude').value = '';
-        document.getElementById('longitude').value = '';
+        // 1. Vider TOUS les champs du formulaire de manière explicite
+        const postalCodeField = document.getElementById('postal-code');
+        const postalRadiusField = document.getElementById('postal-radius');
+        const startDateField = document.getElementById('start-date');
+        const endDateField = document.getElementById('end-date');
+        const searchTypeField = document.getElementById('search-type');
+        const latitudeField = document.getElementById('latitude');
+        const longitudeField = document.getElementById('longitude');
 
-        // Empêcher le navigateur d'auto-remplir les champs
-        searchForm.setAttribute('autocomplete', 'off');
+        // Vider les valeurs ET supprimer les attributs qui pourraient persister
+        if (postalCodeField) {
+          postalCodeField.value = '';
+          postalCodeField.removeAttribute('value');
+        }
 
-        // Réactiver l'auto-remplissage après un court délai
+        if (postalRadiusField) {
+          postalRadiusField.selectedIndex = 0;
+          postalRadiusField.value = '0';
+        }
+
+        if (startDateField) {
+          startDateField.value = '';
+          startDateField.removeAttribute('value');
+        }
+
+        if (endDateField) {
+          endDateField.value = '';
+          endDateField.removeAttribute('value');
+        }
+
+        if (searchTypeField) {
+          searchTypeField.value = 'generic';
+        }
+
+        if (latitudeField) {
+          latitudeField.value = '';
+        }
+
+        if (longitudeField) {
+          longitudeField.value = '';
+        }
+
+        // 2. Supprimer complètement le champ radius s'il existe
+        const radiusElement = document.querySelector('input[name="radius"]');
+        if (radiusElement) {
+          radiusElement.parentNode.removeChild(radiusElement);
+          console.log('Champ radius supprimé');
+        }
+
+        // 3. Réinitialiser le bouton de géolocalisation
+        const proximityButton = document.getElementById('proximity-search');
+        if (proximityButton) {
+          proximityButton.textContent = 'Chercher autour de moi';
+          proximityButton.disabled = false;
+          proximityButton.classList.remove('bg-gray-400');
+          proximityButton.classList.add('bg-blue-500');
+        }
+
+        // 4. Réinitialiser le formulaire HTML natif pour être sûr
+        searchForm.reset();
+
+        // 5. Vérifier que tous les champs sont bien vides
+        console.log('Vérification après réinitialisation:');
+        console.log('  - postalCode:', "'" + (postalCodeField ? postalCodeField.value : 'N/A') + "'");
+        console.log('  - postalRadius:', postalRadiusField ? postalRadiusField.value : 'N/A');
+        console.log('  - startDate:', "'" + (startDateField ? startDateField.value : 'N/A') + "'");
+        console.log('  - endDate:', "'" + (endDateField ? endDateField.value : 'N/A') + "'");
+        console.log('  - searchType:', searchTypeField ? searchTypeField.value : 'N/A');
+
+        // 6. Afficher immédiatement le message de chargement
+        const coursesListContainer = document.getElementById('courses-list');
+        const noResultsContainer = document.getElementById('no-results');
+
+        if (coursesListContainer) {
+          coursesListContainer.innerHTML = '<div class="p-4 text-center"><p>Réinitialisation en cours...</p></div>';
+          coursesListContainer.style.display = 'block';
+        }
+
+        if (noResultsContainer) {
+          noResultsContainer.style.display = 'none';
+        }
+
+        // 7. Attendre un peu puis faire une recherche complètement vide
         setTimeout(() => {
-          searchForm.setAttribute('autocomplete', 'on');
-        }, 1000);
+          console.log('=== EXECUTION RECHERCHE VIDE APRES RESET ===');
 
-        // Déclencher une recherche sans paramètres
-        setTimeout(() => {
-          searchForm.dispatchEvent(new Event('submit'));
-        }, 100);
+          // Vérifier une dernière fois que les champs sont vides
+          console.log('Vérification finale des champs:');
+          console.log('  - postal-code:', "'" + document.getElementById('postal-code').value + "'");
+          console.log('  - postal-radius:', document.getElementById('postal-radius').value);
+          console.log('  - start-date:', "'" + document.getElementById('start-date').value + "'");
+          console.log('  - end-date:', "'" + document.getElementById('end-date').value + "'");
+
+          // Créer une requête avec des champs explicitement vides
+          const emptyFormData = new URLSearchParams();
+          emptyFormData.append('postalCode', '');
+          emptyFormData.append('postalRadius', '0');
+          emptyFormData.append('startDate', '');
+          emptyFormData.append('endDate', '');
+          emptyFormData.append('searchType', 'generic');
+          emptyFormData.append('latitude', '');
+          emptyFormData.append('longitude', '');
+
+          console.log('FormData envoyée après reset:', emptyFormData.toString());
+
+          fetch(searchForm.action, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: emptyFormData.toString()
+          })
+                  .then(response => {
+                    console.log('Réponse reçue après réinitialisation:', response.status);
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                      return response.json();
+                    } else {
+                      return response.text().then(html => {
+                        console.log('Parsing HTML response après réinitialisation...');
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+
+                        // Extraire les courses depuis le script th:inline plutôt que depuis les éléments DOM
+                        const scripts = doc.querySelectorAll('script');
+                        let coursesData = [];
+
+                        scripts.forEach(script => {
+                          const content = script.textContent;
+                          if (content.includes('currentCourses')) {
+                            const match = content.match(/currentCourses\s*=\s*(\[.*?\]);/s);
+                            if (match) {
+                              try {
+                                coursesData = JSON.parse(match[1]);
+                                console.log('Courses extraites du script après reset:', coursesData.length);
+                              } catch (e) {
+                                console.error('Erreur parsing JSON après réinitialisation:', e);
+                              }
+                            }
+                          }
+                        });
+
+                        return { courses: coursesData };
+                      });
+                    }
+                  })
+                  .then(data => {
+                    console.log('=== DONNEES RECUES APRES RESET ===');
+                    console.log('Nombre de courses:', data.courses ? data.courses.length : 0);
+
+                    let courses = data.courses || [];
+
+                    // S'assurer qu'on a bien toutes les courses (fallback sur les courses initiales)
+                    if (courses.length === 0) {
+                      console.log('Aucune course reçue, utilisation des courses initiales');
+                      courses = currentCourses || [];
+                    }
+
+                    // Mettre à jour la liste et la carte
+                    updateCoursesList(courses);
+                    initializeMap(courses);
+
+                    console.log('=== REINITIALISATION TERMINEE AVEC SUCCES ===');
+                    console.log('Courses affichées:', courses.length);
+                  })
+                  .catch(error => {
+                    console.error('Erreur lors de la réinitialisation:', error);
+
+                    // En cas d'erreur, utiliser les courses initiales
+                    console.log('Utilisation des courses initiales à cause de l\'erreur');
+                    updateCoursesList(currentCourses || []);
+                    initializeMap(currentCourses || []);
+                  });
+        }, 200); // Délai un peu plus long pour être sûr
       });
     }
-
-    // Initialiser les événements pour les éléments de la liste
-    attachCourseItemEvents();
   });
 </script>
 </body>
