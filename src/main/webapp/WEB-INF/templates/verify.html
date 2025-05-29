@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Vérification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white min-h-screen flex flex-col items-center justify-center px-4">
+<div class="w-full max-w-md space-y-6">
+    <h1 class="text-2xl font-bold text-center">Vérification Email</h1>
+    <p class="text-center text-sm text-gray-600">Un code de vérification a été envoyé à votre adresse email. Veuillez le saisir ci-dessous :</p>
+
+    <form method="post" th:action="@{/verify}" class="space-y-4">
+        <input type="text" name="code" required placeholder="Code de vérification"
+               class="w-full border border-yellow-400 px-3 py-2 rounded">
+        <button type="submit" class="bg-yellow-400 w-full py-2 rounded text-white font-semibold hover:bg-yellow-500">
+            Vérifier
+        </button>
+    </form>
+
+    <p class="text-center text-sm text-red-600" th:if="${error}" th:text="${error}"></p>
+</div>
+</body>
+</html>
