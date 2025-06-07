@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- CSS Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- JS Leaflet -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+<div th:fragment="mapFragment(width, height, zoom, courses, showLegend, className)">
+    <!-- Carte -->
+    <div th:id="map" th:class="${'h-' + height + ' w-' + width + ' border rounded relative shadow-md ' + className}">
+        <div class="absolute inset-0 bg-gray-100 flex items-center justify-center z-0">
+            <p class="text-gray-500">Chargement de la carte...</p>
+        </div>
+
+        <!-- Légende de la carte -->
+        <div th:if="${showLegend}" class="absolute bottom-4 left-4 bg-white p-3 rounded-md shadow-md z-10">
+            <h4 class="font-bold text-sm mb-2">Légende</h4>
+            <div class="flex items-center mb-1">
+                <div class="w-4 h-4 rounded-full bg-pink-500 mr-2"></div>
+                <p class="text-xs">Courses à venir</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script pour la carte -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Données des événements (récupérées depuis le modèle)
+            const colorRunEvents = /*[[${courses}]]*/ [];
+
+            // Vérifier si nous sommes dans un contexte de recherche
+            const isSearchContext = /*[[${searchPostalCode != null && searchPostalCode != ''}]]*/ false;
+
+            // Récupérer le code postal recherché si disponible
+            const searchedPostalCode = /*[[${searchPostalCode}]]*/ '';
+
+            // Paramètres de la carte
+            let initialZoom = [[${zoom}]];
+            let initialCenter = [46.603354, 1.888334]; // Coordonnées par défaut (France)
+
+            // Initialiser la carte
+            const map = L.map('map').setView(initialCenter, initialZoom);
+
+            // Exposer la carte pour pouvoir l'utiliser depuis l'extérieur
+            window.map = map;
+
+            // Ajouter le fond de carte
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Si aucun événement, ne rien faire de plus
+            if (!colorRunEvents || colorRunEvents.length === 0) {
+                console.log("Aucune course à afficher sur la carte");
+                return;
+            }
+
+            console.log("Affichage de", colorRunEvents.length, "courses sur la carte");
+
+            // Ajouter des marqueurs pour chaque course
+            const bounds = L.latLngBounds();
+            let hasValidBounds = false;
+
+            // Créer un objet pour stocker les marqueurs par ID de course
+            const markers = {};
+
+            colorRunEvents.forEach(event => {
+                // Vérifier que les coordonnées sont valides
+                if (event.startpositionLatitude && event.startpositionLongitude) {
+                    console.log("Ajout du marqueur pour:", event.name, "à", event.startpositionLatitude, event.startpositionLongitude);
+
+                    const marker = L.marker([event.startpositionLatitude, event.startpositionLongitude])
+                        .addTo(map);
+
+                    // Créer le popup avec les infos de l'événement
+                    marker.bindPopup(`
+                        <div style="font-family: 'Poppins', sans-serif; padding: 10px; max-width: 250px;">
+                            <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${event.name}</h3>
+                            <p style="font-size: 14px; margin-bottom: 5px;"><strong>Date:</strong> ${event.startDate}</p>
+                            <p style="font-size: 12px; margin-bottom: 10px;">${event.description}</p>
+                            <a href="/course-detail?id=${event.id}"
+                                style="background-color: #14b8a6; color: white; padding: 6px 12px;
+                                    border-radius: 4px; text-decoration: none; display: inline-block;
+                                    font-size: 12px; text-align: center; font-weight: 500;">
+                                VOIR DÉTAILS
+                            </a>
+                        </div>
+                    `);
+
+                    // Ajouter l'événement pour lier le marqueur à l'élément de la liste
+                    marker.on('click', function() {
+                        if (window.highlightCourseItem) {
+                            window.highlightCourseItem(event.id);
+                        }
+                    });
+
+                    // Stocker le marqueur par ID de course
+                    markers[event.id] = marker;
+
+                    // Étendre les limites pour inclure ce marqueur
+                    bounds.extend([event.startpositionLatitude, event.startpositionLongitude]);
+                    hasValidBounds = true;
+                }
+            });
+
+            // Exposer les marqueurs à la fenêtre globale pour l'interaction avec la liste
+            window.mapMarkers = markers;
+
+            // Ajuster la vue en fonction du contexte
+            if (hasValidBounds) {
+                if (isSearchContext) {
+                    console.log("Contexte de recherche: ajustement de la vue sur les résultats");
+
+                    if (colorRunEvents.length === 1) {
+                        // Si un seul résultat, zoom modéré sur ce point
+                        const course = colorRunEvents[0];
+                        map.setView([course.startpositionLatitude, course.startpositionLongitude], 10);
+                        console.log("Zoom sur la course unique:", course.name);
+                    } else {
+                        // Plusieurs résultats, afficher tous les marqueurs
+                        map.fitBounds(bounds, {
+                            padding: [50, 50], // Ajouter de la marge autour des marqueurs
+                            maxZoom: 12 // Limiter le zoom maximum
+                        });
+                        console.log("Affichage de toutes les courses dans les limites");
+                    }
+                } else {
+                    // Page d'accueil: vue sur la France avec tous les marqueurs visibles
+                    console.log("Page d'accueil: vue globale sur la France");
+                    map.fitBounds(bounds, {
+                        padding: [50, 50],
+                        maxZoom: 8 // Zoom moins important pour la vue d'ensemble
+                    });
+                }
+            }
+        });
+    </script>
+</div>
+
+<!-- Fragment autonome pour inclure tous les éléments nécessaires -->
+<div th:fragment="mapFragmentStandalone(width, height, zoom, courses, showLegend, className)">
+    <!-- CSS Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <div th:replace="fragments/map :: mapFragment(${width}, ${height}, ${zoom}, ${courses}, ${showLegend}, ${className})">
+    </div>
+
+    <!-- JS Leaflet -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</div>
+
+</body>
+</html>

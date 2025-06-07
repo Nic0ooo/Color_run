@@ -3,11 +3,13 @@ package fr.esgi.color_run.repository.impl;
 
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.repository.CourseRepository;
+import fr.esgi.color_run.service.GeocodingService;
 import fr.esgi.color_run.util.Config;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.sql.DriverManager.getConnection;
 
@@ -19,8 +21,11 @@ public class CourseRepositoryImpl implements CourseRepository {
     private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
     private final String jdbcUser = "sa";
     private final String jdbcPassword = "";
+    private final GeocodingService geocodingService;
 
-    public CourseRepositoryImpl() {
+    public CourseRepositoryImpl(GeocodingService geocodingService) {
+        this.geocodingService = geocodingService;
+
         try {
             // Obligatoire pour que Tomcat charge le driver H2
             Class.forName("org.h2.Driver");
@@ -112,6 +117,53 @@ public class CourseRepositoryImpl implements CourseRepository {
             System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + courses);
         }
             return courses;
+    }
+
+    @Override
+    public List<Course> findByProximity(double latitude, double longitude, int radiusInKm) {
+        List<Course> allCourses = findAll();
+
+        return allCourses.stream()
+                    .filter(course -> geocodingService.calculateDistance(
+                            latitude, longitude,
+                            course.getStartpositionLatitude(), course.getStartpositionLongitude()) <= radiusInKm)
+                    .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Course> findByPostalCode(String postalCode) {
+        // Vérifier si le code postal est vide ou null
+        if (postalCode == null || postalCode.trim().isEmpty()) {
+            return findAll();
+        }
+
+        List<Course> allCourses = findAll();
+        return allCourses.stream()
+                .filter(course -> course.getZipCode() == Integer.parseInt(postalCode))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Course> findByMonth(String month) {
+        List<Course> courses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE TO_CHAR(startdate, 'MM') = ?";
+
+        try (Connection connection = getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            // Set the month parameter (e.g., "01" for January)
+            stmt.setString(1, month);
+
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    courses.add(mapRowToCourse(resultSet));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return courses;
     }
 
     @Override
