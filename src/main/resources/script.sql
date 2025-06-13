@@ -113,13 +113,17 @@ CREATE TABLE Paiement (
     SELECT 'Courir Ensemble', 'Organisation de courses caritatives', 'www.courirensemble.org', '/images/logo2.png', 'contact@courirensemble.org', '0187654321', '15 rue Lafayette', 'Marseille', 13001
     WHERE NOT EXISTS (SELECT 1 FROM Association LIMIT 2) AND EXISTS (SELECT 1 FROM Association LIMIT 1);
 
-INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
-SELECT 'Marathon de Paris', 'Un marathon mythique au cœur de Paris', 1, 1, '2025-04-10 17:00', '2025-04-10 18:00', 48.8566, 2.3522, 48.8606, 2.3376, 42.195, 'Champs Élysées', 'Paris', 75008, 5000, 1200, 50.0
-WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 1);
+    INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+    SELECT 'Marathon de Paris', 'Un marathon mythique au cœur de Paris', 1, 1, '2025-04-10 17:00', '2025-04-10 18:00', 48.8566, 2.3522, 48.8606, 2.3376, 42.195, 'Champs Élysées', 'Paris', 75008, 5000, 1200, 50.0
+    WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 1);
 
     INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
     SELECT 'Course des Héros', 'Course caritative pour la bonne cause', 2, 2, '2025-06-15 13:00', '2025-06-15 15:30', 45.764, 4.8357, 45.7700, 4.8300, 5, 'Parc Blandant', 'Lyon', 69006, 3000, 800, 30.0
     WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 2) AND EXISTS (SELECT 1 FROM Course LIMIT 1);
+
+    INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+    SELECT 'Trail des Alpes', 'Une course en montagne avec des paysages magnifiques', 2, 1, '2025-07-20 08:00', '2025-07-20 14:00', 45.9237, 6.8694, 45.9170, 6.8720, 25.0, 'Mont Blanc', 'Chamonix', 74400, 1500, 500, 40.0
+    WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 3) AND EXISTS (SELECT 1 FROM Course LIMIT 2);
 
     -- Insérer des membres dans les courses seulement si la table est vide
     INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus)

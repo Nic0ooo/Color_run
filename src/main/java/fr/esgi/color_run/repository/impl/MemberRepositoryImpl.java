@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.Mapper;
 
 public class MemberRepositoryImpl implements MemberRepository {
 
@@ -100,7 +101,7 @@ public class MemberRepositoryImpl implements MemberRepository {
             ps.setLong(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return Optional.of(mapRowToMember(rs));
+                return Optional.of(Mapper.mapRowToMember(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -115,7 +116,7 @@ public class MemberRepositoryImpl implements MemberRepository {
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return Optional.of(mapRowToMember(rs));
+                return Optional.of(Mapper.mapRowToMember(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -129,7 +130,7 @@ public class MemberRepositoryImpl implements MemberRepository {
         String sql = "SELECT * FROM member";
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                members.add(mapRowToMember(rs));
+                members.add(Mapper.mapRowToMember(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -176,6 +177,7 @@ public class MemberRepositoryImpl implements MemberRepository {
         }
     }
 
+    // à supprimer -> laissé pour ne pas caisser après merge, mappage se fait maintenant via /util/Mapper pour être accesible partout
     private Member mapRowToMember(ResultSet rs) throws SQLException {
         Member m = new Member();
         m.setId(rs.getLong("id"));

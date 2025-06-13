@@ -10,47 +10,167 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ArrayList;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 @WebServlet(urlPatterns = {"/courses"})
 public class CoursesServlet extends HttpServlet {
 
     private final CourseService courseService = new CourseServiceImpl();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         System.out.println("CoursesServlet: doGet() called");
 
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("member") == null) {
+            resp.sendRedirect("login");
+            return;
+        }
+
+        Member member = (Member) session.getAttribute("member");
+
+        // Vérifier si c'est une requête AJAX
+        String isAjax = req.getParameter("ajax");
+        if ("true".equals(isAjax)) {
+            handleAjaxRequest(req, resp, member);
+            return;
+        }
+
+        // Traitement normal pour le rendu HTML
+        handleNormalRequest(req, resp, member);
+    }
+
+    private void handleAjaxRequest(HttpServletRequest req, HttpServletResponse resp, Member member) throws IOException {
+        // Récupération des paramètres de recherche et tri
+        String searchTerm = req.getParameter("search");
+        String fromDateStr = req.getParameter("fromDate");
+        String toDateStr = req.getParameter("toDate");
+        String sortBy = req.getParameter("sortBy");
+        String sortDirection = req.getParameter("sortDirection");
+
+        // Conversion des dates
+        LocalDate fromDate = null;
+        LocalDate toDate = null;
+        try {
+            if (fromDateStr != null && !fromDateStr.isEmpty()) {
+                fromDate = LocalDate.parse(fromDateStr);
+            }
+            if (toDateStr != null && !toDateStr.isEmpty()) {
+                toDate = LocalDate.parse(toDateStr);
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors du parsing des dates: " + e.getMessage());
+        }
+
+        // Récupérer les courses avec filtres et tri
+        List<Course> upcomingCourses = courseService.searchAndSortCourses(
+                searchTerm, fromDate, toDate, sortBy, sortDirection, true);
+        List<Course> pastCourses = courseService.searchAndSortCourses(
+                searchTerm, fromDate, toDate, sortBy, sortDirection, false);
+
+        System.out.println("AJAX - Courses à venir: " + upcomingCourses.size());
+        System.out.println("AJAX - Courses passées: " + pastCourses.size());
+
+        // Créer la réponse JSON
+        Map<String, Object> response = new HashMap<>();
+        response.put("upcomingCourses", convertCoursesToJson(upcomingCourses));
+        response.put("pastCourses", convertCoursesToJson(pastCourses));
+
+        // Configurer la réponse
+        resp.setContentType("application/json;charset=UTF-8");
+        resp.getWriter().write(objectMapper.writeValueAsString(response));
+    }
+
+    private void handleNormalRequest(HttpServletRequest req, HttpServletResponse resp, Member member) throws ServletException, IOException {
         TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         WebContext context = new WebContext(ThymeleafConfiguration.getApplication().buildExchange(req, resp));
 
-        // Récupérer la liste des courses passés
-        var courses = courseService.listAllCourses();
-        System.out.println("CoursesServlet: Nombre de courses récupérées = " + courses.size());
-        context.setVariable("courses", courses);
-
-        // Récupérer la liste des courses à venir
-        var upcomingCourses = courseService.listUpcomingCourses();
-        System.out.println("CoursesServlet: Nombre de courses à venir récupérées = " + upcomingCourses.size());
-        context.setVariable("upcomingCourses", upcomingCourses);
-
-        // Récupérer la liste des courses passés
-        var pastCourses = courseService.listPastCourses();
-        System.out.println("CoursesServlet: Nombre de courses récupérées = " + pastCourses.size());
-        context.setVariable("pastCourses", pastCourses);
-
-        // Récupérer le membre de la session
-        Member member = (Member) req.getSession().getAttribute("member");
         context.setVariable("member", member);
-        System.out.println("Connécté en tant que :" + member);
+        context.setVariable("pageTitle", "Courses");
+
+        // Récupération des paramètres de recherche et tri
+        String searchTerm = req.getParameter("search");
+        String fromDateStr = req.getParameter("fromDate");
+        String toDateStr = req.getParameter("toDate");
+        String sortBy = req.getParameter("sortBy");
+        String sortDirection = req.getParameter("sortDirection");
+
+        // Conversion des dates
+        LocalDate fromDate = null;
+        LocalDate toDate = null;
+        try {
+            if (fromDateStr != null && !fromDateStr.isEmpty()) {
+                fromDate = LocalDate.parse(fromDateStr);
+            }
+            if (toDateStr != null && !toDateStr.isEmpty()) {
+                toDate = LocalDate.parse(toDateStr);
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors du parsing des dates: " + e.getMessage());
+        }
+
+        // Récupérer les courses avec filtres et tri
+        List<Course> upcomingCourses = courseService.searchAndSortCourses(
+                searchTerm, fromDate, toDate, sortBy, sortDirection, true);
+        List<Course> pastCourses = courseService.searchAndSortCourses(
+                searchTerm, fromDate, toDate, sortBy, sortDirection, false);
+
+        System.out.println("CoursesServlet: Nombre de courses à venir récupérées = " + upcomingCourses.size());
+        System.out.println("CoursesServlet: Nombre de courses passées récupérées = " + pastCourses.size());
+
+        context.setVariable("upcomingCourses", upcomingCourses);
+        context.setVariable("pastCourses", pastCourses);
 
         // Configuration de la réponse
         resp.setContentType("text/html;charset=UTF-8");
         engine.process("courses", context, resp.getWriter());
+    }
+
+    private List<Map<String, Object>> convertCoursesToJson(List<Course> courses) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
+
+        for (Course course : courses) {
+            Map<String, Object> courseMap = new HashMap<>();
+            courseMap.put("id", course.getId());
+            courseMap.put("name", course.getName());
+            courseMap.put("description", course.getDescription());
+            courseMap.put("city", course.getCity());
+            courseMap.put("zipCode", course.getZipCode());
+            courseMap.put("address", course.getAddress());
+            courseMap.put("distance", course.getDistance());
+            courseMap.put("price", course.getPrice());
+            courseMap.put("startDate", course.getStartDate() != null ? course.getStartDate().toString() : null);
+            courseMap.put("endDate", course.getEndDate() != null ? course.getEndDate().toString() : null);
+            courseMap.put("formattedStartDate", course.getStartDate() != null ? course.getStartDate().format(formatter) : "");
+            courseMap.put("startpositionLatitude", course.getStartpositionLatitude());
+            courseMap.put("startpositionLongitude", course.getStartpositionLongitude());
+            courseMap.put("endpositionLatitude", course.getEndpositionLatitude());
+            courseMap.put("endpositionLongitude", course.getEndpositionLongitude());
+            courseMap.put("maxOfRunners", course.getMaxOfRunners());
+            courseMap.put("currentNumberOfRunners", course.getCurrentNumberOfRunners());
+            courseMap.put("associationId", course.getAssociationId());
+            courseMap.put("memberCreatorId", course.getMemberCreatorId());
+
+            result.add(courseMap);
+        }
+
+        return result;
     }
 
     @Override
@@ -58,7 +178,6 @@ public class CoursesServlet extends HttpServlet {
         System.out.println("CoursesServlet: doPost() called");
         req.setCharacterEncoding("UTF-8");
 
-        req.setCharacterEncoding("UTF-8");
         String action = req.getParameter("action");
 
         if ("create".equals(action)) {
@@ -188,5 +307,3 @@ public class CoursesServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/courses");
     }
 }
-
-

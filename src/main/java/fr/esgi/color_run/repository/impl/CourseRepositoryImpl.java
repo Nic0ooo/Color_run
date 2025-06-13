@@ -1,15 +1,14 @@
-// File: src/main/java/fr/esgi/color_run/repository/impl/CourseRepositoryImpl.java
 package fr.esgi.color_run.repository.impl;
 
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.Mapper;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.sql.DriverManager.getConnection;
 
 public class CourseRepositoryImpl implements CourseRepository {
 
@@ -98,7 +97,7 @@ public class CourseRepositoryImpl implements CourseRepository {
 
         try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
-                courses.add(mapRowToCourse(resultSet));
+                courses.add(Mapper.mapRowToCourse(resultSet));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -107,9 +106,8 @@ public class CourseRepositoryImpl implements CourseRepository {
             System.out.println("❌ Aucune course trouvée dans la base de données.");
         } else {
             System.out.println("✅ " + courses.size() + " courses trouvées dans la base de données.");
-            System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + courses);
         }
-            return courses;
+        return courses;
     }
 
     @Override
@@ -120,7 +118,7 @@ public class CourseRepositoryImpl implements CourseRepository {
 
         try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
-                upcomingCourses.add(mapRowToCourse(resultSet));
+                upcomingCourses.add(Mapper.mapRowToCourse(resultSet));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -129,7 +127,6 @@ public class CourseRepositoryImpl implements CourseRepository {
             System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
         } else {
             System.out.println("✅ " + upcomingCourses.size() + " courses à venir trouvées dans la base de données.");
-            // System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + upcomingCourses);
         }
         return upcomingCourses;
     }
@@ -142,16 +139,15 @@ public class CourseRepositoryImpl implements CourseRepository {
 
         try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
-                pastCourses.add(mapRowToCourse(resultSet));
+                pastCourses.add(Mapper.mapRowToCourse(resultSet));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         if (pastCourses.isEmpty()) {
-            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
+            System.out.println("❌ Aucune course passée trouvée dans la base de données.");
         } else {
             System.out.println("✅ " + pastCourses.size() + " courses passées trouvées dans la base de données.");
-            // System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + pastCourses);
         }
         return pastCourses;
     }
@@ -166,7 +162,7 @@ public class CourseRepositoryImpl implements CourseRepository {
             stmt.setString(1, "%" + name + "%");
             ResultSet resultSet = stmt.executeQuery();
             while (resultSet.next()) {
-                searchedCourses.add(mapRowToCourse(resultSet));
+                searchedCourses.add(Mapper.mapRowToCourse(resultSet));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -181,17 +177,17 @@ public class CourseRepositoryImpl implements CourseRepository {
 
     @Override
     public Course findById(Integer id) {
-        Course course = new Course();
+        Course course = null;
         String sql = "SELECT * FROM course WHERE id = ?";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, id);
             ResultSet resultSet = stmt.executeQuery();
             if (resultSet.next()) {
-                course = mapRowToCourse(resultSet);
+                course = Mapper.mapRowToCourse(resultSet);
+                System.out.println("CourseRepositoryImpl: findById() - Course trouvée avec l'ID : " + id);
             } else {
                 System.out.println("❌ Aucune course trouvée avec l'ID : " + id);
             }
-            System.out.println("CourseRepositoryImpl: findById() - Course trouvée avec l'ID : " + id);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -199,127 +195,178 @@ public class CourseRepositoryImpl implements CourseRepository {
     }
 
     @Override
-    public Course save(Course course) {
-        String sql = "INSERT INTO PUBLIC.COURSE (name, description, associationid, membercreatorid, startdate, enddate, startpositionlatitude, startpositionlongitude, endpositionlatitude, endpositionlongitude, distance, address, city, zipcode, maxofrunners, currentnumberofrunners, price) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public List<Course> searchAndSortCourses(String searchTerm, LocalDate fromDate, LocalDate toDate,
+                                             String sortBy, String sortDirection, boolean upcoming) {
+        List<Course> courses = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM course WHERE 1=1");
+        List<Object> parameters = new ArrayList<>();
+
+        // Filtre par période (upcoming/past)
+        if (upcoming) {
+            sql.append(" AND startdate > CURRENT_TIMESTAMP");
+        } else {
+            sql.append(" AND startdate < CURRENT_TIMESTAMP");
+        }
+
+        // Filtre par terme de recherche (nom, ville, code postal)
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            sql.append(" AND (LOWER(name) LIKE LOWER(?) OR LOWER(city) LIKE LOWER(?) OR CAST(zipcode AS VARCHAR) LIKE ?)");
+            String searchPattern = "%" + searchTerm.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+
+        // Filtre par date de début
+        if (fromDate != null) {
+            sql.append(" AND DATE(startdate) >= ?");
+            parameters.add(Date.valueOf(fromDate));
+        }
+
+        // Filtre par date de fin
+        if (toDate != null) {
+            sql.append(" AND DATE(startdate) <= ?");
+            parameters.add(Date.valueOf(toDate));
+        }
+
+        // Tri
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            String direction = "desc".equalsIgnoreCase(sortDirection) ? "DESC" : "ASC";
+
+            switch (sortBy.toLowerCase()) {
+                case "name":
+                    sql.append(" ORDER BY LOWER(name) ").append(direction);
+                    break;
+                case "startdate":
+                    sql.append(" ORDER BY startdate ").append(direction);
+                    break;
+                case "city":
+                    sql.append(" ORDER BY LOWER(city) ").append(direction);
+                    break;
+                case "distance":
+                    sql.append(" ORDER BY distance ").append(direction);
+                    break;
+                default:
+                    sql.append(" ORDER BY startdate ASC"); // Tri par défaut
+            }
+        } else {
+            // Tri par défaut : date croissante pour upcoming, décroissante pour past
+            sql.append(" ORDER BY startdate ").append(upcoming ? "ASC" : "DESC");
+        }
+
+        System.out.println("Requête SQL générée: " + sql.toString());
+        System.out.println("Paramètres: " + parameters);
+
         try (Connection connection = getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
 
-             PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            // Définir les paramètres
+            for (int i = 0; i < parameters.size(); i++) {
+                stmt.setObject(i + 1, parameters.get(i));
+            }
 
-            stmt.setString(1, course.getName());
-            stmt.setString(2, course.getDescription());
-            stmt.setInt(3, course.getAssociationId());
-            stmt.setInt(4, course.getMemberCreatorId());
-            stmt.setTimestamp(5, course.getStartDate() != null ?
-                    Timestamp.valueOf(course.getStartDate()) : null);
-            stmt.setTimestamp(6, course.getEndDate() != null ?
-                    Timestamp.valueOf(course.getEndDate()) : null);
-            stmt.setDouble(7, course.getStartpositionLatitude());
-            stmt.setDouble(8, course.getStartpositionLongitude());
-            stmt.setDouble(9, course.getEndpositionLatitude());
-            stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setDouble(11, course.getDistance());
-            stmt.setString(12, course.getAddress());
-            stmt.setString(13, course.getCity());
-            stmt.setInt(14, course.getZipCode());
-            stmt.setInt(15, course.getMaxOfRunners());
-            stmt.setInt(16, course.getCurrentNumberOfRunners());
-            stmt.setDouble(17, course.getPrice());
-
-            stmt.executeUpdate();
-
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    course.setId(generatedKeys.getLong(1));
-                } else {
-                    throw new SQLException("Creating course failed, no ID obtained.");
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    courses.add(Mapper.mapRowToCourse(resultSet));
                 }
             }
-
-            System.out.println("✅ Course enregistrée : " + course.getName());
-            return course;
         } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la recherche et tri des courses:");
             e.printStackTrace();
-            return null;
         }
+
+        return courses;
     }
 
-    @Override
-    public Course updateCourse(Course course) {
-        // Vérifier si l'ID de la course est valide
-        if (course == null || course.getId() == null) {
-            System.out.println("❌ Course ID est nul, impossible de mettre à jour.");
-            return null;
-        }
-        String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, distance = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
-        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, course.getName());
-            stmt.setString(2, course.getDescription());
-            stmt.setInt(3, course.getAssociationId());
-            stmt.setInt(4, course.getMemberCreatorId());
-            stmt.setTimestamp(5, course.getStartDate()!= null ?
-                    Timestamp.valueOf(course.getStartDate()) : null);
-            stmt.setTimestamp(6, course.getEndDate() != null ?
-                    Timestamp.valueOf(course.getEndDate()) : null);
-            stmt.setDouble(7, course.getStartpositionLatitude());
-            stmt.setDouble(8, course.getStartpositionLongitude());
-            stmt.setDouble(9, course.getEndpositionLatitude());
-            stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setDouble(11, course.getDistance());
-            stmt.setString(12, course.getAddress());
-            stmt.setString(13, course.getCity());
-            stmt.setInt(14, course.getZipCode());
-            stmt.setInt(15, course.getMaxOfRunners());
-            stmt.setInt(16, course.getCurrentNumberOfRunners());
-            stmt.setDouble(17, course.getPrice());
-            stmt.setLong(18, course.getId());
 
-            System.out.println("Données de mises à jour" + stmt.toString());
+        @Override
+        public Course save(Course course) {
+            String sql = "INSERT INTO PUBLIC.COURSE (name, description, associationid, membercreatorid, startdate, enddate, startpositionlatitude, startpositionlongitude, endpositionlatitude, endpositionlongitude, distance, address, city, zipcode, maxofrunners, currentnumberofrunners, price) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            try (Connection connection = getConnection();
+                 PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            int rowsUpdated = stmt.executeUpdate();
-            if (rowsUpdated > 0) {
-                System.out.println("✅ Course mise à jour : " + course.getName());
+                stmt.setString(1, course.getName());
+                stmt.setString(2, course.getDescription());
+                stmt.setInt(3, course.getAssociationId());
+                stmt.setInt(4, course.getMemberCreatorId());
+                stmt.setTimestamp(5, course.getStartDate() != null ?
+                        Timestamp.valueOf(course.getStartDate()) : null);
+                stmt.setTimestamp(6, course.getEndDate() != null ?
+                        Timestamp.valueOf(course.getEndDate()) : null);
+                stmt.setDouble(7, course.getStartpositionLatitude());
+                stmt.setDouble(8, course.getStartpositionLongitude());
+                stmt.setDouble(9, course.getEndpositionLatitude());
+                stmt.setDouble(10, course.getEndpositionLongitude());
+                stmt.setDouble(11, course.getDistance());
+                stmt.setString(12, course.getAddress());
+                stmt.setString(13, course.getCity());
+                stmt.setInt(14, course.getZipCode());
+                stmt.setInt(15, course.getMaxOfRunners());
+                stmt.setInt(16, course.getCurrentNumberOfRunners());
+                stmt.setDouble(17, course.getPrice());
+
+                stmt.executeUpdate();
+
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        course.setId(generatedKeys.getLong(1));
+                    } else {
+                        throw new SQLException("Creating course failed, no ID obtained.");
+                    }
+                }
+
+                System.out.println("✅ Course enregistrée : " + course.getName());
                 return course;
-            } else {
-                System.out.println("❌ Aucune ligne mise à jour pour la course avec ID : " + course.getId());
+            } catch (SQLException e) {
+                e.printStackTrace();
                 return null;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+        }
+
+        @Override
+        public Course updateCourse(Course course) {
+            // Vérifier si l'ID de la course est valide
+            if (course == null || course.getId() == null) {
+                System.out.println("❌ Course ID est nul, impossible de mettre à jour.");
+                return null;
+            }
+            String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, distance = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
+            try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setString(1, course.getName());
+                stmt.setString(2, course.getDescription());
+                stmt.setInt(3, course.getAssociationId());
+                stmt.setInt(4, course.getMemberCreatorId());
+                stmt.setTimestamp(5, course.getStartDate()!= null ?
+                        Timestamp.valueOf(course.getStartDate()) : null);
+                stmt.setTimestamp(6, course.getEndDate() != null ?
+                        Timestamp.valueOf(course.getEndDate()) : null);
+                stmt.setDouble(7, course.getStartpositionLatitude());
+                stmt.setDouble(8, course.getStartpositionLongitude());
+                stmt.setDouble(9, course.getEndpositionLatitude());
+                stmt.setDouble(10, course.getEndpositionLongitude());
+                stmt.setDouble(11, course.getDistance());
+                stmt.setString(12, course.getAddress());
+                stmt.setString(13, course.getCity());
+                stmt.setInt(14, course.getZipCode());
+                stmt.setInt(15, course.getMaxOfRunners());
+                stmt.setInt(16, course.getCurrentNumberOfRunners());
+                stmt.setDouble(17, course.getPrice());
+                stmt.setLong(18, course.getId());
+
+                System.out.println("Données de mises à jour" + stmt.toString());
+
+                int rowsUpdated = stmt.executeUpdate();
+                if (rowsUpdated > 0) {
+                    System.out.println("✅ Course mise à jour : " + course.getName());
+                    return course;
+                } else {
+                    System.out.println("❌ Aucune ligne mise à jour pour la course avec ID : " + course.getId());
+                    return null;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return null;
+            }
         }
     }
-
-    private Course mapRowToCourse(ResultSet resultSet) throws SQLException {
-        Course course = new Course();
-        course.setId(resultSet.getLong("id"));
-        course.setName(resultSet.getString("name"));
-        course.setDescription(resultSet.getString("description"));
-        course.setAssociationId(resultSet.getInt("associationid"));
-        course.setMemberCreatorId(resultSet.getInt("membercreatorid"));
-
-        // Conversion des Timestamp en LocalDateTime
-        Timestamp startTs = resultSet.getTimestamp("startdate");
-        if (startTs != null) {
-            course.setStartDate(startTs.toLocalDateTime());
-        }
-
-        Timestamp endTs = resultSet.getTimestamp("enddate");
-        if (endTs != null) {
-            course.setEndDate(endTs.toLocalDateTime());
-        }
-
-        course.setStartpositionLatitude(resultSet.getDouble("startpositionlatitude"));
-        course.setStartpositionLongitude(resultSet.getDouble("startpositionlongitude"));
-        course.setEndpositionLatitude(resultSet.getDouble("endpositionlatitude"));
-        course.setEndpositionLongitude(resultSet.getDouble("endpositionlongitude"));
-        course.setDistance(resultSet.getDouble("distance"));
-        course.setAddress(resultSet.getString("address"));
-        course.setCity(resultSet.getString("city"));
-        course.setZipCode(resultSet.getInt("zipcode"));
-        course.setMaxOfRunners(resultSet.getInt("maxofrunners"));
-        course.setCurrentNumberOfRunners(resultSet.getInt("currentnumberofrunners"));
-        course.setPrice(resultSet.getDouble("price"));
-        return course;
-    }
-}

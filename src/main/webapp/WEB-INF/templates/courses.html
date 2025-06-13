@@ -14,7 +14,12 @@
   <div th:replace="fragments/header :: headerFragment('home', ${member})"></div>
 
   <!-- Table des courses à venir et passées -->
-  <div th:replace="fragments/coursesTable :: coursesTableFragment('courses', ${member}, ${upcomingCourses}, ${pastCourses})"></div>
+  <div th:replace="fragments/coursesTable :: coursesTableFragment('courses', 'allCourses', 'Listes de toutes les courses', ${member}, ${upcomingCourses}, ${pastCourses})"></div>
+
+<!--
+  &lt;!&ndash; Table des courses à venir et passées &ndash;&gt;
+  <div th:replace="fragments/coursesTable :: coursesTableFragment('courses', 'memberCourses', 'Mes courses', ${member}, ${upcomingCourses}, ${pastCourses})"></div>
+-->
 
   <!-- Footer -->
   <footer class="bg-white border-t p-4 text-center text-sm text-gray-500">

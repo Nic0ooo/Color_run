@@ -1,478 +1,854 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="fr" th:fragment="coursesTableFragment (page, member, upcomingCourses, pastCourses)">
+<html xmlns:th="http://www.thymeleaf.org" lang="fr" th:fragment="coursesTableFragment (page, tableMode, tableTitle,  member, upcomingCourses, pastCourses)">
 <head>
-  <meta charset="UTF-8">
-  <title>Liste des Courses</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Ajout des fichiers Leaflet sans les attributs integrity qui causent des erreurs -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <meta charset="UTF-8">
+    <title>Liste des Courses</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ajout des fichiers Leaflet sans les attributs integrity qui causent des erreurs -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
 <main class="flex-grow container mx-auto px-4 py-8 text-center">
-  <div class="max-w-7xl mx-auto">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Liste des Courses</h1>
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6" th:text="${tableTitle}"></h1>
 
-    <!-- Onglets -->
-    <div class="mb-6">
-      <div class="flex border-b border-gray-300">
-        <button id="tab-upcoming" onclick="switchTab('upcoming')" class="px-6 py-3 font-medium text-gray-800 border-b-2 border-blue-600 bg-white">
-          Courses à venir
-        </button>
-        <button id="tab-past" onclick="switchTab('past')" class="px-6 py-3 font-medium text-gray-600 hover:text-gray-800 bg-gray-200">
-          Courses passées
-        </button>
-      </div>
-    </div>
+        <!-- Onglets -->
+        <div class="mb-6">
+            <div class="flex border-b border-gray-300">
+                <button th:id="${tableMode + '-tab-upcoming'}"
+                        th:attr="onclick=|switchTabDynamic('${tableMode}', 'upcoming')|"
+                        class="px-6 py-3 font-medium text-gray-800 border-b-2 border-blue-600 bg-white">
+                    Courses à venir
+                </button>
 
-    <!-- Formulaire de recherche -->
-    <form th:action="@{/courses}" id="searchParamForm" method="get" class="hidden mb-8 p-4 bg-white rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="flex flex-col">
-        <label class="mb-1 text-sm font-medium text-gray-700">Nom</label>
-        <input type="text" name="name" th:value="${param.name}" placeholder="Nom de la course" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div class="flex flex-col">
-        <label class="mb-1 text-sm font-medium text-gray-700">Date début</label>
-        <input type="date" name="fromDate" th:value="${param.fromDate}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div class="flex flex-col">
-        <label class="mb-1 text-sm font-medium text-gray-700">Date fin</label>
-        <input type="date" name="toDate" th:value="${param.toDate}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div class="flex flex-col">
-        <label class="mb-1 text-sm font-medium text-gray-700">Ville</label>
-        <input type="text" name="city" th:value="${param.city}" placeholder="Ville" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div class="flex flex-col">
-        <label class="mb-1 text-sm font-medium text-gray-700">Code Postal</label>
-        <input type="text" name="zipCode" th:value="${param.zipCode}" placeholder="CP" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div class="flex flex-col">
-        <label class="mb-1 text-sm font-medium text-gray-700">Trier par</label>
-        <select name="sortBy" th:value="${param.sortBy}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">— Sans tri —</option>
-          <option value="name">Nom</option>
-          <option value="date">Date</option>
-          <option value="city">Ville</option>
-        </select>
-      </div>
-      <div class="flex items-center pt-6 md:pt-0">
-        <input type="checkbox" id="onlyMine" name="onlyMine" th:checked="${param.onlyMine != null}" class="h-4 w-4 text-blue-600">
-        <label for="onlyMine" class="ml-2 text-sm text-gray-700">Afficher uniquement mes courses</label>
-      </div>
-      <div class="flex items-between md:col-span-3">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-          Rechercher
-        </button>
-        <button type="button" onclick="toglleSearchParam()" class="bg-neutral-500 text-white ml-5 px-4 py-2 rounded hover:bg-neutral-600 transition">
-          Annuler
-        </button>
-      </div>
-    </form>
-
-    <div id="showSearchParamFormButton" class="flex items-end md:col-span-3 my-5">
-      <button onclick="toglleSearchParam()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-        Rechercher / Trier les courses
-      </button>
-    </div>
-
-    <!-- Tableau des courses à venir -->
-    <div id="courses-upcoming" class="mb-8">
-      <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
-        <table class="min-w-full bg-white text-left text-sm">
-          <thead class="bg-gray-100 uppercase text-gray-600 text-xs">
-          <tr>
-            <th class="px-6 py-3">Nom</th>
-            <th class="px-6 py-3">Date</th>
-            <th class="px-6 py-3">Ville</th>
-            <th class="px-6 py-3">Distance</th>
-            <th class="px-6 py-3">Participants</th>
-            <th class="px-6 py-3">Actions</th>
-          </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-          <tr th:each="course : ${upcomingCourses}" class="hover:bg-gray-50">
-            <td class="px-6 py-4" th:text="${course.name}"></td>
-            <td class="px-6 py-4" th:text="${course.formattedStartDate}"></td>
-            <td class="px-6 py-4" th:text="${course.city}"></td>
-            <td class="px-6 py-4" th:text="${course.distance} + ' km'"></td>
-            <td class="px-6 py-4">
-              <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
-            </td>
-            <td class="px-6 py-4 flex gap-2">
-              <!-- <button th:attr="onclick=|editCourse(${course.id}, '${course.name}', '${course.description}', '${course.city}', ${course.zipCode}, '${course.address}', ${course.distance}, ${course.price}, '${course.startDate}', '${course.endDate}', ${course.startpositionLatitude}, ${course.startpositionLongitude}, ${course.endpositionLatitude}, ${course.endpositionLongitude}, ${course.maxOfRunners}, ${course.associationId}, ${course.memberCreatorId})|" -->
-              <button th:data-id="${course.id}"
-                      th:data-name="${course.name}"
-                      th:data-description="${course.description}"
-                      th:data-city="${course.city}"
-                      th:data-zip-code="${course.zipCode}"
-                      th:data-address="${course.address}"
-                      th:data-distance="${course.distance}"
-                      th:data-price="${course.price}"
-                      th:data-start-date="${course.startDate}"
-                      th:data-end-date="${course.endDate}"
-                      th:data-start-lat="${course.startpositionLatitude}"
-                      th:data-start-long="${course.startpositionLongitude}"
-                      th:data-end-lat="${course.endpositionLatitude}"
-                      th:data-end-long="${course.endpositionLongitude}"
-                      th:data-max-runners="${course.maxOfRunners}"
-                      th:data-association-id="${course.associationId}"
-                      th:data-member-id="${course.memberCreatorId}"
-                      onclick="editCourseFromData(this)"
-                      class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition">
-                Modifier
-              </button>
-              <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
-                Accès au chat
-              </a>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Tableau des courses passées (initialement caché) -->
-    <div id="courses-past" class="mb-8 hidden">
-      <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
-        <table class="min-w-full bg-white text-left text-sm">
-          <thead class="bg-gray-100 uppercase text-gray-600 text-xs">
-          <tr>
-            <th class="px-6 py-3">Nom</th>
-            <th class="px-6 py-3">Date</th>
-            <th class="px-6 py-3">Ville</th>
-            <th class="px-6 py-3">Distance</th>
-            <th class="px-6 py-3">Participants</th>
-            <th class="px-6 py-3">Actions</th>
-          </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-          <tr th:each="course : ${pastCourses}" class="hover:bg-gray-50">
-            <td class="px-6 py-4" th:text="${course.name}"></td>
-            <td class="px-6 py-4" th:text="${course.formattedStartDate}"></td>
-            <td class="px-6 py-4" th:text="${course.city}"></td>
-            <td class="px-6 py-4" th:text="${course.distance}"></td>
-            <td class="px-6 py-4">
-              <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
-            </td>
-            <td class="px-6 py-4">
-              <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
-                Accès au chat
-              </a>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="showFormButton" class="mt-4 flex justify-left">
-      <!-- Bouton d'affichage du formulaire -->
-      <button onclick="toggleForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-        Ajouter une course
-      </button>
-    </div>
-
-    <!-- Bouton annuler l'ajout d'une course -->
-    <div id="cancelButton" class="hidden mt-4  flex justify-left">
-      <button onclick="toggleForm()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
-        Annuler
-      </button>
-    </div>
-
-<!--
-    &lt;!&ndash; Message d'erreur &ndash;&gt;
-    <div th:if="${error}" class="mt-4 text-red-500">
-      <p th:text="${error}"></p>
-    </div>
-
-    &lt;!&ndash; Message de succès &ndash;&gt;
-    <div th:if="${success}" class="mt-4 text-green-500">
-      <p th:text="${success}"></p>
-    </div>
--->
-
-    <!-- Formulaire de création masqué par défaut -->
-    <div id="courseForm" class="mt-6 hidden bg-white p-6 rounded shadow border border-gray-200">
-      <h2 class="text-xl font-semibold mb-4">Nouvelle Course</h2>
-      <form action="/color_run_war/courses" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input type="hidden" name="action" value="create">
-        <input type="text" name="name" placeholder="Nom de la course" required class="input-style">
-        <input type="text" name="description" placeholder="Description" class="input-style">
-        <input type="text" name="city" placeholder="Ville" required class="input-style">
-        <input type="number" name="zipCode" placeholder="Code Postal" required class="input-style">
-        <input type="text" name="address" placeholder="Adresse" required class="input-style">
-        <input type="text" name="distance" placeholder="Distance (km)" required class="input-style">
-        <input type="number" step="0.01" name="price" placeholder="Prix (€)" required class="input-style">
-        <input type="datetime-local" name="startDate" required class="input-style">
-        <input type="datetime-local" name="endDate" required class="input-style">
-        <input type="hidden" id="startLatitude" name="startLatitude" />
-        <input type="hidden" id="startLongitude" name="startLongitude" />
-        <input type="hidden" id="endLatitude" name="endLatitude" />
-        <input type="hidden" id="endLongitude" name="endLongitude" />
-        <div class="md:col-span-2 flex space-x-4 items-center">
-          <button type="button" onclick="openMap()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Définir les points sur la carte</button>
-          <span id="coordsPreview" class="text-sm text-gray-600"></span>
+                <button th:id="${tableMode + '-tab-past'}"
+                        th:attr="onclick=|switchTabDynamic('${tableMode}', 'past')|"
+                        class="px-6 py-3 font-medium text-gray-600 hover:text-gray-800 bg-gray-200">
+                    Courses passées
+                </button>
+            </div>
         </div>
-        <input type="number" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
-        <input type="number" name="associationId" placeholder="ID Association" required class="input-style">
-        <input type="number" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
-        <div class="md:col-span-2"><button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Enregistrer</button></div>
-      </form>
-    </div>
 
-    <!-- Modal Carte Leaflet -->
-    <div id="mapModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 hidden items-center justify-center">
-      <div class="bg-white p-4 rounded-lg shadow-lg w-3/4 h-3/4 flex flex-col">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="text-lg font-semibold">Sélectionner les points de départ et d'arrivée</h3>
-          <button onclick="closeMap()" class="text-gray-600 hover:text-gray-900">×</button>
+        <!-- Formulaire de recherche simplifié -->
+        <div id="searchParamForm" class="hidden mb-8 p-4 bg-white rounded-lg shadow-md">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="flex flex-col">
+                    <label class="mb-1 text-sm font-medium text-gray-700">Recherche</label>
+                    <input type="text" id="searchInput" th:value="${param.search}"
+                           placeholder="Nom, ville ou code postal"
+                           class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex flex-col">
+                    <label class="mb-1 text-sm font-medium text-gray-700">Date début</label>
+                    <input type="date" id="fromDateInput" th:value="${param.fromDate}"
+                           class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex flex-col">
+                    <label class="mb-1 text-sm font-medium text-gray-700">Date fin</label>
+                    <input type="date" id="toDateInput" th:value="${param.toDate}"
+                           class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <input type="hidden" id="hiddenSortBy" th:value="${param.sortBy}">
+            <input type="hidden" id="hiddenSortDirection" th:value="${param.sortDirection}">
+
+            <div class="flex items-center gap-4">
+                <button type="button" onclick="clearSearchDynamic()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
+                    Effacer
+                </button>
+                <button type="button" onclick="toggleSearchParam()" class="bg-neutral-500 text-white px-4 py-2 rounded hover:bg-neutral-600 transition">
+                    Fermer
+                </button>
+            </div>
         </div>
-        <div id="map" class="flex-grow w-full h-full"></div>
-        <div class="mt-2 text-sm text-gray-700">Cliquez pour définir le départ, puis l'arrivée.<br>Sélectionnez ensuite "Valider".</div>
-        <button type="button" onclick="closeMap()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Valider</button>
-      </div>
-    </div>
 
-    <!-- Formulaire de modification masqué par défaut -->
-    <div id="editCourseForm" class="mt-6 hidden bg-white p-6 rounded shadow fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
-      <div class="bg-white p-6 rounded shadow max-w-4xl w-full max-h-screen overflow-y-auto border border-gray-200">
-        <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Modifier Course</h2><button onclick="closeEditForm()" class="text-gray-600 hover:text-gray-900">×</button></div>
-        <form action="/color_run_war/courses" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="hidden" name="action" value="update">
-          <input type="hidden" id="edit-id" name="courseId">
-          <input type="text" id="edit-name" name="name" placeholder="Nom de la course" required class="input-style">
-          <input type="text" id="edit-description" name="description" placeholder="Description" class="input-style">
-          <input type="text" id="edit-city" name="city" placeholder="Ville" required class="input-style">
-          <input type="number" id="edit-zipCode" name="zipCode" placeholder="Code Postal" required class="input-style">
-          <input type="text" id="edit-address" name="address" placeholder="Adresse" required class="input-style">
-          <input type="text" id="edit-distance" name="distance" placeholder="Distance (km)" required class="input-style">
-          <input type="number" step="0.01" id="edit-price" name="price" placeholder="Prix (€)" required class="input-style">
-          <input type="datetime-local" id="edit-startDate" name="startDate" required class="input-style">
-          <input type="datetime-local" id="edit-endDate" name="endDate" required class="input-style">
-          <input type="hidden" id="edit-startLatitude" name="startLatitude" />
-          <input type="hidden" id="edit-startLongitude" name="startLongitude" />
-          <input type="hidden" id="edit-endLatitude" name="endLatitude" />
-          <input type="hidden" id="edit-endLongitude" name="endLongitude" />
-          <div class="md:col-span-2 flex space-x-4 items-center">
-            <button type="button" onclick="openMap('edit')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Modifier les points sur la carte</button>
-            <span id="editCoordsPreview" class="text-sm text-gray-600"></span>
-          </div>
-          <input type="number" id="edit-maxOfRunners" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
-          <input type="number" id="edit-associationId" name="associationId" placeholder="ID Association" required class="input-style">
-          <input type="number" id="edit-memberCreatorId" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
-          <div class="md:col-span-2"><button type="submit" class="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition">Mettre à jour</button></div>
-        </form>
-      </div>
-    </div>
+        <div id="showSearchParamFormButton" class="flex items-end md:col-span-3 my-5">
+            <button onclick="toggleSearchParam()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                Rechercher / Filtrer les courses
+            </button>
+        </div>
 
-  </div>
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="hidden text-center py-4">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-gray-600">Chargement...</p>
+        </div>
+
+        <!-- Tableau des courses à venir -->
+        <div th:id="${tableMode} + '-courses-upcoming'" class="mb-8">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
+                <table class="min-w-full bg-white text-left text-sm">
+                    <thead class="bg-gray-100 uppercase text-gray-600 text-xs">
+                    <tr>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('name')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Nom
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'name'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('startDate')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Date
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'startDate'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('city')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Ville
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'city'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('distance')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Distance
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'distance'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3">Participants</th>
+                        <th class="px-6 py-3">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="upcomingCoursesBody" class="divide-y divide-gray-100">
+                    <tr th:each="course : ${upcomingCourses}" class="hover:bg-gray-50">
+                        <td class="px-6 py-4" th:text="${course.name}"></td>
+                        <td class="px-6 py-4" th:text="${course.formattedStartDate}"></td>
+                        <td class="px-6 py-4" th:text="${course.city}"></td>
+                        <td class="px-6 py-4" th:text="${course.distance} + ' km'"></td>
+                        <td class="px-6 py-4">
+                            <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
+                        </td>
+                        <td th:if="${tableMode == 'allCourses'}" class="px-6 py-4 flex gap-2">
+                            <button th:data-id="${course.id}"
+                                    th:data-name="${course.name}"
+                                    th:data-description="${course.description}"
+                                    th:data-city="${course.city}"
+                                    th:data-zip-code="${course.zipCode}"
+                                    th:data-address="${course.address}"
+                                    th:data-distance="${course.distance}"
+                                    th:data-price="${course.price}"
+                                    th:data-start-date="${course.startDate}"
+                                    th:data-end-date="${course.endDate}"
+                                    th:data-start-lat="${course.startpositionLatitude}"
+                                    th:data-start-long="${course.startpositionLongitude}"
+                                    th:data-end-lat="${course.endpositionLatitude}"
+                                    th:data-end-long="${course.endpositionLongitude}"
+                                    th:data-max-runners="${course.maxOfRunners}"
+                                    th:data-association-id="${course.associationId}"
+                                    th:data-member-id="${course.memberCreatorId}"
+                                    onclick="editCourseFromData(this)"
+                                    class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition">
+                                Modifier
+                            </button>
+                            <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
+                                Accès au chat
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tableau des courses passées (initialement caché) -->
+        <div th:id="${tableMode} + '-courses-past'" class="mb-8 hidden">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
+                <table class="min-w-full bg-white text-left text-sm">
+                    <thead class="bg-gray-100 uppercase text-gray-600 text-xs">
+                    <tr>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('name')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Nom
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'name'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('startDate')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Date
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'startDate'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('city')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Ville
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'city'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onclick="sortTableDynamic('distance')"
+                            title="Cliquez pour trier">
+                            <div class="flex items-center justify-between">
+                                Distance
+                                <span class="sort-indicator" th:classappend="${param.sortBy == 'distance'} ? (${param.sortDirection == 'desc'} ? 'desc' : 'asc') : ''">↕</span>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3">Participants</th>
+                        <th class="px-6 py-3">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pastCoursesBody" class="divide-y divide-gray-100">
+                    <tr th:each="course : ${pastCourses}" class="hover:bg-gray-50">
+                        <td class="px-6 py-4" th:text="${course.name}"></td>
+                        <td class="px-6 py-4" th:text="${course.formattedStartDate}"></td>
+                        <td class="px-6 py-4" th:text="${course.city}"></td>
+                        <td class="px-6 py-4" th:text="${course.distance}"></td>
+                        <td class="px-6 py-4">
+                            <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
+                                Accès au chat
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div th:if="${tableMode == 'allCourses'}" id="showFormButton" class="mt-4 flex justify-left">
+            <button onclick="toggleForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                Ajouter une course
+            </button>
+        </div>
+
+        <!-- Bouton annuler l'ajout d'une course -->
+        <div th:if="${tableMode == 'allCourses'}" id="cancelButton" class="hidden mt-4  flex justify-left">
+            <button onclick="toggleForm()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                Annuler
+            </button>
+        </div>
+
+        <!-- Formulaire de création masqué par défaut -->
+        <div id="courseForm" class="mt-6 hidden bg-white p-6 rounded shadow border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4">Nouvelle Course</h2>
+            <form action="/color_run_war/courses" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" name="action" value="create">
+                <input type="text" name="name" placeholder="Nom de la course" required class="input-style">
+                <input type="text" name="description" placeholder="Description" class="input-style">
+                <input type="text" name="city" placeholder="Ville" required class="input-style">
+                <input type="number" name="zipCode" placeholder="Code Postal" required class="input-style">
+                <input type="text" name="address" placeholder="Adresse" required class="input-style">
+                <input type="text" name="distance" placeholder="Distance (km)" required class="input-style">
+                <input type="number" step="0.01" name="price" placeholder="Prix (€)" required class="input-style">
+                <input type="datetime-local" name="startDate" required class="input-style">
+                <input type="datetime-local" name="endDate" required class="input-style">
+                <input type="hidden" id="startLatitude" name="startLatitude" />
+                <input type="hidden" id="startLongitude" name="startLongitude" />
+                <input type="hidden" id="endLatitude" name="endLatitude" />
+                <input type="hidden" id="endLongitude" name="endLongitude" />
+                <div class="md:col-span-2 flex space-x-4 items-center">
+                    <button type="button" onclick="openMapModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Définir les points sur la carte</button>
+                    <span id="coordsPreview" class="text-sm text-gray-600"></span>
+                </div>
+                <input type="number" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
+                <input type="number" name="associationId" placeholder="ID Association" required class="input-style">
+                <input type="number" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
+                <div class="md:col-span-2"><button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Enregistrer</button></div>
+            </form>
+        </div>
+
+        <!-- Modal Carte Leaflet -->
+        <div id="mapModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 hidden items-center justify-center">
+            <div class="bg-white p-4 rounded-lg shadow-lg w-3/4 h-3/4 flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-lg font-semibold">Sélectionner les points de départ et d'arrivée</h3>
+                    <button onclick="closeMapModal()" class="text-gray-600 hover:text-gray-900">×</button>
+                </div>
+                <div id="leafletMap" class="flex-grow w-full h-full"></div>
+                <div class="mt-2 text-sm text-gray-700">Cliquez pour définir le départ, puis l'arrivée.<br>Sélectionnez ensuite "Valider".</div>
+                <button type="button" onclick="closeMapModal()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Valider</button>
+            </div>
+        </div>
+
+        <!-- Formulaire de modification masqué par défaut -->
+        <div id="editCourseForm" class="mt-6 hidden bg-white p-6 rounded shadow fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+            <div class="bg-white p-6 rounded shadow max-w-4xl w-full max-h-screen overflow-y-auto border border-gray-200">
+                <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold">Modifier Course</h2><button onclick="closeEditForm()" class="text-gray-600 hover:text-gray-900">×</button></div>
+                <form action="/color_run_war/courses" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" id="edit-id" name="courseId">
+                    <input type="text" id="edit-name" name="name" placeholder="Nom de la course" required class="input-style">
+                    <input type="text" id="edit-description" name="description" placeholder="Description" class="input-style">
+                    <input type="text" id="edit-city" name="city" placeholder="Ville" required class="input-style">
+                    <input type="number" id="edit-zipCode" name="zipCode" placeholder="Code Postal" required class="input-style">
+                    <input type="text" id="edit-address" name="address" placeholder="Adresse" required class="input-style">
+                    <input type="text" id="edit-distance" name="distance" placeholder="Distance (km)" required class="input-style">
+                    <input type="number" step="0.01" id="edit-price" name="price" placeholder="Prix (€)" required class="input-style">
+                    <input type="datetime-local" id="edit-startDate" name="startDate" required class="input-style">
+                    <input type="datetime-local" id="edit-endDate" name="endDate" required class="input-style">
+                    <input type="hidden" id="edit-startLatitude" name="startLatitude" />
+                    <input type="hidden" id="edit-startLongitude" name="startLongitude" />
+                    <input type="hidden" id="edit-endLatitude" name="endLatitude" />
+                    <input type="hidden" id="edit-endLongitude" name="endLongitude" />
+                    <div class="md:col-span-2 flex space-x-4 items-center">
+                        <button type="button" onclick="openMapModal('edit')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Modifier les points sur la carte</button>
+                        <span id="editCoordsPreview" class="text-sm text-gray-600"></span>
+                    </div>
+                    <input type="number" id="edit-maxOfRunners" name="maxOfRunners" placeholder="Max coureurs" required class="input-style">
+                    <input type="number" id="edit-associationId" name="associationId" placeholder="ID Association" required class="input-style">
+                    <input type="number" id="edit-memberCreatorId" name="memberCreatorId" placeholder="ID Créateur" required class="input-style">
+                    <div class="md:col-span-2"><button type="submit" class="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition">Mettre à jour</button></div>
+                </form>
+            </div>
+        </div>
+
+    </div>
 </main>
 
-<script>
-  // Afficher l'onglet "Courses à venir" par défaut
-  window.onload = function() {
-    switchTab('upcoming');
-  };
+<script th:inline="javascript">
+    // Variables globales pour éviter les conflits
+    window.coursesApp = window.coursesApp || {};
 
-  function switchTab(tab) {
-    // Masquer tous les contenus des onglets
-    document.getElementById('courses-upcoming').classList.add('hidden');
-    document.getElementById('courses-past').classList.add('hidden');
+    // Configuration
+    const COURSES_APP = {
+        currentTableMode: /*[[${tableMode}]]*/ 'allCourses',
+        currentActiveTab: 'upcoming',
+        searchTimeout: null,
+        leafletMapInstance: null,
+        createMapState: {startMarker: null, endMarker: null, clickCount: 0},
+        editMapState: {startMarker: null, endMarker: null, clickCount: 0}
+    };
 
-    // Réinitialiser le style des onglets
-    document.getElementById('tab-upcoming').classList.remove('border-b-2', 'border-blue-600', 'bg-white');
-    document.getElementById('tab-upcoming').classList.add('bg-gray-200');
-    document.getElementById('tab-past').classList.remove('border-b-2', 'border-blue-600', 'bg-white');
-    document.getElementById('tab-past').classList.add('bg-gray-200');
+    // Initialisation au chargement de la page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vérifier que les éléments existent avant d'appeler switchTab
+        const upcomingTab = document.getElementById(COURSES_APP.currentTableMode + '-tab-upcoming');
+        const pastTab = document.getElementById(COURSES_APP.currentTableMode + '-tab-past');
 
-    // Afficher le contenu de l'onglet sélectionné et appliquer le style actif
-    if (tab === 'upcoming') {
-      document.getElementById('courses-upcoming').classList.remove('hidden');
-      document.getElementById('tab-upcoming').classList.add('border-b-2', 'border-blue-600', 'bg-white');
-      document.getElementById('tab-upcoming').classList.remove('bg-gray-200');
-    } else {
-      document.getElementById('courses-past').classList.remove('hidden');
-      document.getElementById('tab-past').classList.add('border-b-2', 'border-blue-600', 'bg-white');
-      document.getElementById('tab-past').classList.remove('bg-gray-200');
-    }
-  }
-
-  function toggleForm() {
-    const form = document.getElementById("courseForm");
-    const cancelButton = document.getElementById("cancelButton");
-    const showFormButton = document.getElementById("showFormButton");
-
-    form.classList.toggle("hidden");
-    cancelButton.classList.toggle("hidden");
-    showFormButton.classList.toggle('hidden');
-  }
-
-  function toglleSearchParam() {
-    const form = document.getElementById("searchParamForm");
-    const showSearchParamFormButton = document.getElementById("showSearchParamFormButton");
-
-    form.classList.toggle("hidden");
-    showSearchParamFormButton.classList.toggle('hidden');
-  }
-
-  function editCourseFromData(button) {
-    const dataset = button.dataset;
-
-    document.getElementById("edit-id").value = parseInt(dataset.id);
-    document.getElementById("edit-name").value = dataset.name;
-    document.getElementById("edit-description").value = dataset.description;
-    document.getElementById("edit-city").value = dataset.city;
-    document.getElementById("edit-zipCode").value = parseInt(dataset.zipCode);
-    document.getElementById("edit-address").value = dataset.address;
-    document.getElementById("edit-distance").value = parseFloat(dataset.distance);
-    document.getElementById("edit-price").value = parseFloat(dataset.price);
-    document.getElementById("edit-startDate").value = dataset.startDate;
-    document.getElementById("edit-endDate").value = dataset.endDate;
-    document.getElementById("edit-startLatitude").value = parseFloat(dataset.startLat);
-    document.getElementById("edit-startLongitude").value = parseFloat(dataset.startLong);
-    document.getElementById("edit-endLatitude").value = parseFloat(dataset.endLat);
-    document.getElementById("edit-endLongitude").value = parseFloat(dataset.endLong);
-    document.getElementById("edit-maxOfRunners").value = parseInt(dataset.maxRunners);
-    document.getElementById("edit-associationId").value = parseInt(dataset.associationId)
-    document.getElementById("edit-memberCreatorId").value = parseInt(dataset.memberId);
-
-    // Afficher le formulaire de modification
-    const editForm = document.getElementById("editCourseForm");
-    editForm.classList.remove("hidden");
-
-  }
-
-  function closeEditForm() {
-    document.getElementById("editCourseForm").classList.add("hidden");
-  }
-
-  document.addEventListener('DOMContentLoaded',()=>{ const s=document.querySelector('input[name="startDate"]'), e=document.querySelector('input[name="endDate"]'); if(s&&e) s.addEventListener('change',()=>e.value=s.value); });
-
-  // Variables Leaflet et états
-  let map;
-  const createState={startMarker:null,endMarker:null,clickCount:0};
-  const editState={startMarker:null,endMarker:null,clickCount:0};
-  /**
-   * Ouvre le modal et initialise la carte.
-   * formType: 'edit' ou undefined pour création
-   */
-  function openMap(formType){
-    const isEdit=formType==='edit';
-    const state=isEdit?editState:createState;
-    const prefix=isEdit?'edit-':'';
-    const previewId=isEdit?'editCoordsPreview':'coordsPreview';
-
-    // Masquer le formulaire d'édition si nécessaire
-    if (isEdit) {
-      document.getElementById('editCourseForm').classList.add('hidden');
-    }
-
-    document.getElementById('mapModal').classList.remove('hidden');
-    document.getElementById('mapModal').classList.add('flex');
-    setTimeout(()=>{
-      if(!map){
-        map=L.map('map').setView([46.2276,2.2137],6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OSM contributors' }).addTo(map);
-        map.on('click', e=>{
-          state.clickCount++;
-          if(state.clickCount===1){
-            // Départ
-            if(state.startMarker) map.removeLayer(state.startMarker);
-            state.startMarker=L.marker(e.latlng).addTo(map)
-                    .bindPopup('Départ',{autoClose:false,closeOnClick:false})
-                    .on('popupclose', ()=>{
-                      map.removeLayer(state.startMarker); state.startMarker=null; state.clickCount=0;
-                      document.getElementById(prefix+'startLatitude').value='';
-                      document.getElementById(prefix+'startLongitude').value='';
-                      document.getElementById(previewId).textContent='';
-                    })
-                    .openPopup();
-            document.getElementById(prefix+'startLatitude').value=e.latlng.lat;
-            document.getElementById(prefix+'startLongitude').value=e.latlng.lng;
-          } else if(state.clickCount===2){
-            // Arrivée
-            if(state.endMarker) map.removeLayer(state.endMarker);
-            state.endMarker=L.marker(e.latlng).addTo(map)
-                    .bindPopup('Arrivée',{autoClose:false,closeOnClick:false})
-                    .on('popupclose', ()=>{
-                      map.removeLayer(state.endMarker); state.endMarker=null; state.clickCount=1;
-                      document.getElementById(prefix+'endLatitude').value='';
-                      document.getElementById(prefix+'endLongitude').value='';
-                      updatePreview(prefix,previewId);
-                    })
-                    .openPopup();
-            document.getElementById(prefix+'endLatitude').value=e.latlng.lat;
-            document.getElementById(prefix+'endLongitude').value=e.latlng.lng;
-            updatePreview(prefix,previewId);
-          }
-        });
-      }
-      map.invalidateSize();
-      // Placer markers existants
-      ['start','end'].forEach((type,i)=>{
-        const lat=document.getElementById(prefix+type+(i===0?'Latitude':'Latitude'))?.value;
-        const lng=document.getElementById(prefix+type+(i===0?'Longitude':'Longitude'))?.value;
-        if(lat&&lng){
-          const marker= L.marker([lat,lng]).addTo(map)
-                  .bindPopup(type=== 'start'? 'Départ':'Arrivée',{autoClose:false,closeOnClick:false})
-                  .on('popupclose', ()=>{
-                    map.removeLayer(marker);
-                    state[type+'Marker']=null;
-                    state.clickCount= type==='start'?0:1;
-                    document.getElementById(prefix+type+'Latitude').value='';
-                    document.getElementById(prefix+type+'Longitude').value='';
-                    updatePreview(prefix,previewId);
-                  });
-          marker.openPopup();
-          state[type+'Marker']=marker;
-          state.clickCount++;
+        if (upcomingTab && pastTab) {
+            switchTabDynamic(COURSES_APP.currentTableMode, 'upcoming');
         }
-      });
-      // Centrage d'après adresse
-      const city=document.getElementById(prefix+'city').value||'';
-      const addr=document.getElementById(prefix+'address').value||'';
-      const zip=document.getElementById(prefix+'zipCode').value||'';
-      if(city||addr){
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr+', '+zip+' '+city+', France')}`)
-                .then(r=>r.json()).then(d=>{ if(d.length) map.setView([d[0].lat,d[0].lon],13); });
-      }
-    },100);
-  }
-  function closeMap(){
-    document.getElementById('mapModal').classList.add('hidden');
-    document.getElementById('mapModal').classList.remove('flex');
 
-    // Vérifier si on était en mode édition et réafficher le formulaire
-    if (document.getElementById('edit-id').value) {
-      document.getElementById('editCourseForm').classList.remove('hidden');
+        // Initialiser les événements de recherche dynamique
+        initializeDynamicSearch();
+    });
+
+    function initializeDynamicSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const fromDateInput = document.getElementById('fromDateInput');
+        const toDateInput = document.getElementById('toDateInput');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(COURSES_APP.searchTimeout);
+                COURSES_APP.searchTimeout = setTimeout(performDynamicSearch, 300);
+            });
+        }
+
+        if (fromDateInput) {
+            fromDateInput.addEventListener('change', performDynamicSearch);
+        }
+
+        if (toDateInput) {
+            toDateInput.addEventListener('change', performDynamicSearch);
+        }
     }
 
-  }
-  function updatePreview(prefix,id){
-    const sLat=document.getElementById(prefix+'startLatitude').value;
-    const sLng=document.getElementById(prefix+'startLongitude').value;
-    const eLat=document.getElementById(prefix+'endLatitude').value;
-    const eLng=document.getElementById(prefix+'endLongitude').value;
-    if(sLat&&sLng&&eLat&&eLng){
-      document.getElementById(id).textContent=
-              `Départ:[${sLat.slice(0,6)},${sLng.slice(0,6)}] Arrivée:[${eLat.slice(0,6)},${eLng.slice(0,6)}]`;
+    function switchTabDynamic(tableMode, tab) {
+        // Masquer tous les contenus des onglets
+        const upcomingDiv = document.getElementById(tableMode + '-courses-upcoming');
+        const pastDiv = document.getElementById(tableMode + '-courses-past');
+        const upcomingTab = document.getElementById(tableMode + '-tab-upcoming');
+        const pastTab = document.getElementById(tableMode + '-tab-past');
+
+        if (!upcomingDiv || !pastDiv || !upcomingTab || !pastTab) {
+            console.error('Éléments d\'onglets non trouvés pour tableMode:', tableMode);
+            return;
+        }
+
+        upcomingDiv.classList.add('hidden');
+        pastDiv.classList.add('hidden');
+
+        // Réinitialiser le style des onglets
+        upcomingTab.classList.remove('border-b-2', 'border-blue-600', 'bg-white');
+        upcomingTab.classList.add('bg-gray-200');
+        pastTab.classList.remove('border-b-2', 'border-blue-600', 'bg-white');
+        pastTab.classList.add('bg-gray-200');
+
+        // Afficher le contenu de l'onglet sélectionné et appliquer le style actif
+        if (tab === 'upcoming') {
+            upcomingDiv.classList.remove('hidden');
+            upcomingTab.classList.add('border-b-2', 'border-blue-600', 'bg-white');
+            upcomingTab.classList.remove('bg-gray-200');
+        } else {
+            pastDiv.classList.remove('hidden');
+            pastTab.classList.add('border-b-2', 'border-blue-600', 'bg-white');
+            pastTab.classList.remove('bg-gray-200');
+        }
+
+        COURSES_APP.currentActiveTab = tab;
     }
-  }
+
+    function performDynamicSearch() {
+        const searchTerm = document.getElementById('searchInput')?.value || '';
+        const fromDate = document.getElementById('fromDateInput')?.value || '';
+        const toDate = document.getElementById('toDateInput')?.value || '';
+        const sortBy = document.getElementById('hiddenSortBy')?.value || '';
+        const sortDirection = document.getElementById('hiddenSortDirection')?.value || '';
+
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        if (fromDate) params.append('fromDate', fromDate);
+        if (toDate) params.append('toDate', toDate);
+        if (sortBy) params.append('sortBy', sortBy);
+        if (sortDirection) params.append('sortDirection', sortDirection);
+        params.append('ajax', 'true');
+
+        showLoadingIndicator(true);
+
+        fetch('/color_run_war/courses?' + params.toString())
+            .then(response => response.json())
+            .then(data => {
+                updateTablesWithData(data);
+                updateSortIndicators(sortBy, sortDirection);
+                showLoadingIndicator(false);
+            })
+            .catch(error => {
+                console.error('Erreur lors de la recherche:', error);
+                showLoadingIndicator(false);
+            });
+    }
+
+    function sortTableDynamic(column) {
+        const currentSort = document.getElementById('hiddenSortBy')?.value || '';
+        const currentDirection = document.getElementById('hiddenSortDirection')?.value || '';
+
+        let newDirection = 'asc';
+        if (currentSort === column && currentDirection === 'asc') {
+            newDirection = 'desc';
+        }
+
+        document.getElementById('hiddenSortBy').value = column;
+        document.getElementById('hiddenSortDirection').value = newDirection;
+
+        performDynamicSearch();
+    }
+
+    function updateTablesWithData(data) {
+        // Mettre à jour le tableau des courses à venir
+        const upcomingBody = document.getElementById('upcomingCoursesBody');
+        if (upcomingBody && data.upcomingCourses) {
+            upcomingBody.innerHTML = generateTableRows(data.upcomingCourses, true);
+        }
+
+        // Mettre à jour le tableau des courses passées
+        const pastBody = document.getElementById('pastCoursesBody');
+        if (pastBody && data.pastCourses) {
+            pastBody.innerHTML = generateTableRows(data.pastCourses, false);
+        }
+    }
+
+    function generateTableRows(courses, isUpcoming) {
+        if (!courses || courses.length === 0) {
+            return '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Aucune course trouvée</td></tr>';
+        }
+
+        return courses.map(course => {
+            const actionButtons = COURSES_APP.currentTableMode === 'allCourses' && isUpcoming
+                ? `<button onclick="editCourseFromData(this)"
+             data-id="${course.id}" data-name="${course.name}" data-description="${course.description}"
+             data-city="${course.city}" data-zip-code="${course.zipCode}" data-address="${course.address}"
+             data-distance="${course.distance}" data-price="${course.price}" data-start-date="${course.startDate}"
+             data-end-date="${course.endDate}" data-start-lat="${course.startpositionLatitude}"
+             data-start-long="${course.startpositionLongitude}" data-end-lat="${course.endpositionLatitude}"
+             data-end-long="${course.endpositionLongitude}" data-max-runners="${course.maxOfRunners}"
+             data-association-id="${course.associationId}" data-member-id="${course.memberCreatorId}"
+             class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition">
+             Modifier
+           </button>
+           <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
+             Accès au chat
+           </a>`
+                : `<a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
+             Accès au chat
+           </a>`;
+
+            return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4">${course.name || ''}</td>
+          <td class="px-6 py-4">${course.formattedStartDate || ''}</td>
+          <td class="px-6 py-4">${course.city || ''}</td>
+          <td class="px-6 py-4">${course.distance ? course.distance + ' km' : ''}</td>
+          <td class="px-6 py-4">
+            <span>${course.currentNumberOfRunners || 0}</span>/<span>${course.maxOfRunners || 0}</span>
+          </td>
+          <td class="px-6 py-4 flex gap-2">${actionButtons}</td>
+        </tr>
+      `;
+        }).join('');
+    }
+
+    function updateSortIndicators(sortBy, sortDirection) {
+        // Réinitialiser tous les indicateurs
+        document.querySelectorAll('.sort-indicator').forEach(indicator => {
+            indicator.className = 'sort-indicator';
+            indicator.textContent = '↕';
+        });
+
+        // Mettre à jour l'indicateur actif
+        if (sortBy) {
+            document.querySelectorAll(`th[onclick="sortTableDynamic('${sortBy}')"] .sort-indicator`).forEach(indicator => {
+                indicator.classList.add(sortDirection === 'desc' ? 'desc' : 'asc');
+            });
+        }
+    }
+
+    function showLoadingIndicator(show) {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+            if (show) {
+                loadingIndicator.classList.remove('hidden');
+            } else {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+    }
+
+    function toggleForm() {
+        const form = document.getElementById("courseForm");
+        const cancelButton = document.getElementById("cancelButton");
+        const showFormButton = document.getElementById("showFormButton");
+
+        if (form && cancelButton && showFormButton) {
+            form.classList.toggle("hidden");
+            cancelButton.classList.toggle("hidden");
+            showFormButton.classList.toggle('hidden');
+        }
+    }
+
+    function toggleSearchParam() {
+        const form = document.getElementById("searchParamForm");
+        const showSearchParamFormButton = document.getElementById("showSearchParamFormButton");
+
+        if (form && showSearchParamFormButton) {
+            form.classList.toggle("hidden");
+            showSearchParamFormButton.classList.toggle('hidden');
+        }
+    }
+
+    function clearSearchDynamic() {
+        const searchInput = document.getElementById('searchInput');
+        const fromDateInput = document.getElementById('fromDateInput');
+        const toDateInput = document.getElementById('toDateInput');
+        const hiddenSortBy = document.getElementById('hiddenSortBy');
+        const hiddenSortDirection = document.getElementById('hiddenSortDirection');
+
+        if (searchInput) searchInput.value = '';
+        if (fromDateInput) fromDateInput.value = '';
+        if (toDateInput) toDateInput.value = '';
+        if (hiddenSortBy) hiddenSortBy.value = '';
+        if (hiddenSortDirection) hiddenSortDirection.value = '';
+
+        performDynamicSearch();
+    }
+
+    function editCourseFromData(button) {
+        const dataset = button.dataset;
+
+        const editFields = {
+            'edit-id': parseInt(dataset.id),
+            'edit-name': dataset.name,
+            'edit-description': dataset.description,
+            'edit-city': dataset.city,
+            'edit-zipCode': parseInt(dataset.zipCode),
+            'edit-address': dataset.address,
+            'edit-distance': parseFloat(dataset.distance),
+            'edit-price': parseFloat(dataset.price),
+            'edit-startDate': dataset.startDate,
+            'edit-endDate': dataset.endDate,
+            'edit-startLatitude': parseFloat(dataset.startLat),
+            'edit-startLongitude': parseFloat(dataset.startLong),
+            'edit-endLatitude': parseFloat(dataset.endLat),
+            'edit-endLongitude': parseFloat(dataset.endLong),
+            'edit-maxOfRunners': parseInt(dataset.maxRunners),
+            'edit-associationId': parseInt(dataset.associationId),
+            'edit-memberCreatorId': parseInt(dataset.memberId)
+        };
+
+        Object.entries(editFields).forEach(([fieldId, value]) => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                element.value = value;
+            }
+        });
+
+        // Afficher le formulaire de modification
+        const editForm = document.getElementById("editCourseForm");
+        if (editForm) {
+            editForm.classList.remove("hidden");
+        }
+    }
+
+    function closeEditForm() {
+        const editForm = document.getElementById("editCourseForm");
+        if (editForm) {
+            editForm.classList.add("hidden");
+        }
+    }
+
+    // Gestion de la carte Leaflet
+    function openMapModal(formType) {
+        const isEdit = formType === 'edit';
+        const state = isEdit ? COURSES_APP.editMapState : COURSES_APP.createMapState;
+        const prefix = isEdit ? 'edit-' : '';
+        const previewId = isEdit ? 'editCoordsPreview' : 'coordsPreview';
+
+        // Masquer le formulaire d'édition si nécessaire
+        if (isEdit) {
+            const editForm = document.getElementById('editCourseForm');
+            if (editForm) {
+                editForm.classList.add('hidden');
+            }
+        }
+
+        const mapModal = document.getElementById('mapModal');
+        if (mapModal) {
+            mapModal.classList.remove('hidden');
+            mapModal.classList.add('flex');
+        }
+
+        setTimeout(() => {
+            initializeLeafletMap(state, prefix, previewId);
+        }, 100);
+    }
+
+    function initializeLeafletMap(state, prefix, previewId) {
+        if (!COURSES_APP.leafletMapInstance) {
+            COURSES_APP.leafletMapInstance = L.map('leafletMap').setView([46.2276, 2.2137], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OSM contributors'
+            }).addTo(COURSES_APP.leafletMapInstance);
+
+            COURSES_APP.leafletMapInstance.on('click', function(e) {
+                handleMapClick(e, state, prefix, previewId);
+            });
+        }
+
+        COURSES_APP.leafletMapInstance.invalidateSize();
+
+        // Placer markers existants
+        ['start', 'end'].forEach((type, i) => {
+            const latField = document.getElementById(prefix + type + 'Latitude');
+            const lngField = document.getElementById(prefix + type + 'Longitude');
+
+            if (latField && lngField && latField.value && lngField.value) {
+                const lat = parseFloat(latField.value);
+                const lng = parseFloat(lngField.value);
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const marker = L.marker([lat, lng]).addTo(COURSES_APP.leafletMapInstance)
+                        .bindPopup(type === 'start' ? 'Départ' : 'Arrivée', {autoClose: false, closeOnClick: false})
+                        .on('popupclose', () => {
+                            COURSES_APP.leafletMapInstance.removeLayer(marker);
+                            state[type + 'Marker'] = null;
+                            state.clickCount = type === 'start' ? 0 : 1;
+                            latField.value = '';
+                            lngField.value = '';
+                            updatePreview(prefix, previewId);
+                        });
+
+                    marker.openPopup();
+                    state[type + 'Marker'] = marker;
+                    state.clickCount++;
+                }
+            }
+        });
+
+        // Centrage d'après adresse
+        const cityField = document.getElementById(prefix + 'city');
+        const addrField = document.getElementById(prefix + 'address');
+        const zipField = document.getElementById(prefix + 'zipCode');
+
+        if (cityField && addrField && zipField) {
+            const city = cityField.value || '';
+            const addr = addrField.value || '';
+            const zip = zipField.value || '';
+
+            if (city || addr) {
+                const query = encodeURIComponent(`${addr}, ${zip} ${city}, France`);
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.length) {
+                            COURSES_APP.leafletMapInstance.setView([d[0].lat, d[0].lon], 13);
+                        }
+                    })
+                    .catch(err => console.error('Erreur géocodage:', err));
+            }
+        }
+    }
+
+    function handleMapClick(e, state, prefix, previewId) {
+        state.clickCount++;
+
+        if (state.clickCount === 1) {
+            // Départ
+            if (state.startMarker) {
+                COURSES_APP.leafletMapInstance.removeLayer(state.startMarker);
+            }
+
+            state.startMarker = L.marker(e.latlng).addTo(COURSES_APP.leafletMapInstance)
+                .bindPopup('Départ', {autoClose: false, closeOnClick: false})
+                .on('popupclose', () => {
+                    COURSES_APP.leafletMapInstance.removeLayer(state.startMarker);
+                    state.startMarker = null;
+                    state.clickCount = 0;
+                    const latField = document.getElementById(prefix + 'startLatitude');
+                    const lngField = document.getElementById(prefix + 'startLongitude');
+                    if (latField) latField.value = '';
+                    if (lngField) lngField.value = '';
+                    updatePreview(prefix, previewId);
+                })
+                .openPopup();
+
+            const startLatField = document.getElementById(prefix + 'startLatitude');
+            const startLngField = document.getElementById(prefix + 'startLongitude');
+            if (startLatField) startLatField.value = e.latlng.lat;
+            if (startLngField) startLngField.value = e.latlng.lng;
+
+        } else if (state.clickCount === 2) {
+            // Arrivée
+            if (state.endMarker) {
+                COURSES_APP.leafletMapInstance.removeLayer(state.endMarker);
+            }
+
+            state.endMarker = L.marker(e.latlng).addTo(COURSES_APP.leafletMapInstance)
+                .bindPopup('Arrivée', {autoClose: false, closeOnClick: false})
+                .on('popupclose', () => {
+                    COURSES_APP.leafletMapInstance.removeLayer(state.endMarker);
+                    state.endMarker = null;
+                    state.clickCount = 1;
+                    const latField = document.getElementById(prefix + 'endLatitude');
+                    const lngField = document.getElementById(prefix + 'endLongitude');
+                    if (latField) latField.value = '';
+                    if (lngField) lngField.value = '';
+                    updatePreview(prefix, previewId);
+                })
+                .openPopup();
+
+            const endLatField = document.getElementById(prefix + 'endLatitude');
+            const endLngField = document.getElementById(prefix + 'endLongitude');
+            if (endLatField) endLatField.value = e.latlng.lat;
+            if (endLngField) endLngField.value = e.latlng.lng;
+
+            updatePreview(prefix, previewId);
+        }
+    }
+
+    function closeMapModal() {
+        const mapModal = document.getElementById('mapModal');
+        if (mapModal) {
+            mapModal.classList.add('hidden');
+            mapModal.classList.remove('flex');
+        }
+
+        // Vérifier si on était en mode édition et réafficher le formulaire
+        const editIdField = document.getElementById('edit-id');
+        if (editIdField && editIdField.value) {
+            const editForm = document.getElementById('editCourseForm');
+            if (editForm) {
+                editForm.classList.remove('hidden');
+            }
+        }
+    }
+
+    function updatePreview(prefix, previewId) {
+        const startLatField = document.getElementById(prefix + 'startLatitude');
+        const startLngField = document.getElementById(prefix + 'startLongitude');
+        const endLatField = document.getElementById(prefix + 'endLatitude');
+        const endLngField = document.getElementById(prefix + 'endLongitude');
+        const previewElement = document.getElementById(previewId);
+
+        if (startLatField && startLngField && endLatField && endLngField && previewElement) {
+            const sLat = startLatField.value;
+            const sLng = startLngField.value;
+            const eLat = endLatField.value;
+            const eLng = endLngField.value;
+
+            if (sLat && sLng && eLat && eLng) {
+                previewElement.textContent =
+                    `Départ:[${sLat.slice(0,6)},${sLng.slice(0,6)}] Arrivée:[${eLat.slice(0,6)},${eLng.slice(0,6)}]`;
+            }
+        }
+    }
+
+    // Auto-fill end date when start date changes
+    document.addEventListener('DOMContentLoaded', () => {
+        const startDateField = document.querySelector('input[name="startDate"]');
+        const endDateField = document.querySelector('input[name="endDate"]');
+
+        if (startDateField && endDateField) {
+            startDateField.addEventListener('change', () => {
+                if (!endDateField.value) {
+                    endDateField.value = startDateField.value;
+                }
+            });
+        }
+    });
 
 </script>
 
 <style>
-  .input-style {
-    @apply border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500;
-  }
+    .input-style {
+        @apply border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500;
+    }
 
-  /* S'assurer que la carte prend toute la hauteur disponible */
-  #map {
-    height: 100%;
-    min-height: 400px;
-  }
+    /* S'assurer que la carte prend toute la hauteur disponible */
+    #leafletMap {
+        height: 100%;
+        min-height: 400px;
+    }
+
+    /* Styles pour les indicateurs de tri */
+    .sort-indicator {
+        font-size: 12px;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+    }
+
+    .sort-indicator.asc {
+        opacity: 1;
+        color: #3b82f6;
+    }
+
+    .sort-indicator.asc::before {
+        content: '↑';
+    }
+
+    .sort-indicator.desc {
+        opacity: 1;
+        color: #3b82f6;
+    }
+
+    .sort-indicator.desc::before {
+        content: '↓';
+    }
+
+    /* Animation pour l'indicateur de chargement */
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
 </style>
 </body>
 </html>
