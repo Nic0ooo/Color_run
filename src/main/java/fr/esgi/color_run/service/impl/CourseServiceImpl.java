@@ -148,4 +148,14 @@ public class CourseServiceImpl implements CourseService {
         return updatedCourse;
     }
 
+    public Course getCourseById(Long id) {
+        Course course = courseRepository.findById(id);
+
+        if (course != null) {
+            System.out.println("Course found: " + course);
+        } else {
+            System.out.println("No course found with ID: " + id);
+        }
+        return course;
+    }
 }

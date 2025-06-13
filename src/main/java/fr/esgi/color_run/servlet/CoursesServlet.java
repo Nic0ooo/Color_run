@@ -19,7 +19,7 @@ import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
 
-@WebServlet(urlPatterns = {"/courses"})
+@WebServlet(urlPatterns = {"/courses", "/course-detail"})
 public class CoursesServlet extends HttpServlet {
 
 //    private final CourseService courseService = new CourseServiceImpl();
@@ -41,14 +41,23 @@ public class CoursesServlet extends HttpServlet {
         TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         WebContext context = new WebContext(ThymeleafConfiguration.getApplication().buildExchange(req, resp));
 
-        // Récupérer la liste des courses
-        var courses = courseService.listAllCourses();
-        System.out.println("CoursesServlet: Nombre de courses récupérées = " + courses.size());
-        context.setVariable("courses", courses);
+        // Vérifier si appel course détail
+        String courseId = req.getParameter("id");
 
-        // Configuration de la réponse
-        resp.setContentType("text/html;charset=UTF-8");
-        engine.process("courses", context, resp.getWriter());
+        if (courseId != null && !courseId.isEmpty()) {
+
+            showCourseDetail(courseId, context, engine, resp);
+        } else {
+
+            // Récupérer la liste des courses
+            var courses = courseService.listAllCourses();
+            System.out.println("CoursesServlet: Nombre de courses récupérées = " + courses.size());
+            context.setVariable("courses", courses);
+
+            // Configuration de la réponse
+            resp.setContentType("text/html;charset=UTF-8");
+            engine.process("courses", context, resp.getWriter());
+        }
     }
 
     @Override
@@ -152,5 +161,20 @@ public class CoursesServlet extends HttpServlet {
         courseService.updateCourse(course);
 
         resp.sendRedirect(req.getContextPath() + "/courses");
+    }
+
+    private void showCourseDetail(String courseId, WebContext context, TemplateEngine engine, HttpServletResponse resp) throws IOException {
+        try {
+            var course = courseService.getCourseById(Long.parseLong(courseId));
+            context.setVariable("course", course);
+
+            resp.setContentType("text/html;charset=UTF-8");
+            engine.process("course_detail", context, resp.getWriter());
+
+            System.out.println("CoursesServlet: Détail affiché pour la course ID = " + courseId);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération de la course: " + e.getMessage());
+            resp.sendRedirect("courses"); // Retour à la liste en cas d'erreur
+        }
     }
 }

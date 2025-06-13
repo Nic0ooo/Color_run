@@ -273,4 +273,23 @@ public class CourseRepositoryImpl implements CourseRepository {
         course.setPrice(resultSet.getDouble("price"));
         return course;
     }
+
+    @Override
+    public Course findById(Long id) {
+        String sql = "SELECT * FROM course WHERE id = ?";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, id);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapRowToCourse(resultSet);
+                } else {
+                    System.out.println("❌ Aucune course trouvée avec l'ID : " + id);
+                    return null;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

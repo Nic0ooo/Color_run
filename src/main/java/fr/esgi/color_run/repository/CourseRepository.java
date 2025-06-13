@@ -19,4 +19,6 @@ public interface CourseRepository {
     Course save(Course course);
 
     Course updateCourse(Course course);
+
+    Course findById(Long id);
 }

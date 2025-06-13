@@ -28,4 +28,5 @@ public interface CourseService {
 
     Course updateCourse(Course course);
 
+    Course getCourseById(Long id);
 }
