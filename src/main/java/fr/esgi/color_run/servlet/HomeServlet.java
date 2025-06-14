@@ -136,7 +136,7 @@ public class HomeServlet extends HttpServlet {
             jsonResponse.append("\"description\":\"").append(escapeJson(course.getDescription())).append("\",");
             jsonResponse.append("\"city\":\"").append(escapeJson(course.getCity())).append("\",");
             jsonResponse.append("\"zipCode\":").append(course.getZipCode()).append(",");
-            jsonResponse.append("\"startDate\":\"").append(escapeJson(course.getStartDate())).append("\",");
+            jsonResponse.append("\"startDate\":\"").append(escapeJson(String.valueOf(course.getStartDate()))).append("\",");
             jsonResponse.append("\"price\":").append(course.getPrice()).append(",");
             jsonResponse.append("\"startpositionLatitude\":").append(course.getStartpositionLatitude()).append(",");
             jsonResponse.append("\"startpositionLongitude\":").append(course.getStartpositionLongitude());
