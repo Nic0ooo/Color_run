@@ -1,9 +1,12 @@
 package fr.esgi.color_run.servlet;
 
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
+import fr.esgi.color_run.service.EmailService;
 import fr.esgi.color_run.service.MemberService;
 import fr.esgi.color_run.service.impl.MemberServiceImpl;
+import fr.esgi.color_run.utils.VerificationCodeStorage;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -15,7 +18,7 @@ import org.thymeleaf.context.WebContext;
 import java.io.IOException;
 import java.util.Optional;
 
-@WebServlet(urlPatterns = {"/login", "/register"})
+@WebServlet(urlPatterns = {"/login", "/register", "/verify"})
 public class MemberServlet extends HttpServlet {
 
     private final MemberService memberService = new MemberServiceImpl();
@@ -29,11 +32,20 @@ public class MemberServlet extends HttpServlet {
         switch (req.getServletPath()) {
             case "/login":
                 context.setVariable("pageTitle", "Connexion");
+                context.setVariable("page", "login");
                 engine.process("login", context, resp.getWriter());
                 break;
+
             case "/register":
                 context.setVariable("pageTitle", "Inscription");
+                context.setVariable("page", "register");
                 engine.process("register", context, resp.getWriter());
+                break;
+
+            case "/verify":
+                context.setVariable("pageTitle", "Vérification");
+                context.setVariable("page", "verify");
+                engine.process("verify", context, resp.getWriter());
                 break;
         }
     }
@@ -41,6 +53,9 @@ public class MemberServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getServletPath();
+        TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
+        WebContext context = new WebContext(
+                ThymeleafConfiguration.getApplication().buildExchange(req, resp));
 
         switch (path) {
             case "/register":
@@ -62,12 +77,26 @@ public class MemberServlet extends HttpServlet {
                 newMember.setAddress(address != null ? address : "");
                 newMember.setCity(city != null ? city : "");
                 newMember.setZipCode(zip != null && !zip.isEmpty() ? Integer.parseInt(zip) : 0);
-
+                newMember.setRole(Role.valueOf("RUNNER"));
                 newMember.setPositionLatitude(48.8566);
                 newMember.setPositionLongitude(2.3522);
 
+                if (memberService.findByEmail(email).isPresent()) {
+                    context.setVariable("error", "Un compte avec cet email existe déjà.");
+                    context.setVariable("page", "register");
+                    engine.process("register", context, resp.getWriter());
+                    return;
+                }
+
+                // Création du membre
                 memberService.createMember(newMember);
-                resp.sendRedirect("login");
+
+                // Envoi du code
+                String code = memberService.generateVerificationCodeForEmail(email);
+                new EmailService().sendVerificationEmail(email, code);
+                req.getSession().setAttribute("pendingEmail", email);
+
+                resp.sendRedirect("verify");
                 break;
 
             case "/login":
@@ -75,18 +104,47 @@ public class MemberServlet extends HttpServlet {
                 password = req.getParameter("password");
 
                 Optional<Member> memberOpt = memberService.connectMember(email, password);
-
                 if (memberOpt.isPresent()) {
                     req.getSession().setAttribute("member", memberOpt.get());
                     resp.sendRedirect("home");
                 } else {
-                    TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
-                    WebContext context = new WebContext(
-                            ThymeleafConfiguration.getApplication().buildExchange(req, resp));
+                    context.setVariable("pageTitle", "Connexion");
                     context.setVariable("error", "Identifiants incorrects");
+                    context.setVariable("page", "login");
                     engine.process("login", context, resp.getWriter());
                 }
                 break;
+
+            case "/verify":
+                String userInputCode = req.getParameter("code");
+                String pendingEmail = (String) req.getSession().getAttribute("pendingEmail");
+
+                if (pendingEmail == null) {
+                    context.setVariable("error", "Session expirée. Veuillez vous réinscrire.");
+                    context.setVariable("page", "verify");
+                    engine.process("verify", context, resp.getWriter());
+                    return;
+                }
+
+                // Récupérer le vrai code stocké
+                String expectedCode = VerificationCodeStorage.getCode(pendingEmail);
+
+                if (expectedCode != null && expectedCode.equals(userInputCode)) {
+                    // Vérification réussie
+                    req.getSession().removeAttribute("pendingEmail");
+                    VerificationCodeStorage.removeCode(pendingEmail);
+
+                    context.setVariable("success", "Votre adresse email a été vérifiée !");
+                    context.setVariable("page", "login");
+                    engine.process("login", context, resp.getWriter());
+                } else {
+                    // Mauvais code
+                    context.setVariable("error", "Code de vérification invalide.");
+                    context.setVariable("page", "verify");
+                    engine.process("verify", context, resp.getWriter());
+                }
+                break;
+
         }
     }
 }

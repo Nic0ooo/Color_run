@@ -17,6 +17,16 @@ public interface CourseRepository {
 
     Course findById(Integer id);
 
+/*
+    List<Course> getAllCourses();
+*/
+
+    List<Course> findByProximity(double latitude, double longitude, int radiusInKm);
+
+    List<Course> findByPostalCode(String postalCode);
+
+    List<Course> findByMonth(String monthName);
+
     Course save(Course course);
 
     Course updateCourse(Course course);

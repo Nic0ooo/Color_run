@@ -11,4 +11,6 @@ public interface MemberRepository {
     List<Member> findAll();
     Boolean deleteById(Long id);
     Member update(Member member);
+    void updatePasswordByEmail(String email, String password);
+
 }

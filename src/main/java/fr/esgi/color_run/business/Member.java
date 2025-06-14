@@ -19,6 +19,7 @@ public class Member {
     private Integer zipCode;
     private double positionLatitude;
     private double positionLongitude;
+    private Boolean isVerified = false;
 
     private static Long compteur = 0L;
     /**

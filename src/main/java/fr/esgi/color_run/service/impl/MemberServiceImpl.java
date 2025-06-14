@@ -4,9 +4,13 @@ import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
+import fr.esgi.color_run.utils.VerificationCodeStorage;
 
-import java.util.List;
-import java.util.Optional;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.*;
+import java.sql.Connection;
 
 public class MemberServiceImpl implements MemberService {
 
@@ -48,4 +52,43 @@ public class MemberServiceImpl implements MemberService {
     public Optional<Member> getMember(Long id) {
         return memberRepository.findById(id);
     }
+
+    private final Map<String, String> verificationCodes = new HashMap<>();
+
+    public String generateVerificationCodeForEmail(String email) {
+        String code = String.valueOf(new Random().nextInt(900000) + 100000); // Code à 6 chiffres
+        VerificationCodeStorage.storeCode(email, code);
+        return code;
+    }
+
+    public boolean isCodeValid(String email, String code) {
+        return code.equals(verificationCodes.get(email));
+    }
+
+    public void removeCode(String email) {
+        verificationCodes.remove(email);
+    }
+
+    @Override
+    public void updatePasswordByEmail(String email, String password) {
+            memberRepository.updatePasswordByEmail(email, password);
+    }
+
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return memberRepository.findByEmail(email).isPresent();
+    }
+
+
+    @Override
+    public Optional<Member> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
+    }
+
+
+
+
 }
+
+

@@ -3,8 +3,12 @@ package fr.esgi.color_run.servlet;
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
+import fr.esgi.color_run.repository.CourseRepository;
+import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
 import fr.esgi.color_run.service.CourseService;
+import fr.esgi.color_run.service.GeocodingService;
 import fr.esgi.color_run.service.impl.CourseServiceImpl;
+import fr.esgi.color_run.service.impl.GeocodingServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -29,8 +33,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @WebServlet(urlPatterns = {"/courses"})
 public class CoursesServlet extends HttpServlet {
 
-    private final CourseService courseService = new CourseServiceImpl();
+    //private final CourseService courseService = new CourseServiceImpl();
     private final ObjectMapper objectMapper = new ObjectMapper();
+//    private final CourseService courseService = new CourseServiceImpl();
+    private CourseService courseService;
+    private CourseRepository courseRepository;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        GeocodingService geocodingService = new GeocodingServiceImpl();
+        CourseRepository courseRepository = new CourseRepositoryImpl(new GeocodingServiceImpl());
+        this.courseService = new CourseServiceImpl(courseRepository, geocodingService);
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

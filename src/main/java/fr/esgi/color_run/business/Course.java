@@ -70,4 +70,26 @@ public class Course {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH'h'mm");
         return startDate.format(formatter);
     }
+
+    public String getMonthName() {
+        if (startDate != null) {
+            int monthValue = startDate.getMonthValue(); // Récupère le numéro du mois (1-12)
+            switch (monthValue) {
+                case 1: return "january";
+                case 2: return "february";
+                case 3: return "march";
+                case 4: return "april";
+                case 5: return "may";
+                case 6: return "june";
+                case 7: return "july";
+                case 8: return "august";
+                case 9: return "september";
+                case 10: return "october";
+                case 11: return "november";
+                case 12: return "december";
+                default: return "";
+            }
+        }
+        return "";
+    }
 }
