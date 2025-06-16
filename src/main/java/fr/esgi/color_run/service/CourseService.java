@@ -2,10 +2,15 @@ package fr.esgi.color_run.service;
 
 import fr.esgi.color_run.business.Course;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface CourseService {
     List<Course> listAllCourses();
+
+    List<Course> listUpcomingCourses();
+
+    List<Course> listPastCourses();
 
     /**
      * Recherche des courses à proximité d'un point géographique avec un filtre de date
@@ -29,4 +34,18 @@ public interface CourseService {
     Course updateCourse(Course course);
 
     Course getCourseById(Long id);
+    List<Course> searchCourseByName(String name);
+
+    /**
+     * Recherche et trie les courses selon les critères donnés
+     * @param searchTerm terme de recherche (nom, ville, code postal)
+     * @param fromDate date de début (optionnel)
+     * @param toDate date de fin (optionnel)
+     * @param sortBy colonne de tri (name, startDate, city, distance)
+     * @param sortDirection direction du tri (asc, desc)
+     * @param upcoming true pour les courses à venir, false pour les courses passées
+     * @return liste des courses filtrées et triées
+     */
+    List<Course> searchAndSortCourses(String searchTerm, LocalDate fromDate, LocalDate toDate,
+                                      String sortBy, String sortDirection, boolean upcoming);
 }
