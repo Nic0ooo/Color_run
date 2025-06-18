@@ -151,7 +151,7 @@
                                 Modifier
                             </button>
                             <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
-                                Accès au chat
+                                Voir détails
                             </a>
                         </td>
                     </tr>
@@ -213,7 +213,7 @@
                         </td>
                         <td class="px-6 py-4">
                             <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
-                                Accès au chat
+                                Voir détails
                             </a>
                         </td>
                     </tr>
@@ -222,7 +222,7 @@
             </div>
         </div>
 
-        <div th:if="${tableMode == 'allCourses'}" id="showFormButton" class="mt-4 flex justify-left">
+        <div th:if="${tableMode == 'allCourses' and member.role.name() == 'ORGANIZER'}" id="showFormButton" class="mt-4 flex justify-left">
             <button onclick="toggleForm()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                 Ajouter une course
             </button>
@@ -474,10 +474,10 @@
              Modifier
            </button>
            <a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
-             Accès au chat
+             Voir détails
            </a>`
                 : `<a href="#" class="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 transition">
-             Accès au chat
+             Voir détails
            </a>`;
 
             return `

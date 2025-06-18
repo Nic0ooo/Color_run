@@ -1,5 +1,6 @@
 package fr.esgi.color_run.util;
 
+import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Member;
 
@@ -52,4 +53,20 @@ public class Mapper {
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
         return m;
     }
+
+    public static  Association mapRowToAssociation(ResultSet rs) throws  SQLException {
+        Association association = new Association();
+        association.setId(rs.getLong("id"));
+        association.setName(rs.getString("name"));
+        association.setDescription(rs.getString("description"));
+        association.setWebsiteLink(rs.getString("websiteLink"));
+        association.setLogoPath(rs.getString("logoPath"));
+        association.setEmail(rs.getString("email"));
+        association.setPhoneNumber(rs.getString("phoneNumber"));
+        association.setAddress(rs.getString("address"));
+        association.setCity(rs.getString("city"));
+        association.setZipCode(rs.getInt("zipCode"));
+        return association;
+    }
+
 }

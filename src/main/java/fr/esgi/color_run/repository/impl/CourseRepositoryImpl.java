@@ -112,7 +112,6 @@ public class CourseRepositoryImpl implements CourseRepository {
             System.out.println("❌ Aucune course trouvée dans la base de données.");
         } else {
             System.out.println("✅ " + courses.size() + " courses trouvées dans la base de données.");
-            System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + courses);
         }
         return courses;
     }
