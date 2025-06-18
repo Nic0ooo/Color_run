@@ -36,9 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @WebServlet(urlPatterns = {"/courses", "/course-detail"})
 public class CoursesServlet extends HttpServlet {
 
-    //private final CourseService courseService = new CourseServiceImpl();
     private final ObjectMapper objectMapper = new ObjectMapper();
-//    private final CourseService courseService = new CourseServiceImpl();
     private CourseService courseService;
     private CourseRepository courseRepository;
     private Course_memberService courseMemberService;
@@ -58,12 +56,7 @@ public class CoursesServlet extends HttpServlet {
         System.out.println("CoursesServlet: doGet() called");
 
         HttpSession session = req.getSession(false);
-//        if (session == null || session.getAttribute("member") == null) {
-//            resp.sendRedirect("login");
-//            return;
-//        }
 
-//        Member member = (Member) session.getAttribute("member");
         Member member = (Member) (session != null ? session.getAttribute("member") : null);
 
         // Vérifier si c'est une requête AJAX
@@ -160,11 +153,6 @@ public class CoursesServlet extends HttpServlet {
             }
 
             // Récupérer les courses avec filtres et tri
-//            List<Course> upcomingCourses = courseService.searchAndSortCourses(
-//                    searchTerm, fromDate, toDate, sortBy, sortDirection, true);
-//            List<Course> pastCourses = courseService.searchAndSortCourses(
-//                    searchTerm, fromDate, toDate, sortBy, sortDirection, false);
-            // Récupérer les courses avec filtres et tri
             List<Course> upcomingCourses = courseService.listUpcomingCourses();
             List<Course> pastCourses = courseService.listPastCourses();
 
@@ -251,7 +239,6 @@ public class CoursesServlet extends HttpServlet {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Gestion des erreurs de parsing
         }
 
         double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
@@ -308,7 +295,6 @@ public class CoursesServlet extends HttpServlet {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Gestion des erreurs de parsing
         }
 
         double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
@@ -358,7 +344,7 @@ public class CoursesServlet extends HttpServlet {
                 return;
             }
 
-            // ✅ Vérifier si la course est expirée
+            // Vérifier si la course est expirée
             boolean courseExpired = false;
             if (course.getEndDate() != null) {
                 courseExpired = course.getEndDate().isBefore(LocalDateTime.now());
@@ -366,20 +352,20 @@ public class CoursesServlet extends HttpServlet {
                 courseExpired = course.getStartDate().isBefore(LocalDateTime.now());
             }
 
-            // ✅ Si tentative d'inscription sur course expirée via URL
+            // Si tentative d'inscription sur course expirée via URL
             if (courseExpired && req.getParameter("error") == null) {
                 resp.sendRedirect(req.getContextPath() + "/course-detail?id=" + courseId + "&error=course_expired");
                 return;
             }
 
-            // ✅ Vérifier l'état d'inscription via le SERVICE (pas le repository directement)
+            // Vérifier l'état d'inscription via le SERVICE (pas le repository directement)
             boolean isUserRegistered = false;
             boolean isUserPaid = false;
 
             if (member != null) {
                 Long courseIdLong = Long.parseLong(courseId);
 
-                // ✅ Utilisation du service au lieu du repository
+                // Utilisation du service au lieu du repository
                 isUserRegistered = courseMemberService.isMemberInCourse(courseIdLong, member.getId());
                 isUserPaid = courseMemberService.isMemberRegisteredAndPaid(courseIdLong, member.getId());
 
@@ -388,7 +374,7 @@ public class CoursesServlet extends HttpServlet {
                 System.out.println("  - Payé: " + isUserPaid);
             }
 
-            // ✅ Passer toutes les variables au contexte Thymeleaf
+            // Passer toutes les variables au contexte Thymeleaf
             context.setVariable("course", course);
             context.setVariable("member", member);
             context.setVariable("pageTitle", "Détail de la course - " + course.getName());
@@ -396,23 +382,16 @@ public class CoursesServlet extends HttpServlet {
             context.setVariable("isUserRegistered", isUserRegistered);
             context.setVariable("isUserPaid", isUserPaid);
 
-            System.out.println("🔍 Debug course detail:");
-            System.out.println("  - Course: " + course.getName());
-            System.out.println("  - Member: " + (member != null ? member.getEmail() : "null"));
-            System.out.println("  - Prix: " + course.getPrice());
-            System.out.println("  - User registered: " + isUserRegistered);
-            System.out.println("  - User paid: " + isUserPaid);
-
             resp.setContentType("text/html;charset=UTF-8");
             engine.process("course_detail", context, resp.getWriter());
 
-            System.out.println("✅ CoursesServlet: Détail affiché pour la course ID = " + courseId);
+            System.out.println("CoursesServlet: Détail affiché pour la course ID = " + courseId);
 
         } catch (NumberFormatException e) {
-            System.err.println("❌ ID de course invalide: " + courseId);
+            System.err.println("ID de course invalide: " + courseId);
             resp.sendRedirect(req.getContextPath() + "/courses");
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la récupération de la course: " + e.getMessage());
+            System.err.println("Erreur lors de la récupération de la course: " + e.getMessage());
             e.printStackTrace();
             resp.sendRedirect(req.getContextPath() + "/courses");
         }
