@@ -56,6 +56,7 @@ CREATE TABLE CourseMember (
                 memberId INTEGER,
                 registrationDate VARCHAR(255),
                 registrationStatus VARCHAR(255),
+                stripeSessionId VARCHAR(255) DEFAULT NULL,
                 FOREIGN KEY (courseId) REFERENCES Course(id),
                 FOREIGN KEY (memberId) REFERENCES Member(id)
 );
@@ -114,11 +115,11 @@ CREATE TABLE Paiement (
     WHERE NOT EXISTS (SELECT 1 FROM Association LIMIT 2) AND EXISTS (SELECT 1 FROM Association LIMIT 1);
 
     INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
-    SELECT 'Marathon de Paris', 'Un marathon mythique au cœur de Paris', 1, 1, '2025-04-10 17:00', '2025-04-10 18:00', 48.8566, 2.3522, 48.8606, 2.3376, 42.195, 'Champs Élysées', 'Paris', 75008, 5000, 1200, 50.0
+    SELECT 'Marathon de Paris', 'Un marathon mythique au cœur de Paris', 1, 1, '2025-10-10 17:00', '2025-10-10 18:00', 48.8566, 2.3522, 48.8606, 2.3376, 42.195, 'Champs Élysées', 'Paris', 75008, 5000, 1200, 50.0
     WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 1);
 
     INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
-    SELECT 'Course des Héros', 'Course caritative pour la bonne cause', 2, 2, '2025-06-15 13:00', '2025-06-15 15:30', 45.764, 4.8357, 45.7700, 4.8300, 5, 'Parc Blandant', 'Lyon', 69006, 3000, 800, 30.0
+    SELECT 'Course des Héros', 'Course caritative pour la bonne cause', 2, 2, '2025-08-15 13:00', '2025-08-15 15:30', 45.764, 4.8357, 45.7700, 4.8300, 5, 'Parc Blandant', 'Lyon', 69006, 3000, 800, 30.0
     WHERE NOT EXISTS (SELECT 1 FROM Course LIMIT 2) AND EXISTS (SELECT 1 FROM Course LIMIT 1);
 
     INSERT INTO Course (name, description, associationId, memberCreatorId, startDate, endDate, startpositionLatitude, startpositionLongitude, endpositionLatitude, endpositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
@@ -127,11 +128,11 @@ CREATE TABLE Paiement (
 
     -- Insérer des membres dans les courses seulement si la table est vide
     INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus)
-    SELECT 1, 2, '2025-03-01', 'Confirmed'
+    SELECT 1, 2, '2025-03-01', 'ACCEPTED'
     WHERE NOT EXISTS (SELECT 1 FROM CourseMember LIMIT 1);
 
     INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus)
-    SELECT 2, 1, '2025-03-05', 'Pending'
+    SELECT 2, 1, '2025-03-05', 'PENDING'
     WHERE NOT EXISTS (SELECT 1 FROM CourseMember LIMIT 2) AND EXISTS (SELECT 1 FROM CourseMember LIMIT 1);
 
     -- Insérer des membres dans les associations seulement si la table est vide
