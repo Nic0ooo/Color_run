@@ -58,11 +58,9 @@ public class Mapper {
     public static Course_member mapRowToCourse_member(ResultSet rs) throws SQLException {
         Course_member courseMember = new Course_member();
         courseMember.setId(rs.getLong("id"));
-//        courseMember.setCourseId(rs.getLong("course_id"));
-//        courseMember.setMemberId(rs.getLong("member_id"));
         courseMember.setCourseId(rs.getLong("courseId"));
         courseMember.setMemberId(rs.getLong("memberId"));
-        // Gérer les nouvelles colonnes avec fallback pour rétrocompatibilité
+
         try {
             String regDate = rs.getString("registrationDate");
             courseMember.setRegistrationDate(regDate != null ? regDate : java.time.LocalDateTime.now().toString());
@@ -73,7 +71,6 @@ public class Mapper {
             courseMember.setStripeSessionId(rs.getString("stripeSessionId")); // Peut être null
 
         } catch (SQLException e) {
-            // Si les colonnes n'existent pas encore dans votre base, valeurs par défaut
             courseMember.setRegistrationDate(java.time.LocalDateTime.now().toString());
             courseMember.setRegistrationStatus(Status.ACCEPTED);
             courseMember.setStripeSessionId(null);
