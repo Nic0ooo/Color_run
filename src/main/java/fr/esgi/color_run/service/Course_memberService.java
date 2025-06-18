@@ -14,14 +14,8 @@ public interface Course_memberService {
 
     boolean isMemberInCourse(long courseId, long memberId);
 
-    /**
-     * Vérifie si un membre est inscrit ET a payé pour une course
-     */
     boolean isMemberRegisteredAndPaid(long courseId, long memberId);
 
-    /**
-     * Obtient les détails de l'inscription d'un membre pour une course
-     */
     Optional<Course_member> getRegistrationDetails(long courseId, long memberId);
 
     List<Course> findCoursesByMemberId(long memberId);

@@ -21,9 +21,9 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
             try {
                 // Obligatoire pour que Tomcat charge le driver H2
                 Class.forName("org.h2.Driver");
-                System.out.println("✅ Driver H2 chargé");
+                System.out.println("Driver H2 chargé");
             } catch (ClassNotFoundException e) {
-                System.err.println("❌ Driver H2 introuvable !");
+                System.err.println("Driver H2 introuvable !");
                 e.printStackTrace();
             }
 
@@ -37,12 +37,12 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
         public void testDatabaseConnection() {
             try (Connection connection = getConnection()) {
                 if (connection != null && !connection.isClosed()) {
-                    System.out.println("✅ Connexion à la base de données réussie !");
+                    System.out.println("Connexion à la base de données réussie !");
                 } else {
-                    System.out.println("❌ Échec de la connexion à la base de données.");
+                    System.out.println("Échec de la connexion à la base de données.");
                 }
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la tentative de connexion à la base de données :");
+                System.err.println("Erreur lors de la tentative de connexion à la base de données :");
                 e.printStackTrace();
             }
         }
@@ -55,7 +55,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 pstmt.setLong(2, course_member.getMemberId());
                 pstmt.executeUpdate();
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de l'insertion du membre dans la course :");
+                System.err.println("Erreur lors de l'insertion du membre dans la course :");
                 e.printStackTrace();
             }
         }
@@ -77,7 +77,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération des détails d'inscription: " + e.getMessage());
+            System.err.println("Erreur lors de la récupération des détails d'inscription: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -118,10 +118,10 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                     }
                 }
 
-                System.out.println("✅ Inscription Stripe insérée: " + course_member.getId());
+                System.out.println("Inscription Stripe insérée: " + course_member.getId());
 
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de l'insertion Stripe: " + e.getMessage());
+                System.err.println("Erreur lors de l'insertion Stripe: " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -141,13 +141,13 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 int rowsUpdated = pstmt.executeUpdate();
 
                 if (rowsUpdated > 0) {
-                    System.out.println("✅ Inscription Stripe mise à jour: " + course_member.getId());
+                    System.out.println("Inscription Stripe mise à jour: " + course_member.getId());
                 } else {
-                    System.err.println("❌ Aucune ligne mise à jour pour l'inscription: " + course_member.getId());
+                    System.err.println("Aucune ligne mise à jour pour l'inscription: " + course_member.getId());
                 }
 
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la mise à jour Stripe: " + e.getMessage());
+                System.err.println("Erreur lors de la mise à jour Stripe: " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -168,7 +168,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 }
 
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la recherche par stripeSessionId: " + e.getMessage());
+                System.err.println("Erreur lors de la recherche par stripeSessionId: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -192,7 +192,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 }
 
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la vérification de paiement: " + e.getMessage());
+                System.err.println("Erreur lors de la vérification de paiement: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -208,7 +208,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 pstmt.setLong(2, course_member.getMemberId());
                 pstmt.executeUpdate();
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la suppression du membre de la course :");
+                System.err.println("Erreur lors de la suppression du membre de la course :");
                 e.printStackTrace();
             }
         }
@@ -224,7 +224,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                     return rs.getInt(1) > 0;
                 }
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la vérification de l'appartenance du membre à la course :");
+                System.err.println("Erreur lors de la vérification de l'appartenance du membre à la course :");
                 e.printStackTrace();
             }
             return false;
@@ -246,7 +246,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 }
                 return courses;
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la récupération des courses pour le membre :");
+                System.err.println("Erreur lors de la récupération des courses pour le membre :");
                 e.printStackTrace();
             }
             return null;
@@ -264,7 +264,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 }
                 return courses;
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la récupération des courses passées pour le membre :");
+                System.err.println("Erreur lors de la récupération des courses passées pour le membre :");
                 e.printStackTrace();
             }
             return null;
@@ -282,7 +282,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
             }
             return courses;
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération des courses à venir pour le membre :");
+            System.err.println("Erreur lors de la récupération des courses à venir pour le membre :");
             e.printStackTrace();
         }
         return null;
@@ -300,7 +300,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 }
                 return members;
             } catch (SQLException e) {
-                System.err.println("❌ Erreur lors de la récupération des membres de la course :");
+                System.err.println("Erreur lors de la récupération des membres de la course :");
                 e.printStackTrace();
             }
             return null;
