@@ -53,8 +53,8 @@ public class HomeServlet extends HttpServlet {
         Member member = (Member) req.getSession().getAttribute("member");
         context.setVariable("member", member);
 
-        // Récupérer toutes les courses depuis le service
-        List<Course> courses = courseService.listAllCourses();
+        // Récupérer seulement les courses à venir depuis le service
+        List<Course> courses = courseService.listUpcomingCourses();
         context.setVariable("courses", courses);
 
         context.setVariable("pageTitle", "Accueil");
@@ -67,8 +67,6 @@ public class HomeServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         System.out.println("=== POST REQUEST RECEIVED ===");
 
-        // Debug: afficher TOUS les paramètres reçus
-        System.out.println("Tous les paramètres reçus:");
         req.getParameterMap().forEach((key, values) -> {
             System.out.println("  " + key + " = " + java.util.Arrays.toString(values));
         });
@@ -79,13 +77,6 @@ public class HomeServlet extends HttpServlet {
         String contentType = req.getContentType();
         boolean isAjaxRequest = "XMLHttpRequest".equals(xRequestedWith) ||
                 (acceptHeader != null && acceptHeader.contains("application/json"));
-
-        // Debug: afficher les en-têtes pour comprendre le type de requête
-        System.out.println("Headers reçus:");
-        System.out.println("  Accept: " + acceptHeader);
-        System.out.println("  X-Requested-With: " + xRequestedWith);
-        System.out.println("  Content-Type: " + contentType);
-        System.out.println("  Is AJAX request: " + isAjaxRequest);
 
         // Récupérer les membres de la session
         Member member = (Member) req.getSession().getAttribute("member");
@@ -120,7 +111,6 @@ public class HomeServlet extends HttpServlet {
 
         resp.setContentType("application/json;charset=UTF-8");
 
-        // Créer la réponse JSON manuellement (plus simple et plus fiable)
         StringBuilder jsonResponse = new StringBuilder();
         jsonResponse.append("{");
 

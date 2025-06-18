@@ -44,4 +44,4 @@ build/
 .DS_Store
 
 ### Pour la variable d'environnement:
-src/main/resources/config.properties
+src/main/resources/config.propertiesql*

@@ -15,8 +15,6 @@ public interface CourseRepository {
 
     List<Course> searchCourseByName(String name);
 
-    Course findById(Integer id);
-
 /*
     List<Course> getAllCourses();
 */
@@ -30,6 +28,9 @@ public interface CourseRepository {
     Course save(Course course);
 
     Course updateCourse(Course course);
+
+    Course findById(Long id);
+
 
     /**
      * Recherche et trie les courses selon les critères donnés

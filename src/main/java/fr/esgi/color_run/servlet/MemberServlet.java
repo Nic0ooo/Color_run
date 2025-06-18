@@ -106,7 +106,18 @@ public class MemberServlet extends HttpServlet {
                 Optional<Member> memberOpt = memberService.connectMember(email, password);
                 if (memberOpt.isPresent()) {
                     req.getSession().setAttribute("member", memberOpt.get());
-                    resp.sendRedirect("home");
+
+                    String redirectUrl = req.getParameter("redirect");
+                    if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                        // Ajouter le context path si ce n'est pas déjà fait
+                        if (!redirectUrl.startsWith(req.getContextPath())) {
+                            redirectUrl = req.getContextPath() + redirectUrl;
+                        }
+                        System.out.println("🔄 Redirection après login vers: " + redirectUrl);
+                        resp.sendRedirect(redirectUrl);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/home");
+                    }
                 } else {
                     context.setVariable("pageTitle", "Connexion");
                     context.setVariable("error", "Identifiants incorrects");
