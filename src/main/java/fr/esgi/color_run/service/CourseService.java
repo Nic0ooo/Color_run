@@ -33,9 +33,8 @@ public interface CourseService {
 
     Course updateCourse(Course course);
 
+    Course getCourseById(Long id);
     List<Course> searchCourseByName(String name);
-
-    Course getCourseById(Integer id);
 
     /**
      * Recherche et trie les courses selon les critères donnés

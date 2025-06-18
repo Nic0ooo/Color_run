@@ -203,7 +203,6 @@
 
     <div class="flex flex-wrap justify-center gap-8">
       <div class="w-full md:w-1/4 text-center">
-<!--        <div class="bg-gray-200 h-32 w-32 mx-auto mb-4"></div>-->
         <div class="w-full aspect-[1/1] overflow-hidden rounded-lg shadow-md">
           <img src="/color_run_war/images/colorrun_img1.webp"
                alt="Participants à la Color Run couverts de poudre colorée"
@@ -373,7 +372,7 @@
             <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${course.name}</h3>
             <p style="font-size: 14px; margin-bottom: 5px;"><strong>Date:</strong> ${course.startDate}</p>
             <p style="font-size: 12px; margin-bottom: 10px;">${course.description}</p>
-            <a href="/course-detail?id=${course.id}"
+            <a href="course-detail?id=${course.id}"
                 style="background-color: #14b8a6; color: white; padding: 6px 12px;
                     border-radius: 4px; text-decoration: none; display: inline-block;
                     font-size: 12px; text-align: center; font-weight: 500;">
@@ -511,7 +510,6 @@
     if (mapMarkers && mapMarkers[courseId] && map) {
       const markerPosition = mapMarkers[courseId].getLatLng();
 
-      // Calculer la position cible : 50% largeur, 70% hauteur (30% à partir du bas)
       const mapContainer = map.getContainer();
       const containerWidth = mapContainer.offsetWidth;
       const containerHeight = mapContainer.offsetHeight;
@@ -575,7 +573,7 @@
   });
 </script>
 
-<!-- JavaScript pour la géolocalisation -->
+<!-- géolocalisation -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const proximityButton = document.getElementById('proximity-search');
@@ -762,8 +760,8 @@
                           zipCode: cityElement ? cityElement.textContent.trim().match(/\((\d+)\)/)?.[1] || '' : '',
                           startDate: dateElement ? dateElement.textContent.trim() : '',
                           price: priceElement ? priceElement.textContent.trim().replace('€', '') : '0',
-                          startpositionLatitude: null,
-                          startpositionLongitude: null,
+                          startPositionLatitude: null,
+                          startPositionLongitude: null,
                           description: ''
                         });
                       }
@@ -1002,7 +1000,7 @@
 
                     let courses = data.courses || [];
 
-                    // S'assurer qu'on a bien toutes les courses (fallback sur les courses initiales)
+                    // S'assurer de la présence de toutes les courses
                     if (courses.length === 0) {
                       console.log('Aucune course reçue, utilisation des courses initiales');
                       courses = currentCourses || [];
@@ -1023,7 +1021,7 @@
                     updateCoursesList(currentCourses || []);
                     initializeMap(currentCourses || []);
                   });
-        }, 200); // Délai un peu plus long pour être sûr
+        }, 200); // Délai
       });
     }
   });

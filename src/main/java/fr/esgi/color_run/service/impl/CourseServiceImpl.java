@@ -28,7 +28,7 @@ public class CourseServiceImpl implements CourseService {
         if (courses.isEmpty()) {
             System.out.println("No courses found.");
         } else {
-            System.out.println("Courses found: " + courses.size());
+            System.out.println("Courses found: " + courses);
         }
         return courses;
     }
@@ -168,13 +168,24 @@ public class CourseServiceImpl implements CourseService {
     public Course updateCourse(Course course) {
         Course updatedCourse = courseRepository.updateCourse(course);
         if (updatedCourse != null) {
-            System.out.println("Course updated successfully: " + updatedCourse.getName());
+            System.out.println("Course updated successfully: " + updatedCourse);
         } else {
             System.out.println("Failed to update course.");
         }
         return updatedCourse;
     }
 
+    @Override
+    public Course getCourseById(Long id) {
+        Course course = courseRepository.findById(id);
+
+        if (course != null) {
+            System.out.println("Course found: " + course);
+        } else {
+            System.out.println("No course found with ID: " + id);
+        }
+        return course;
+    }
     @Override
     public List<Course> searchCourseByName(String name) {
         List<Course> searchedCourses = courseRepository.searchCourseByName(name);
@@ -184,17 +195,6 @@ public class CourseServiceImpl implements CourseService {
             System.out.println("Courses found with the name " + name + ": " + searchedCourses.size());
         }
         return searchedCourses;
-    }
-
-    @Override
-    public Course getCourseById(Integer id) {
-        Course course = courseRepository.findById(id);
-        if (course != null) {
-            System.out.println("Course found: " + course.getName());
-        } else {
-            System.out.println("No course found with the ID: " + id);
-        }
-        return course;
     }
 
     @Override

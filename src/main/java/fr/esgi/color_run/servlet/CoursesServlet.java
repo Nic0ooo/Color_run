@@ -6,8 +6,10 @@ import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
 import fr.esgi.color_run.service.CourseService;
+import fr.esgi.color_run.service.Course_memberService;
 import fr.esgi.color_run.service.GeocodingService;
 import fr.esgi.color_run.service.impl.CourseServiceImpl;
+import fr.esgi.color_run.service.impl.Course_memberServiceImpl;
 import fr.esgi.color_run.service.impl.GeocodingServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
@@ -30,14 +33,13 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-@WebServlet(urlPatterns = {"/courses"})
+@WebServlet(urlPatterns = {"/courses", "/course-detail"})
 public class CoursesServlet extends HttpServlet {
 
-    //private final CourseService courseService = new CourseServiceImpl();
     private final ObjectMapper objectMapper = new ObjectMapper();
-//    private final CourseService courseService = new CourseServiceImpl();
     private CourseService courseService;
     private CourseRepository courseRepository;
+    private Course_memberService courseMemberService;
 
     @Override
     public void init() throws ServletException {
@@ -45,6 +47,8 @@ public class CoursesServlet extends HttpServlet {
         GeocodingService geocodingService = new GeocodingServiceImpl();
         CourseRepository courseRepository = new CourseRepositoryImpl(new GeocodingServiceImpl());
         this.courseService = new CourseServiceImpl(courseRepository, geocodingService);
+
+        this.courseMemberService = new Course_memberServiceImpl();
     }
 
     @Override
@@ -52,12 +56,8 @@ public class CoursesServlet extends HttpServlet {
         System.out.println("CoursesServlet: doGet() called");
 
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("member") == null) {
-            resp.sendRedirect("login");
-            return;
-        }
 
-        Member member = (Member) session.getAttribute("member");
+        Member member = (Member) (session != null ? session.getAttribute("member") : null);
 
         // Vérifier si c'est une requête AJAX
         String isAjax = req.getParameter("ajax");
@@ -115,45 +115,57 @@ public class CoursesServlet extends HttpServlet {
         TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         WebContext context = new WebContext(ThymeleafConfiguration.getApplication().buildExchange(req, resp));
 
-        context.setVariable("member", member);
-        context.setVariable("pageTitle", "Courses");
 
-        // Récupération des paramètres de recherche et tri
-        String searchTerm = req.getParameter("search");
-        String fromDateStr = req.getParameter("fromDate");
-        String toDateStr = req.getParameter("toDate");
-        String sortBy = req.getParameter("sortBy");
-        String sortDirection = req.getParameter("sortDirection");
+        // Vérifier si appel course détail
+        String courseId = req.getParameter("id");
 
-        // Conversion des dates
-        LocalDate fromDate = null;
-        LocalDate toDate = null;
-        try {
-            if (fromDateStr != null && !fromDateStr.isEmpty()) {
-                fromDate = LocalDate.parse(fromDateStr);
+        if (courseId != null && !courseId.isEmpty()) {
+
+            showCourseDetail(courseId, context, engine, resp, req, member);
+        } else {
+
+            // Récupérer la liste des courses
+            var courses = courseService.listAllCourses();
+            System.out.println("CoursesServlet: Nombre de courses récupérées = " + courses.size());
+            context.setVariable("courses", courses);
+            context.setVariable("member", member);
+            context.setVariable("pageTitle", "Courses");
+
+            // Récupération des paramètres de recherche et tri
+            String searchTerm = req.getParameter("search");
+            String fromDateStr = req.getParameter("fromDate");
+            String toDateStr = req.getParameter("toDate");
+            String sortBy = req.getParameter("sortBy");
+            String sortDirection = req.getParameter("sortDirection");
+
+            // Conversion des dates
+            LocalDate fromDate = null;
+            LocalDate toDate = null;
+            try {
+                if (fromDateStr != null && !fromDateStr.isEmpty()) {
+                    fromDate = LocalDate.parse(fromDateStr);
+                }
+                if (toDateStr != null && !toDateStr.isEmpty()) {
+                    toDate = LocalDate.parse(toDateStr);
+                }
+            } catch (Exception e) {
+                System.err.println("Erreur lors du parsing des dates: " + e.getMessage());
             }
-            if (toDateStr != null && !toDateStr.isEmpty()) {
-                toDate = LocalDate.parse(toDateStr);
-            }
-        } catch (Exception e) {
-            System.err.println("Erreur lors du parsing des dates: " + e.getMessage());
+
+            // Récupérer les courses avec filtres et tri
+            List<Course> upcomingCourses = courseService.listUpcomingCourses();
+            List<Course> pastCourses = courseService.listPastCourses();
+
+            System.out.println("CoursesServlet: Nombre de courses à venir récupérées = " + upcomingCourses.size());
+            System.out.println("CoursesServlet: Nombre de courses passées récupérées = " + pastCourses.size());
+
+            context.setVariable("upcomingCourses", upcomingCourses);
+            context.setVariable("pastCourses", pastCourses);
+
+            // Configuration de la réponse
+            resp.setContentType("text/html;charset=UTF-8");
+            engine.process("courses", context, resp.getWriter());
         }
-
-        // Récupérer les courses avec filtres et tri
-        List<Course> upcomingCourses = courseService.searchAndSortCourses(
-                searchTerm, fromDate, toDate, sortBy, sortDirection, true);
-        List<Course> pastCourses = courseService.searchAndSortCourses(
-                searchTerm, fromDate, toDate, sortBy, sortDirection, false);
-
-        System.out.println("CoursesServlet: Nombre de courses à venir récupérées = " + upcomingCourses.size());
-        System.out.println("CoursesServlet: Nombre de courses passées récupérées = " + pastCourses.size());
-
-        context.setVariable("upcomingCourses", upcomingCourses);
-        context.setVariable("pastCourses", pastCourses);
-
-        // Configuration de la réponse
-        resp.setContentType("text/html;charset=UTF-8");
-        engine.process("courses", context, resp.getWriter());
     }
 
     private List<Map<String, Object>> convertCoursesToJson(List<Course> courses) {
@@ -193,6 +205,7 @@ public class CoursesServlet extends HttpServlet {
         System.out.println("CoursesServlet: doPost() called");
         req.setCharacterEncoding("UTF-8");
 
+        req.setCharacterEncoding("UTF-8");
         String action = req.getParameter("action");
 
         if ("create".equals(action)) {
@@ -226,7 +239,6 @@ public class CoursesServlet extends HttpServlet {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Gestion des erreurs de parsing
         }
 
         double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
@@ -283,7 +295,6 @@ public class CoursesServlet extends HttpServlet {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Gestion des erreurs de parsing
         }
 
         double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
@@ -320,5 +331,69 @@ public class CoursesServlet extends HttpServlet {
         courseService.updateCourse(course);
 
         resp.sendRedirect(req.getContextPath() + "/courses");
+    }
+
+    private void showCourseDetail(String courseId, WebContext context, TemplateEngine engine,
+                                  HttpServletResponse resp, HttpServletRequest req, Member member) throws IOException {
+        try {
+            var course = courseService.getCourseById(Long.parseLong(courseId));
+
+            if (course == null) {
+                System.err.println("Course non trouvée avec l'ID: " + courseId);
+                resp.sendRedirect(req.getContextPath() + "/courses");
+                return;
+            }
+
+            // Vérifier si la course est expirée
+            boolean courseExpired = false;
+            if (course.getEndDate() != null) {
+                courseExpired = course.getEndDate().isBefore(LocalDateTime.now());
+            } else if (course.getStartDate() != null) {
+                courseExpired = course.getStartDate().isBefore(LocalDateTime.now());
+            }
+
+            // Si tentative d'inscription sur course expirée via URL
+            if (courseExpired && req.getParameter("error") == null) {
+                resp.sendRedirect(req.getContextPath() + "/course-detail?id=" + courseId + "&error=course_expired");
+                return;
+            }
+
+            // Vérifier l'état d'inscription via le SERVICE (pas le repository directement)
+            boolean isUserRegistered = false;
+            boolean isUserPaid = false;
+
+            if (member != null) {
+                Long courseIdLong = Long.parseLong(courseId);
+
+                // Utilisation du service au lieu du repository
+                isUserRegistered = courseMemberService.isMemberInCourse(courseIdLong, member.getId());
+                isUserPaid = courseMemberService.isMemberRegisteredAndPaid(courseIdLong, member.getId());
+
+                System.out.println("🔍 État inscription pour member " + member.getId() + " course " + courseId + ":");
+                System.out.println("  - Inscrit: " + isUserRegistered);
+                System.out.println("  - Payé: " + isUserPaid);
+            }
+
+            // Passer toutes les variables au contexte Thymeleaf
+            context.setVariable("course", course);
+            context.setVariable("member", member);
+            context.setVariable("pageTitle", "Détail de la course - " + course.getName());
+            context.setVariable("contextPath", req.getContextPath());
+            context.setVariable("isUserRegistered", isUserRegistered);
+            context.setVariable("isUserPaid", isUserPaid);
+
+            resp.setContentType("text/html;charset=UTF-8");
+            engine.process("course_detail", context, resp.getWriter());
+
+            System.out.println("CoursesServlet: Détail affiché pour la course ID = " + courseId);
+
+        } catch (NumberFormatException e) {
+            System.err.println("ID de course invalide: " + courseId);
+            resp.sendRedirect(req.getContextPath() + "/courses");
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération de la course: " + e.getMessage());
+            e.printStackTrace();
+            resp.sendRedirect(req.getContextPath() + "/courses");
+        }
     }
 }

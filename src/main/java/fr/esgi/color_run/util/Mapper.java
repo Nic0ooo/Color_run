@@ -1,11 +1,13 @@
 package fr.esgi.color_run.util;
 
 import fr.esgi.color_run.business.Course;
+import fr.esgi.color_run.business.Course_member;
 import fr.esgi.color_run.business.Member;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import fr.esgi.color_run.business.Status;
 
 public class Mapper {
     public static Course mapRowToCourse(ResultSet resultSet) throws SQLException {
@@ -51,5 +53,29 @@ public class Mapper {
         m.setPositionLatitude(rs.getDouble("positionLatitude"));
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
         return m;
+    }
+
+    public static Course_member mapRowToCourse_member(ResultSet rs) throws SQLException {
+        Course_member courseMember = new Course_member();
+        courseMember.setId(rs.getLong("id"));
+        courseMember.setCourseId(rs.getLong("courseId"));
+        courseMember.setMemberId(rs.getLong("memberId"));
+
+        try {
+            String regDate = rs.getString("registrationDate");
+            courseMember.setRegistrationDate(regDate != null ? regDate : java.time.LocalDateTime.now().toString());
+
+            String status = rs.getString("registrationStatus");
+            courseMember.setRegistrationStatus(status != null ? Status.valueOf(status) : Status.ACCEPTED);
+
+            courseMember.setStripeSessionId(rs.getString("stripeSessionId")); // Peut être null
+
+        } catch (SQLException e) {
+            courseMember.setRegistrationDate(java.time.LocalDateTime.now().toString());
+            courseMember.setRegistrationStatus(Status.ACCEPTED);
+            courseMember.setStripeSessionId(null);
+        }
+
+        return courseMember;
     }
 }
