@@ -17,19 +17,19 @@ import java.util.Optional;
 public class PaiementServiceImpl implements PaiementService {
 
     private final Course_memberService courseMemberService;
-    private final Course_memberRepositoryImpl courseMemberRepository; // ✅ Repository direct pour Stripe
+    private final Course_memberRepositoryImpl courseMemberRepository; // Repository direct pour Stripe
 
     public PaiementServiceImpl(Course_memberService courseMemberService) {
         this.courseMemberService = courseMemberService;
-        this.courseMemberRepository = new Course_memberRepositoryImpl(); // ✅ Instance directe
+        this.courseMemberRepository = new Course_memberRepositoryImpl(); // Instance directe
 
         // Configurer Stripe
         String secretKey = Config.get("stripe.secret.key");
         if (secretKey != null && !secretKey.trim().isEmpty()) {
             Stripe.apiKey = secretKey;
-            System.out.println("✅ Stripe configuré");
+            System.out.println("Stripe configuré");
         } else {
-            System.err.println("❌ Clé Stripe manquante dans config.properties");
+            System.err.println("Clé Stripe manquante dans config.properties");
         }
     }
 
@@ -74,9 +74,9 @@ public class PaiementServiceImpl implements PaiementService {
                     .build();
 
             Session session = Session.create(params);
-            System.out.println("✅ Session Stripe créée: " + session.getId());
+            System.out.println("Session Stripe créée: " + session.getId());
 
-            // ✅ Créer l'inscription PENDING via repository Stripe
+            // Créer l'inscription PENDING via repository Stripe
             Course_member pendingRegistration = new Course_member();
             pendingRegistration.setCourseId(courseId);
             pendingRegistration.setMemberId(memberId);
@@ -85,12 +85,12 @@ public class PaiementServiceImpl implements PaiementService {
             pendingRegistration.setStripeSessionId(session.getId());
 
             courseMemberRepository.saveWithStripe(pendingRegistration);
-            System.out.println("✅ Inscription PENDING créée avec session ID: " + session.getId());
+            System.out.println("Inscription PENDING créée avec session ID: " + session.getId());
 
             return session.getId();
 
         } catch (StripeException e) {
-            System.err.println("❌ Erreur Stripe: " + e.getMessage());
+            System.err.println("Erreur Stripe: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Erreur lors de la création de la session de paiement", e);
         }
@@ -109,29 +109,29 @@ public class PaiementServiceImpl implements PaiementService {
             System.out.println("Payment Status: " + session.getPaymentStatus());
 
             if (!"complete".equals(session.getStatus()) || !"paid".equals(session.getPaymentStatus())) {
-                System.err.println("❌ Paiement non confirmé - Status: " + session.getStatus() + ", Payment: " + session.getPaymentStatus());
+                System.err.println("Paiement non confirmé - Status: " + session.getStatus() + ", Payment: " + session.getPaymentStatus());
                 return null;
             }
 
-            // ✅ Chercher l'inscription PENDING via repository Stripe
+            // Chercher l'inscription PENDING via repository Stripe
             Optional<Course_member> registrationOpt = courseMemberRepository.findByStripeSessionId(stripeSessionId);
 
             if (registrationOpt.isPresent()) {
                 Course_member registration = registrationOpt.get();
                 registration.setRegistrationStatus(Status.ACCEPTED);
 
-                // ✅ Mettre à jour via repository Stripe
+                // Mettre à jour via repository Stripe
                 courseMemberRepository.saveWithStripe(registration);
 
-                System.out.println("✅ Paiement confirmé et inscription validée");
+                System.out.println("Paiement confirmé et inscription validée");
                 return registration;
             } else {
-                System.err.println("❌ Inscription PENDING introuvable pour: " + stripeSessionId);
+                System.err.println("Inscription PENDING introuvable pour: " + stripeSessionId);
                 return null;
             }
 
         } catch (StripeException e) {
-            System.err.println("❌ Erreur Stripe lors de la confirmation: " + e.getMessage());
+            System.err.println("Erreur Stripe lors de la confirmation: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -142,11 +142,11 @@ public class PaiementServiceImpl implements PaiementService {
         System.out.println("=== Annulation paiement ===");
         System.out.println("Session: " + stripeSessionId);
 
-        // ✅ Chercher via repository Stripe
+        // Chercher via repository Stripe
         Optional<Course_member> registrationOpt = courseMemberRepository.findByStripeSessionId(stripeSessionId);
 
         if (registrationOpt.isPresent()) {
-            // ✅ Supprimer via service standard
+            // Supprimer via service standard
             courseMemberService.delete(registrationOpt.get());
             System.out.println("✅ Inscription PENDING supprimée");
         } else {
@@ -160,7 +160,7 @@ public class PaiementServiceImpl implements PaiementService {
             Session session = Session.retrieve(stripeSessionId);
             return "complete".equals(session.getStatus()) && "paid".equals(session.getPaymentStatus());
         } catch (StripeException e) {
-            System.err.println("❌ Erreur lors de la vérification du paiement: " + e.getMessage());
+            System.err.println("Erreur lors de la vérification du paiement: " + e.getMessage());
             return false;
         }
     }
