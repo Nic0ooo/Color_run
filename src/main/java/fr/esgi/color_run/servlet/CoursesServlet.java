@@ -6,8 +6,10 @@ import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
 import fr.esgi.color_run.service.CourseService;
+import fr.esgi.color_run.service.Course_memberService;
 import fr.esgi.color_run.service.GeocodingService;
 import fr.esgi.color_run.service.impl.CourseServiceImpl;
+import fr.esgi.color_run.service.impl.Course_memberServiceImpl;
 import fr.esgi.color_run.service.impl.GeocodingServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -39,6 +41,7 @@ public class CoursesServlet extends HttpServlet {
 //    private final CourseService courseService = new CourseServiceImpl();
     private CourseService courseService;
     private CourseRepository courseRepository;
+    private Course_memberService courseMemberService;
 
     @Override
     public void init() throws ServletException {
@@ -46,6 +49,8 @@ public class CoursesServlet extends HttpServlet {
         GeocodingService geocodingService = new GeocodingServiceImpl();
         CourseRepository courseRepository = new CourseRepositoryImpl(new GeocodingServiceImpl());
         this.courseService = new CourseServiceImpl(courseRepository, geocodingService);
+
+        this.courseMemberService = new Course_memberServiceImpl();
     }
 
     @Override
@@ -58,7 +63,8 @@ public class CoursesServlet extends HttpServlet {
 //            return;
 //        }
 
-        Member member = (Member) session.getAttribute("member");
+//        Member member = (Member) session.getAttribute("member");
+        Member member = (Member) (session != null ? session.getAttribute("member") : null);
 
         // Vérifier si c'est une requête AJAX
         String isAjax = req.getParameter("ajax");
@@ -116,12 +122,13 @@ public class CoursesServlet extends HttpServlet {
         TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         WebContext context = new WebContext(ThymeleafConfiguration.getApplication().buildExchange(req, resp));
 
+
         // Vérifier si appel course détail
         String courseId = req.getParameter("id");
 
         if (courseId != null && !courseId.isEmpty()) {
 
-            showCourseDetail(courseId, context, engine, resp);
+            showCourseDetail(courseId, context, engine, resp, req, member);
         } else {
 
             // Récupérer la liste des courses
@@ -153,10 +160,13 @@ public class CoursesServlet extends HttpServlet {
             }
 
             // Récupérer les courses avec filtres et tri
-            List<Course> upcomingCourses = courseService.searchAndSortCourses(
-                    searchTerm, fromDate, toDate, sortBy, sortDirection, true);
-            List<Course> pastCourses = courseService.searchAndSortCourses(
-                    searchTerm, fromDate, toDate, sortBy, sortDirection, false);
+//            List<Course> upcomingCourses = courseService.searchAndSortCourses(
+//                    searchTerm, fromDate, toDate, sortBy, sortDirection, true);
+//            List<Course> pastCourses = courseService.searchAndSortCourses(
+//                    searchTerm, fromDate, toDate, sortBy, sortDirection, false);
+            // Récupérer les courses avec filtres et tri
+            List<Course> upcomingCourses = courseService.listUpcomingCourses();
+            List<Course> pastCourses = courseService.listPastCourses();
 
             System.out.println("CoursesServlet: Nombre de courses à venir récupérées = " + upcomingCourses.size());
             System.out.println("CoursesServlet: Nombre de courses passées récupérées = " + pastCourses.size());
@@ -337,18 +347,74 @@ public class CoursesServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/courses");
     }
 
-    private void showCourseDetail(String courseId, WebContext context, TemplateEngine engine, HttpServletResponse resp) throws IOException {
+    private void showCourseDetail(String courseId, WebContext context, TemplateEngine engine,
+                                  HttpServletResponse resp, HttpServletRequest req, Member member) throws IOException {
         try {
             var course = courseService.getCourseById(Long.parseLong(courseId));
+
+            if (course == null) {
+                System.err.println("Course non trouvée avec l'ID: " + courseId);
+                resp.sendRedirect(req.getContextPath() + "/courses");
+                return;
+            }
+
+            // ✅ Vérifier si la course est expirée
+            boolean courseExpired = false;
+            if (course.getEndDate() != null) {
+                courseExpired = course.getEndDate().isBefore(LocalDateTime.now());
+            } else if (course.getStartDate() != null) {
+                courseExpired = course.getStartDate().isBefore(LocalDateTime.now());
+            }
+
+            // ✅ Si tentative d'inscription sur course expirée via URL
+            if (courseExpired && req.getParameter("error") == null) {
+                resp.sendRedirect(req.getContextPath() + "/course-detail?id=" + courseId + "&error=course_expired");
+                return;
+            }
+
+            // ✅ Vérifier l'état d'inscription via le SERVICE (pas le repository directement)
+            boolean isUserRegistered = false;
+            boolean isUserPaid = false;
+
+            if (member != null) {
+                Long courseIdLong = Long.parseLong(courseId);
+
+                // ✅ Utilisation du service au lieu du repository
+                isUserRegistered = courseMemberService.isMemberInCourse(courseIdLong, member.getId());
+                isUserPaid = courseMemberService.isMemberRegisteredAndPaid(courseIdLong, member.getId());
+
+                System.out.println("🔍 État inscription pour member " + member.getId() + " course " + courseId + ":");
+                System.out.println("  - Inscrit: " + isUserRegistered);
+                System.out.println("  - Payé: " + isUserPaid);
+            }
+
+            // ✅ Passer toutes les variables au contexte Thymeleaf
             context.setVariable("course", course);
+            context.setVariable("member", member);
+            context.setVariable("pageTitle", "Détail de la course - " + course.getName());
+            context.setVariable("contextPath", req.getContextPath());
+            context.setVariable("isUserRegistered", isUserRegistered);
+            context.setVariable("isUserPaid", isUserPaid);
+
+            System.out.println("🔍 Debug course detail:");
+            System.out.println("  - Course: " + course.getName());
+            System.out.println("  - Member: " + (member != null ? member.getEmail() : "null"));
+            System.out.println("  - Prix: " + course.getPrice());
+            System.out.println("  - User registered: " + isUserRegistered);
+            System.out.println("  - User paid: " + isUserPaid);
 
             resp.setContentType("text/html;charset=UTF-8");
             engine.process("course_detail", context, resp.getWriter());
 
-            System.out.println("CoursesServlet: Détail affiché pour la course ID = " + courseId);
+            System.out.println("✅ CoursesServlet: Détail affiché pour la course ID = " + courseId);
+
+        } catch (NumberFormatException e) {
+            System.err.println("❌ ID de course invalide: " + courseId);
+            resp.sendRedirect(req.getContextPath() + "/courses");
         } catch (Exception e) {
-            System.err.println("Erreur lors de la récupération de la course: " + e.getMessage());
-            resp.sendRedirect("courses"); // Retour à la liste en cas d'erreur
+            System.err.println("❌ Erreur lors de la récupération de la course: " + e.getMessage());
+            e.printStackTrace();
+            resp.sendRedirect(req.getContextPath() + "/courses");
         }
     }
 }
