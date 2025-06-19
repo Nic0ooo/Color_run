@@ -12,25 +12,100 @@
         <!-- Si connecté -->
         <div th:if="${member != null}" class="flex items-center gap-3">
 
+            <!-- BOUTON ADMIN: Gestion des demandes organisateur -->
+            <div th:if="${member.role != null and member.role.toString() == 'ADMIN'}"
+                 class="text-red-500 font-bold">
+                <a href="/color_run_war/admin/organizer-requests"
+                   class="px-4 py-2 border border-red-500 rounded hover:bg-red-50 transition-colors flex items-center gap-2">
+                    <i class="w-4 h-4" data-lucide="shield-check"></i>
+                    Demandes organisateur
+                </a>
+            </div>
+
+            <!-- BOUTON RUNNER: Devenir organisateur -->
+            <div th:if="${member.role != null and member.role.toString() == 'RUNNER'}">
+                <a href="/color_run_war/organizer-request"
+                   class="px-4 py-2 border border-teal-500 text-teal-600 rounded hover:bg-teal-50 transition-colors flex items-center gap-2">
+                    <i class="w-4 h-4" data-lucide="user-plus"></i>
+                    Devenir organisateur
+                </a>
+            </div>
+
+            <!-- BOUTON ORGANIZER: Selon statut association -->
+            <div th:if="${member.role != null and member.role.toString() == 'ORGANIZER'}">
+                <!-- Si l'organisateur n'a pas d'association -->
+                <div th:if="${organizerHasAssociation == null or organizerHasAssociation == false}">
+                    <a href="/color_run_war/join-association"
+                       class="px-4 py-2 border border-blue-500 text-blue-600 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
+                        <i class="w-4 h-4" data-lucide="building-2"></i>
+                        Rejoindre une association
+                    </a>
+                </div>
+
+                <!-- Si l'organisateur fait partie d'une association -->
+                <div th:if="${organizerHasAssociation == true and organizerAssociation != null}">
+                    <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded">
+                        <i class="w-4 h-4 text-blue-600" data-lucide="building-2"></i>
+                        <span class="text-blue-700 text-sm font-medium" th:text="${organizerAssociation.name}">Mon Association</span>
+                    </div>
+                </div>
+
+                <!-- Bouton créer une course pour les organisateurs -->
+                <a href="/color_run_war/create-course"
+                   class="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors flex items-center gap-2">
+                    <i class="w-4 h-4" data-lucide="calendar-plus"></i>
+                    Créer une course
+                </a>
+            </div>
+
+            <!-- Navigation commune à tous les utilisateurs connectés -->
             <a href="/color_run_war/courses"
-               class="px-4 py-2 hover:color-gray-100">Courses</a>
-            <span th:text="'Bonjour, ' + ${member.firstname}" class="font-medium"></span>
-            <a href="/color_run_war/logout" class="px-4 py-2 border rounded hover:bg-gray-100">Déconnexion</a>
+               class="px-4 py-2 hover:bg-gray-100 rounded transition-colors">Courses</a>
+
+            <!-- Salutation utilisateur -->
+            <span th:text="'Bonjour, ' + ${member.firstname}" class="font-medium text-gray-700"></span>
+
+            <!-- Rôle badge -->
+<!--            <span th:if="${member.role != null}"
+                  th:class="${'px-2 py-1 text-xs font-medium rounded-full ' +
+                            (member.role.toString() == 'ADMIN' ? 'bg-red-100 text-red-800' :
+                             member.role.toString() == 'ORGANIZER' ? 'bg-blue-100 text-blue-800' :
+                             'bg-gray-100 text-gray-800')}"
+                  th:text="${member.role.displayName}">
+                Rôle
+            </span>-->
+
+            <!-- Bouton déconnexion -->
+            <a href="/color_run_war/logout"
+               class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <i class="w-4 h-4" data-lucide="log-out"></i>
+                Déconnexion
+            </a>
         </div>
 
         <!-- Si non connecté -->
         <div th:if="${member == null}">
             <a th:if="${page} == 'register'" href="/color_run_war/login"
-               class="px-4 py-2 border rounded hover:bg-gray-100">Connexion</a>
+               class="px-4 py-2 border rounded hover:bg-gray-100 transition-colors">Connexion</a>
             <a th:if="${page} == 'login'" href="/color_run_war/register"
-               class="px-4 py-2 border rounded hover:bg-gray-100">S'inscrire</a>
+               class="px-4 py-2 border rounded hover:bg-gray-100 transition-colors">S'inscrire</a>
         </div>
         <div th:if="${member == null and page == 'home'}">
             <a href="/color_run_war/login"
-               class="px-4 py-2 border rounded hover:bg-gray-100">Connexion</a>
+               class="px-4 py-2 border rounded hover:bg-gray-100 transition-colors">Connexion</a>
             <a href="/color_run_war/register"
-               class="px-4 py-2 border rounded hover:bg-gray-100">S'inscrire</a>
+               class="px-4 py-2 border rounded hover:bg-gray-100 transition-colors">S'inscrire</a>
         </div>
     </div>
 </header>
+
+<!-- Script pour initialiser les icônes Lucide -->
+<script>
+    // Initialiser les icônes Lucide si elles ne sont pas déjà initialisées
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+    });
+</script>
 </html>

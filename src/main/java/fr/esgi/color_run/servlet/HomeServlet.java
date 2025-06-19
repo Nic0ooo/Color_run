@@ -57,6 +57,8 @@ public class HomeServlet extends HttpServlet {
         List<Course> courses = courseService.listUpcomingCourses();
         context.setVariable("courses", courses);
 
+        context.setVariable("RoleMember", member != null ? member.getRole() : null);
+
         context.setVariable("pageTitle", "Accueil");
 
         resp.setContentType("text/html;charset=UTF-8");
@@ -182,6 +184,7 @@ public class HomeServlet extends HttpServlet {
 
         context.setVariable("member", member);
         context.setVariable("courses", courses);
+        context.setVariable("RoleMember", member != null ? member.getRole() : null);
 
         // Ajouter les paramètres de contexte spécifiques à la stratégie
         Map<String, Object> contextParams = searchStrategy.getContextParameters(req);

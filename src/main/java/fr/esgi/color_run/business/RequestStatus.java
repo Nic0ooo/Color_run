@@ -3,17 +3,15 @@ package fr.esgi.color_run.business;
 import lombok.Getter;
 
 @Getter
-public enum Role {
-    RUNNER("Participant"),
-    ORGANIZER("Organisateur"),
-    ADMIN("Administrateur");
+public enum RequestStatus {
+    PENDING("En attente"),
+    APPROVED("Approuvée"),
+    REJECTED("Refusée");
 
     private final String displayName;
 
-    Role(String displayName) {
+    RequestStatus(String displayName) {
         this.displayName = displayName;
     }
-
-
 
 }

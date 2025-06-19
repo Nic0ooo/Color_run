@@ -1,14 +1,10 @@
 package fr.esgi.color_run.util;
 
-import fr.esgi.color_run.business.Association;
-import fr.esgi.color_run.business.Course;
-import fr.esgi.color_run.business.Course_member;
-import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import fr.esgi.color_run.business.Status;
 
 public class Mapper {
     public static Course mapRowToCourse(ResultSet resultSet) throws SQLException {
@@ -53,6 +49,7 @@ public class Mapper {
         m.setZipCode(rs.getInt("zipCode"));
         m.setPositionLatitude(rs.getDouble("positionLatitude"));
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
+
         return m;
     }
 
