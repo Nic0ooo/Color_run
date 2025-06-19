@@ -50,6 +50,27 @@ public class Mapper {
         m.setPositionLatitude(rs.getDouble("positionLatitude"));
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
 
+        // CORRECTION IMPORTANTE : Ajouter le mapping du rôle
+        try {
+            String roleStr = rs.getString("role");
+            System.out.println("🔍 Mapper: Role lu depuis BDD pour " + m.getEmail() + ": '" + roleStr + "'");
+
+            if (roleStr != null && !roleStr.trim().isEmpty()) {
+                m.setRole(Role.valueOf(roleStr.trim().toUpperCase()));
+                System.out.println("✅ Mapper: Role mappé: " + m.getRole());
+            } else {
+                System.out.println("⚠️ Mapper: Role null/vide, utilisation RUNNER par défaut");
+                m.setRole(Role.RUNNER);
+            }
+        } catch (IllegalArgumentException e) {
+            System.err.println("❌ Mapper: Role invalide dans la BDD: " + rs.getString("role") + " pour " + m.getEmail());
+            System.err.println("❌ Utilisation de RUNNER par défaut");
+            m.setRole(Role.RUNNER);
+        } catch (SQLException e) {
+            System.err.println("❌ Mapper: Erreur lecture colonne role: " + e.getMessage());
+            m.setRole(Role.RUNNER);
+        }
+
         return m;
     }
 

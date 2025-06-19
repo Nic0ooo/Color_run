@@ -157,7 +157,7 @@ public class MemberRepositoryImpl implements MemberRepository {
 
     @Override
     public Member update(Member member) {
-        String sql = "UPDATE member SET name=?, firstname=?, email=?, password=?, phoneNumber=?, address=?, city=?, zipCode=?, positionLatitude=?, positionLongitude=? " +
+        String sql = "UPDATE member SET name=?, firstname=?, email=?, password=?, phoneNumber=?, address=?, city=?, zipCode=?, positionLatitude=?, positionLongitude=?, role=? " +
                 "WHERE id=?";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -171,7 +171,8 @@ public class MemberRepositoryImpl implements MemberRepository {
             ps.setInt(8, member.getZipCode() != null ? member.getZipCode() : 0);
             ps.setDouble(9, member.getPositionLatitude());
             ps.setDouble(10, member.getPositionLongitude());
-            ps.setLong(11, member.getId());
+            ps.setString(11, member.getRole().name());
+            ps.setLong(12, member.getId());
 
             ps.executeUpdate();
             return member;
