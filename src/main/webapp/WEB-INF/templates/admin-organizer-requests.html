@@ -21,9 +21,9 @@
 
     <!-- Breadcrumb -->
     <nav class="flex mb-6 text-sm text-gray-600">
-      <a href="/" class="hover:text-teal-600 transition-colors">Accueil</a>
+      <a href="/color_run_war/home" class="hover:text-teal-600 transition-colors">Accueil</a>
       <span class="mx-2">›</span>
-      <a href="/admin" class="hover:text-teal-600 transition-colors">Administration</a>
+      <a href="/color_run_war/admin" class="hover:text-teal-600 transition-colors">Administration</a>
       <span class="mx-2">›</span>
       <span class="text-gray-900">Demandes organisateur</span>
     </nav>
@@ -41,7 +41,7 @@
           </div>
           <div class="text-right">
             <div class="bg-white text-purple-500 rounded-lg p-4">
-              <div class="text-3xl font-bold" th:text="${#lists.size(pendingRequests)}">3</div>
+              <div class="text-3xl font-bold" th:text="${#lists.size(pendingRequests)}">0</div>
               <div class="text-sm text-purple-600">En attente</div>
             </div>
           </div>
@@ -54,9 +54,9 @@
       <div class="flex items-center">
         <i data-lucide="check-circle" class="w-5 h-5 text-green-600 mr-2"></i>
         <span class="text-green-800 font-medium">
-                    <span th:if="${param.success[0] == 'approved'}">Demande approuvée avec succès !</span>
-                    <span th:if="${param.success[0] == 'rejected'}">Demande refusée avec succès !</span>
-                </span>
+          <span th:if="${param.success[0] == 'approved'}">Demande approuvée avec succès !</span>
+          <span th:if="${param.success[0] == 'rejected'}">Demande refusée avec succès !</span>
+        </span>
       </div>
     </div>
 
@@ -64,9 +64,9 @@
       <div class="flex items-center">
         <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 mr-2"></i>
         <span class="text-red-800 font-medium">
-                    <span th:if="${param.error[0] == 'processing_failed'}">Erreur lors du traitement de la demande</span>
-                    <span th:unless="${param.error[0] == 'processing_failed'}">Une erreur est survenue</span>
-                </span>
+          <span th:if="${param.error[0] == 'processing_failed'}">Erreur lors du traitement de la demande</span>
+          <span th:unless="${param.error[0] == 'processing_failed'}">Une erreur est survenue</span>
+        </span>
       </div>
     </div>
 
@@ -78,7 +78,7 @@
             <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
           </div>
           <div>
-            <div class="text-2xl font-bold text-gray-800" th:text="${#lists.size(pendingRequests)}">3</div>
+            <div class="text-2xl font-bold text-gray-800" th:text="${#lists.size(pendingRequests)}">0</div>
             <div class="text-gray-600 text-sm">En attente</div>
           </div>
         </div>
@@ -90,8 +90,7 @@
             <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
           </div>
           <div>
-            <div class="text-2xl font-bold text-gray-800" th:text="${#lists.size(#lists.select(allRequests, request.status.name() == 'APPROVED'))}">12</div>
-            <div class="text-gray-600 text-sm">Approuvées</div>
+            <div class="text-2xl font-bold text-gray-800" th:text="${approvedCount}">0</div>            <div class="text-gray-600 text-sm">Approuvées</div>
           </div>
         </div>
       </div>
@@ -102,7 +101,7 @@
             <i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>
           </div>
           <div>
-            <div class="text-2xl font-bold text-gray-800" th:text="${#lists.size(#lists.select(allRequests, request.status.name() == 'REJECTED'))}">5</div>
+            <div class="text-2xl font-bold text-gray-800" th:text="${rejectedCount}">0</div>
             <div class="text-gray-600 text-sm">Refusées</div>
           </div>
         </div>
@@ -114,7 +113,7 @@
             <i data-lucide="list" class="w-6 h-6 text-purple-600"></i>
           </div>
           <div>
-            <div class="text-2xl font-bold text-gray-800" th:text="${#lists.size(allRequests)}">20</div>
+            <div class="text-2xl font-bold text-gray-800" th:text="${#lists.size(allRequests)}">0</div>
             <div class="text-gray-600 text-sm">Total</div>
           </div>
         </div>
@@ -128,12 +127,12 @@
           <button id="tab-pending" onclick="switchTab('pending')"
                   class="tab-button active py-4 px-2 border-b-2 border-purple-500 text-purple-600 font-medium text-sm">
             <i data-lucide="clock" class="w-4 h-4 mr-2 inline"></i>
-            En attente (<span th:text="${#lists.size(pendingRequests)}">3</span>)
+            En attente (<span th:text="${#lists.size(pendingRequests)}">0</span>)
           </button>
           <button id="tab-all" onclick="switchTab('all')"
                   class="tab-button py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
             <i data-lucide="list" class="w-4 h-4 mr-2 inline"></i>
-            Toutes les demandes (<span th:text="${#lists.size(allRequests)}">20</span>)
+            Toutes les demandes (<span th:text="${#lists.size(allRequests)}">0</span>)
           </button>
         </nav>
       </div>
@@ -159,21 +158,21 @@
                       Demande #<span th:text="${request.id}">123</span>
                     </h3>
                     <div class="flex items-center text-sm text-gray-600 space-x-4">
-                                            <span class="flex items-center">
-                                                <i data-lucide="user" class="w-4 h-4 mr-1"></i>
-                                                Membre ID: <span th:text="${request.memberId}" class="font-medium ml-1">42</span>
-                                            </span>
                       <span class="flex items-center">
-                                                <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
-                                                <span th:text="${request.formattedRequestDate}">15/06/2025 à 14:30</span>
-                                            </span>
+                        <i data-lucide="user" class="w-4 h-4 mr-1"></i>
+                        Membre ID: <span th:text="${request.memberId}" class="font-medium ml-1">42</span>
+                      </span>
+                      <span class="flex items-center">
+                        <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                        <span th:text="${request.formattedRequestDate}">15/06/2025 à 14:30</span>
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                                    <span class="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-                                        En attente
-                                    </span>
+                  <span class="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                    En attente
+                  </span>
                 </div>
               </div>
 
@@ -252,11 +251,11 @@
                   <span th:unless="${request.existingAssociationId != null}" class="text-gray-500">Aucune</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                                        <span th:class="${'px-2 py-1 text-xs font-medium rounded-full ' +
-                                                        (request.status.name() == 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                         (request.status.name() == 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                                         'bg-red-100 text-red-800'))}"
-                                              th:text="${request.status.displayName}">En attente</span>
+                  <span th:class="${'px-2 py-1 text-xs font-medium rounded-full ' +
+                                  (request.status.name() == 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                   (request.status.name() == 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                   'bg-red-100 text-red-800'))}"
+                        th:text="${request.status.displayName}">En attente</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <span th:if="${request.processedDate != null}" th:text="${request.formattedProcessedDate}">16/06/2025</span>
@@ -264,13 +263,15 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button th:if="${request.status.name() == 'PENDING'}"
-                          onclick="showRequestDetails({id: '[[${request.id}]]', motivation: '[[${request.motivation}]]'})"
+                          th:data-id="${request.id}"
+                          th:data-motivation="${request.motivation}"
+                          onclick="showRequestDetailsFromData(this)"
                           class="text-purple-600 hover:text-purple-900 mr-3">
                     <i data-lucide="eye" class="w-4 h-4"></i>
                   </button>
                   <span th:unless="${request.status.name() == 'PENDING'}" class="text-gray-400">
-                                            <i data-lucide="eye" class="w-4 h-4"></i>
-                                        </span>
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                  </span>
                 </td>
               </tr>
               </tbody>
@@ -282,139 +283,122 @@
 
     <!-- Navigation -->
     <div class="flex justify-between items-center">
-      <a href="/admin" class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors">
+      <a href="/color_run_war/admin" class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
         Retour à l'administration
       </a>
 
-      <a href="/" class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+      <a href="/color_run_war/home" class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
         <i data-lucide="home" class="w-4 h-4 mr-2"></i>
-        Retour à l'accueil
+        Accueil
       </a>
     </div>
   </div>
 </main>
 
 <!-- Approve Modal -->
-<div id="approve-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-    <div class="flex items-center mb-4">
-      <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-md w-full mx-4">
+    <div class="p-6">
+      <div class="flex items-center mb-4">
+        <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+          <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Approuver la demande</h3>
       </div>
-      <h3 class="text-lg font-semibold text-gray-800">Approuver la demande</h3>
+
+      <p class="text-gray-600 mb-6">
+        Êtes-vous sûr de vouloir approuver cette demande ? L'utilisateur obtiendra immédiatement les droits d'organisateur.
+      </p>
+
+      <form id="approveForm" method="post" action="/color_run_war/admin/organizer-requests/approve">
+        <input type="hidden" name="requestId" id="approveRequestId">
+        <input type="hidden" name="memberId" id="approveMemberId">
+        <input type="hidden" name="associationId" id="approveAssociationId">
+
+        <div class="flex justify-end space-x-3">
+          <button type="button" onclick="hideApproveModal()"
+                  class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+            Annuler
+          </button>
+          <button type="submit"
+                  class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+            Approuver
+          </button>
+        </div>
+      </form>
     </div>
-
-    <p class="text-gray-600 mb-4">Êtes-vous sûr de vouloir approuver cette demande ? Le membre deviendra organisateur.</p>
-
-    <form id="approve-form" method="POST" action="/admin/organizer-request/approve">
-      <input type="hidden" id="approve-request-id" name="requestId">
-
-      <div class="mb-4">
-        <label for="approve-comment" class="block text-sm font-medium text-gray-700 mb-2">
-          Commentaire (optionnel)
-        </label>
-        <textarea id="approve-comment" name="comment" rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Commentaire sur l'approbation..."></textarea>
-      </div>
-
-      <div class="flex justify-end space-x-3">
-        <button type="button" onclick="hideApproveModal()"
-                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
-          Annuler
-        </button>
-        <button type="submit"
-                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
-          <i data-lucide="check" class="w-4 h-4 mr-2 inline"></i>
-          Approuver
-        </button>
-      </div>
-    </form>
   </div>
 </div>
 
 <!-- Reject Modal -->
-<div id="reject-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-    <div class="flex items-center mb-4">
-      <div class="bg-red-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-        <i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>
+<div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-md w-full mx-4">
+    <div class="p-6">
+      <div class="flex items-center mb-4">
+        <div class="bg-red-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+          <i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Refuser la demande</h3>
       </div>
-      <h3 class="text-lg font-semibold text-gray-800">Refuser la demande</h3>
+
+      <p class="text-gray-600 mb-6">
+        Êtes-vous sûr de vouloir refuser cette demande ? Cette action est définitive.
+      </p>
+
+      <form id="rejectForm" method="post" action="/color_run_war/admin/organizer-requests/reject">
+        <input type="hidden" name="requestId" id="rejectRequestId">
+        <input type="hidden" name="memberId" id="rejectMemberId">
+
+        <div class="flex justify-end space-x-3">
+          <button type="button" onclick="hideRejectModal()"
+                  class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+            Annuler
+          </button>
+          <button type="submit"
+                  class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+            Refuser
+          </button>
+        </div>
+      </form>
     </div>
-
-    <p class="text-gray-600 mb-4">Êtes-vous sûr de vouloir refuser cette demande ?</p>
-
-    <form id="reject-form" method="POST" action="/admin/organizer-request/reject">
-      <input type="hidden" id="reject-request-id" name="requestId">
-
-      <div class="mb-4">
-        <label for="reject-comment" class="block text-sm font-medium text-gray-700 mb-2">
-          Raison du refus *
-        </label>
-        <textarea id="reject-comment" name="comment" rows="3" required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  placeholder="Expliquez pourquoi cette demande est refusée..."></textarea>
-      </div>
-
-      <div class="flex justify-end space-x-3">
-        <button type="button" onclick="hideRejectModal()"
-                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
-          Annuler
-        </button>
-        <button type="submit"
-                class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
-          <i data-lucide="x" class="w-4 h-4 mr-2 inline"></i>
-          Refuser
-        </button>
-      </div>
-    </form>
   </div>
 </div>
 
 <!-- Request Details Modal -->
-<div id="details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-semibold text-gray-800">Détails de la demande</h3>
-      <button onclick="hideDetailsModal()" class="text-gray-400 hover:text-gray-600">
-        <i data-lucide="x" class="w-6 h-6"></i>
-      </button>
-    </div>
+<div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-lg w-full mx-4">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Détails de la demande</h3>
+        <button onclick="hideDetailsModal()" class="text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
 
-    <div class="space-y-4">
-      <div>
+      <div class="mb-4">
         <h4 class="font-medium text-gray-800 mb-2">Motivation</h4>
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <p id="details-motivation" class="text-gray-700"></p>
+          <p id="detailsMotivation" class="text-gray-700"></p>
         </div>
       </div>
-    </div>
 
-    <div class="flex justify-end mt-6">
-      <button onclick="hideDetailsModal()"
-              class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
-        Fermer
-      </button>
+      <div class="flex justify-end">
+        <button onclick="hideDetailsModal()"
+                class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
+          Fermer
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Footer -->
-<footer class="bg-white border-t p-4 mt-auto">
-  <div class="container mx-auto px-4 text-center">
-    <p class="text-sm text-gray-500">&copy; 2025 Color Run. Tous droits réservés.</p>
-  </div>
-</footer>
-
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    lucide.createIcons();
-  });
+  // Initialize Lucide icons
+  lucide.createIcons();
 
-  // Tab Management
-  function switchTab(tab) {
+  // Tab switching functionality
+  function switchTab(tabName) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
       content.classList.add('hidden');
@@ -427,63 +411,77 @@
     });
 
     // Show selected tab content
-    document.getElementById('content-' + tab).classList.remove('hidden');
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
 
     // Add active class to selected tab button
-    const activeButton = document.getElementById('tab-' + tab);
+    const activeButton = document.getElementById(`tab-${tabName}`);
     activeButton.classList.add('active', 'border-purple-500', 'text-purple-600');
     activeButton.classList.remove('border-transparent', 'text-gray-500');
   }
 
-  // Modal Management
+  // Modal functions
   function showApproveModal(request) {
-    document.getElementById('approve-request-id').value = request.id;
-    document.getElementById('approve-modal').classList.remove('hidden');
+    document.getElementById('approveRequestId').value = request.id;
+    document.getElementById('approveMemberId').value = request.memberId;
+    document.getElementById('approveAssociationId').value = request.associationId || '';
+    document.getElementById('approveModal').classList.remove('hidden');
+    document.getElementById('approveModal').classList.add('flex');
   }
 
   function hideApproveModal() {
-    document.getElementById('approve-modal').classList.add('hidden');
-    document.getElementById('approve-comment').value = '';
+    document.getElementById('approveModal').classList.add('hidden');
+    document.getElementById('approveModal').classList.remove('flex');
   }
 
   function showRejectModal(request) {
-    document.getElementById('reject-request-id').value = request.id;
-    document.getElementById('reject-modal').classList.remove('hidden');
+    document.getElementById('rejectRequestId').value = request.id;
+    document.getElementById('rejectMemberId').value = request.memberId;
+    document.getElementById('rejectModal').classList.remove('hidden');
+    document.getElementById('rejectModal').classList.add('flex');
   }
 
   function hideRejectModal() {
-    document.getElementById('reject-modal').classList.add('hidden');
-    document.getElementById('reject-comment').value = '';
+    document.getElementById('rejectModal').classList.add('hidden');
+    document.getElementById('rejectModal').classList.remove('flex');
   }
 
-  function showRequestDetails(request) {
-    document.getElementById('details-motivation').textContent = request.motivation;
-    document.getElementById('details-modal').classList.remove('hidden');
+  function showRequestDetailsFromData(element) {
+    const id = element.getAttribute('data-id');
+    const motivation = element.getAttribute('data-motivation');
+
+    document.getElementById('detailsMotivation').textContent = motivation;
+    document.getElementById('detailsModal').classList.remove('hidden');
+    document.getElementById('detailsModal').classList.add('flex');
   }
 
   function hideDetailsModal() {
-    document.getElementById('details-modal').classList.add('hidden');
+    document.getElementById('detailsModal').classList.add('hidden');
+    document.getElementById('detailsModal').classList.remove('flex');
   }
 
   // Close modals when clicking outside
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('fixed') && e.target.classList.contains('inset-0')) {
-      hideApproveModal();
-      hideRejectModal();
-      hideDetailsModal();
-    }
+  document.addEventListener('click', function(event) {
+    const modals = ['approveModal', 'rejectModal', 'detailsModal'];
+    modals.forEach(modalId => {
+      const modal = document.getElementById(modalId);
+      if (event.target === modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    });
   });
 
-  // Form validation
-  document.getElementById('reject-form').addEventListener('submit', function(e) {
-    const comment = document.getElementById('reject-comment').value.trim();
-    if (comment.length < 10) {
-      e.preventDefault();
-      alert('Le commentaire de refus doit contenir au moins 10 caractères.');
+  // Close modals with Escape key
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      const modals = ['approveModal', 'rejectModal', 'detailsModal'];
+      modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      });
     }
   });
-
-  console.log('📊 Page admin des demandes organisateur initialisée');
 </script>
 
 </body>

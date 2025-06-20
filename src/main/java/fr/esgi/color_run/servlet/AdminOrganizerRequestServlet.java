@@ -43,13 +43,50 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
 
         try {
             context.setVariable("member", member);
-            context.setVariable("pendingRequests", organizerRequestService.getPendingRequests());
-            context.setVariable("allRequests", organizerRequestService.getAllRequests());
+
+            // Recupère le member dans le contexte
+
+
+            // Charger les demandes
+            var pendingRequests = organizerRequestService.getPendingRequests();
+            var allRequests = organizerRequestService.getAllRequests();
+
+            System.out.println("🔍 Demandes en attente trouvées: " + pendingRequests.size());
+            System.out.println("🔍 Total demandes trouvées: " + allRequests.size());
+
+
+            long approvedCount = 0;
+            long rejectedCount = 0;
+
+            if (allRequests != null) {
+                for (var request : allRequests) {
+                    if (request != null && request.getStatus() != null) {
+                        switch (request.getStatus().name()) {
+                            case "APPROVED":
+                                approvedCount++;
+                                break;
+                            case "REJECTED":
+                                rejectedCount++;
+                                break;
+                        }
+                    }
+                }
+            }
+
+            System.out.println("📊 Statistiques: " + approvedCount + " approuvées, " + rejectedCount + " refusées");
+
+            context.setVariable("pendingRequests", pendingRequests != null ? pendingRequests : java.util.Collections.emptyList());
+            context.setVariable("allRequests", allRequests != null ? allRequests : java.util.Collections.emptyList());
+            context.setVariable("approvedCount", approvedCount);
+            context.setVariable("rejectedCount", rejectedCount);
+
             context.setVariable("pageTitle", "Gestion des demandes organisateur");
             context.setVariable("page", "admin-organizer-requests");
 
             System.out.println("✅ Données chargées pour la page admin");
-            engine.process("admin/organizer-requests", context, resp.getWriter());
+
+            // CORRECTION: Utiliser le bon nom de template
+            engine.process("admin-organizer-requests", context, resp.getWriter());
 
         } catch (Exception e) {
             System.err.println("❌ Erreur lors du chargement de la page admin:");

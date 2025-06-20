@@ -14,4 +14,8 @@ public enum RequestStatus {
         this.displayName = displayName;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
 }
