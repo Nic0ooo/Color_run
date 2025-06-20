@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@WebServlet(urlPatterns = {"/admin/organizer-requests", "/admin/organizer-request/approve", "/admin/organizer-request/reject"})
+@WebServlet(urlPatterns = {"/admin/organizer-requests", "/admin/organizer-requests/approve", "/admin/organizer-requests/reject"})
 public class AdminOrganizerRequestServlet extends HttpServlet {
 
     private final OrganizerRequestService organizerRequestService = new OrganizerRequestServiceImpl();
@@ -161,7 +161,7 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
 
             Long requestId = Long.parseLong(requestIdStr);
 
-            if (path.endsWith("/approve")) {
+            if (path.contains("/approve")) {
                 System.out.println("✅ Approbation de la demande " + requestId);
                 var request = organizerRequestService.approveRequest(requestId, member.getId(), comment);
 
@@ -176,6 +176,30 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
                         e.printStackTrace();
                         // Ne pas faire échouer toute la demande pour ça
                     }
+                } else if (request.getNewAssociation() != null && !request.getNewAssociation().getName().isEmpty()) {
+                    // Si une nouvelle association était demandée, créer l'association
+                    System.out.println("🔗 Création de la nouvelle association: " + request.getNewAssociation().getName());
+                    Association newAssociation = new Association();
+                    newAssociation.setName(request.getNewAssociation().getName());
+                    newAssociation.setDescription(request.getNewAssociation().getDescription());
+                    newAssociation.setWebsiteLink(request.getNewAssociation().getWebsiteLink());
+                    newAssociation.setLogoPath(request.getNewAssociation().getLogoPath());
+                    newAssociation.setEmail(request.getNewAssociation().getEmail());
+                    if (request.getNewAssociation().getPhoneNumber() == null) {
+                        newAssociation.setPhoneNumber("");
+                    } else {
+                        newAssociation.setPhoneNumber(request.getNewAssociation().getPhoneNumber());
+                    }
+                    newAssociation.setAddress(request.getNewAssociation().getAddress());
+                    newAssociation.setCity(request.getNewAssociation().getCity());
+                    newAssociation.setZipCode(request.getNewAssociation().getZipCode());
+
+                    associationService.createAssociation(newAssociation);
+                    System.out.println("✅ Nouvelle association créée: " + newAssociation.getName());
+
+                    // Ajouter l'organisateur à la nouvelle association
+                    associationMemberService.addOrganizerToAssociation(request.getMemberId(), newAssociation.getId());
+                    System.out.println("✅ Organisateur ajouté à la nouvelle association");
                 }
 
                 resp.sendRedirect(req.getContextPath() + "/admin/organizer-requests?success=approved");
