@@ -12,6 +12,9 @@ public interface AssociationService {
     boolean deleteAssociation(Long id);
     List<Association> searchAssociationsByName(String name);
     Optional<Association> findByName(String name);
+
+    Association findById(Long id);
+
     List<Association> getAssociationsByCity(String city);
     boolean existsByName(String name);
 }

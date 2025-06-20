@@ -113,6 +113,14 @@ public class AssociationServiceImpl implements AssociationService {
     }
 
     @Override
+    public Association findById(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return associationRepository.findById(id);
+    }
+
+    @Override
     public List<Association> getAssociationsByCity(String city) {
         if (city == null || city.trim().isEmpty()) {
             return getAllAssociations();

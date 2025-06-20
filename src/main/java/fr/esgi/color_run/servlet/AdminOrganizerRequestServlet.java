@@ -1,10 +1,16 @@
 package fr.esgi.color_run.servlet;
 
+import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.OrganizerRequest;
 import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
+import fr.esgi.color_run.service.AssociationService;
+import fr.esgi.color_run.service.MemberService;
 import fr.esgi.color_run.service.OrganizerRequestService;
 import fr.esgi.color_run.service.Association_memberService;
+import fr.esgi.color_run.service.impl.AssociationServiceImpl;
+import fr.esgi.color_run.service.impl.MemberServiceImpl;
 import fr.esgi.color_run.service.impl.OrganizerRequestServiceImpl;
 import fr.esgi.color_run.service.impl.Association_memberServiceImpl;
 import jakarta.servlet.ServletException;
@@ -16,12 +22,18 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = {"/admin/organizer-requests", "/admin/organizer-request/approve", "/admin/organizer-request/reject"})
 public class AdminOrganizerRequestServlet extends HttpServlet {
 
     private final OrganizerRequestService organizerRequestService = new OrganizerRequestServiceImpl();
     private final Association_memberService associationMemberService = new Association_memberServiceImpl();
+    private final MemberService memberService = new MemberServiceImpl();
+    private final AssociationService associationService = new AssociationServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -44,9 +56,6 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
         try {
             context.setVariable("member", member);
 
-            // Recupère le member dans le contexte
-
-
             // Charger les demandes
             var pendingRequests = organizerRequestService.getPendingRequests();
             var allRequests = organizerRequestService.getAllRequests();
@@ -54,6 +63,13 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
             System.out.println("🔍 Demandes en attente trouvées: " + pendingRequests.size());
             System.out.println("🔍 Total demandes trouvées: " + allRequests.size());
 
+            // Enrichir avec les informations des membres
+            Map<Long, Member> membersMap = loadMembersForRequests(pendingRequests, allRequests);
+            context.setVariable("membersMap", membersMap);
+
+            // Enrichir avec les informations des associations
+            Map<Long, Association> associationsMap = loadAssociationsForRequests(pendingRequests, allRequests);
+            context.setVariable("associationsMap", associationsMap);
 
             long approvedCount = 0;
             long rejectedCount = 0;
@@ -85,7 +101,6 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
 
             System.out.println("✅ Données chargées pour la page admin");
 
-            // CORRECTION: Utiliser le bon nom de template
             engine.process("admin-organizer-requests", context, resp.getWriter());
 
         } catch (Exception e) {
@@ -93,6 +108,27 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
             e.printStackTrace();
             throw new ServletException("Erreur lors du chargement des demandes", e);
         }
+    }
+
+    private Map<Long, Member> loadMembersForRequests(List<OrganizerRequest> pendingRequests, List<OrganizerRequest> allRequests) {
+        return allRequests.stream()
+                .map(request -> request.getMemberId())
+                .distinct()
+                .map(memberId -> memberService.getMember(memberId))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toMap(Member::getId, member -> member));
+    }
+
+    private Map<Long, Association> loadAssociationsForRequests(List<OrganizerRequest> pendingRequests, List<OrganizerRequest> allRequests) {
+        return allRequests.stream()
+                .filter(request -> request.getExistingAssociationId() != null)
+                .map(OrganizerRequest::getExistingAssociationId)
+                .distinct()
+                .map(associationId -> associationService.getAssociationById(associationId))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toMap(Association::getId, association -> association));
     }
 
     @Override
