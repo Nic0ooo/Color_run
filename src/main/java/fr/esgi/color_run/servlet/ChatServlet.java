@@ -41,7 +41,7 @@ public class ChatServlet extends HttpServlet {
         this.messageRepository = new MessageRepositoryImpl();
         this.discussionService = new DiscussionServiceImpl();
         this.objectMapper = new ObjectMapper();
-        System.out.println("✅ ChatServlet initialisé avec tous les services");
+        System.out.println("ChatServlet initialisé avec tous les services");
     }
 
     @Override
@@ -49,7 +49,7 @@ public class ChatServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String servletPath = req.getServletPath();
-        System.out.println("📥 ChatServlet GET - Path: " + servletPath);
+        System.out.println("ChatServlet GET - Path: " + servletPath);
 
         // Configuration de la réponse JSON
         resp.setContentType("application/json;charset=UTF-8");
@@ -72,7 +72,7 @@ public class ChatServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur dans ChatServlet GET:");
+            System.err.println("Erreur dans ChatServlet GET:");
             e.printStackTrace();
             sendErrorResponse(resp, 500, "Erreur interne du serveur");
         }
@@ -83,7 +83,7 @@ public class ChatServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String servletPath = req.getServletPath();
-        System.out.println("📤 ChatServlet POST - Path: " + servletPath);
+        System.out.println("ChatServlet POST - Path: " + servletPath);
 
         // Configuration de la réponse JSON
         resp.setContentType("application/json;charset=UTF-8");
@@ -114,7 +114,7 @@ public class ChatServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur dans ChatServlet POST:");
+            System.err.println("Erreur dans ChatServlet POST:");
             e.printStackTrace();
             sendErrorResponse(resp, 500, "Erreur interne du serveur");
         }
@@ -143,7 +143,7 @@ public class ChatServlet extends HttpServlet {
                 lastMessageId = Long.parseLong(lastMessageIdStr);
             }
 
-            System.out.println("📨 Récupération messages - Course: " + courseId +
+            System.out.println("Récupération messages - Course: " + courseId +
                     ", Member: " + member.getId() + " (" + member.getRole() + ")" +
                     ", Since: " + lastMessageId);
 
@@ -161,7 +161,7 @@ public class ChatServlet extends HttpServlet {
                 messages = messageService.getCourseMessages(courseId, member.getId());
             }
 
-            // ✅ MODIFICATION : Vérifier les droits de modération
+            // Vérification des droits de modération
             boolean isCurrentUserModerator = isUserModerator(member, courseId);
 
             System.out.println("🛡️ Droits de modération pour course " + courseId +
@@ -179,7 +179,7 @@ public class ChatServlet extends HttpServlet {
             // Envoi de la réponse
             resp.getWriter().write(objectMapper.writeValueAsString(response));
 
-            System.out.println("✅ " + messages.size() + " messages envoyés - Modérateur: " + isCurrentUserModerator);
+            System.out.println(messages.size() + " messages envoyés - Modérateur: " + isCurrentUserModerator);
 
         } catch (NumberFormatException e) {
             sendErrorResponse(resp, 400, "Paramètres invalides");
@@ -187,7 +187,7 @@ public class ChatServlet extends HttpServlet {
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Vérifier si un utilisateur est modérateur
+     * Vérification si utilisateur est modérateur
      */
     private boolean isUserModerator(Member member, Long courseId) {
         if (member == null) {
@@ -204,7 +204,6 @@ public class ChatServlet extends HttpServlet {
     private void handleSendMessage(HttpServletRequest req, HttpServletResponse resp, Member member)
             throws IOException {
 
-        // Lecture du JSON depuis le body
         StringBuilder jsonBody = new StringBuilder();
         try (BufferedReader reader = req.getReader()) {
             String line;
@@ -264,19 +263,19 @@ public class ChatServlet extends HttpServlet {
 
             resp.getWriter().write(objectMapper.writeValueAsString(response));
 
-            System.out.println("✅ Message envoyé avec succès - ID: " + sentMessage.getId());
+            System.out.println("Message envoyé avec succès - ID: " + sentMessage.getId());
 
         } catch (NumberFormatException e) {
             sendErrorResponse(resp, 400, "Course ID invalide");
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de l'envoi du message:");
+            System.err.println("Erreur lors de l'envoi du message:");
             e.printStackTrace();
             sendErrorResponse(resp, 500, "Erreur lors de l'envoi du message");
         }
     }
 
     /**
-     * ✅ MÉTHODE AMÉLIORÉE : Gestion de la modération (pin, masquer, supprimer)
+     * Gestion de la modération (pin, masquer, supprimer)
      */
     private void handleModeration(HttpServletRequest req, HttpServletResponse resp, Member member)
             throws IOException {
@@ -314,7 +313,7 @@ public class ChatServlet extends HttpServlet {
             System.out.println("🛡️ Action de modération - Message: " + messageId +
                     ", Action: " + action + ", Modérateur: " + member.getId() + " (role: " + member.getRole() + ")");
 
-            // ✅ VÉRIFICATION DES DROITS DE MODÉRATION
+            // VÉRIFICATION DES DROITS DE MODÉRATION
             Long courseId = getCourseIdFromMessageId(messageId);
             if (courseId == null) {
                 sendErrorResponse(resp, 404, "Message ou course introuvable");
@@ -364,19 +363,17 @@ public class ChatServlet extends HttpServlet {
 
             resp.getWriter().write(objectMapper.writeValueAsString(response));
 
-            System.out.println((success ? "✅" : "❌") + " Action de modération: " + responseMessage);
-
         } catch (NumberFormatException e) {
             sendErrorResponse(resp, 400, "Message ID invalide");
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la modération:");
+            System.err.println("Erreur lors de la modération:");
             e.printStackTrace();
             sendErrorResponse(resp, 500, "Erreur lors de la modération");
         }
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Récupérer le courseId depuis un messageId
+     * Récupération de courseId depuis un messageId
      */
     private Long getCourseIdFromMessageId(Long messageId) {
         try {
@@ -389,7 +386,7 @@ public class ChatServlet extends HttpServlet {
                 }
             }
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la récupération du courseId:");
+            System.err.println("Erreur lors de la récupération du courseId:");
             e.printStackTrace();
         }
         return null;
@@ -430,7 +427,7 @@ public class ChatServlet extends HttpServlet {
             Long messageId = Long.parseLong(messageIdObj.toString());
             String newContent = contentObj.toString().trim();
 
-            System.out.println("✏️ Modification message - ID: " + messageId +
+            System.out.println("Modification message - ID: " + messageId +
                     ", Member: " + member.getId() + ", Nouveau contenu: " +
                     newContent.substring(0, Math.min(newContent.length(), 50)));
 
@@ -450,7 +447,7 @@ public class ChatServlet extends HttpServlet {
             Message updatedMessage = messageServiceImpl.updateMessage(messageId, member.getId(), newContent);
 
             if (updatedMessage != null) {
-                System.out.println("✅ Message modifié avec succès - ID: " + messageId);
+                System.out.println("Message modifié avec succès - ID: " + messageId);
 
                 // Réponse de succès
                 Map<String, Object> response = new HashMap<>();
@@ -466,7 +463,7 @@ public class ChatServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             sendErrorResponse(resp, 400, "Message ID invalide");
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la modification du message:");
+            System.err.println("Erreur lors de la modification du message:");
             e.printStackTrace();
             sendErrorResponse(resp, 500, "Erreur lors de la modification du message");
         }
@@ -512,7 +509,7 @@ public class ChatServlet extends HttpServlet {
             boolean success = messageServiceImpl.deleteOwnMessage(messageId, member.getId());
 
             if (success) {
-                System.out.println("✅ Message supprimé par l'auteur - ID: " + messageId);
+                System.out.println("Message supprimé par l'auteur - ID: " + messageId);
 
                 // Réponse de succès
                 Map<String, Object> response = new HashMap<>();
@@ -528,7 +525,7 @@ public class ChatServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             sendErrorResponse(resp, 400, "Message ID invalide");
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la suppression du message:");
+            System.err.println("Erreur lors de la suppression du message:");
             e.printStackTrace();
             sendErrorResponse(resp, 500, "Erreur lors de la suppression du message");
         }
@@ -560,11 +557,11 @@ public class ChatServlet extends HttpServlet {
 
         resp.getWriter().write(objectMapper.writeValueAsString(errorResponse));
 
-        System.err.println("❌ Erreur " + statusCode + ": " + message);
+        System.err.println("Erreur " + statusCode + ": " + message);
     }
 
     /**
-     * ✅ MÉTHODE AMÉLIORÉE : Convertit la liste de messages en format JSON approprié pour le front-end
+     * Convertit la liste de messages en format JSON approprié pour le front-end
      */
     private List<Map<String, Object>> convertMessagesToJson(List<Message> messages, Member currentMember, boolean isCurrentUserModerator) {
         return messages.stream().map(message -> {
