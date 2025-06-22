@@ -7,12 +7,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
+
 
 <!-- Header -->
 <div th:replace="fragments/header :: headerFragment(page='home', member=${member})"></div>
@@ -120,7 +124,7 @@
                                 </div>
                             </div>
 
-                            <!-- ✅ Gestion de l'état d'inscription (SANS AJAX) -->
+                            <!-- Gestion de l'état d'inscription (SANS AJAX) -->
                             <div id="inscription-status">
 
                                 <!-- Cas 1: Utilisateur non connecté -->
@@ -133,7 +137,8 @@
                                 </div>
 
                                 <!-- Cas 2: Utilisateur connecté ET inscrit ET payé -->
-                                <div th:if="${member != null and isUserPaid}" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <div th:if="${member != null and isUserPaid and member.role.name() != 'ADMIN' and member.role.name() != 'ORGANIZER'}"
+                                     class="bg-green-50 border border-green-200 rounded-lg p-4">
                                     <div class="flex items-center">
                                         <i data-lucide="check-circle" class="w-5 h-5 text-green-600 mr-2"></i>
                                         <span class="text-green-800 font-medium">Vous êtes inscrit à cette course</span>
@@ -146,9 +151,36 @@
                                             <i data-lucide="message-circle" class="w-4 h-4 mr-2"></i>
                                             Chat de la course
                                         </h4>
-                                        <a href="#"
-                                           class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                                        <a href="#chat-section" onclick="accessChat()" id="access-chat-btn"
+                                           class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
                                             <i data-lucide="message-square" class="w-4 h-4 mr-2"></i>
+                                            Accéder au chat
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Cas 2bis: Modérateurs avec accès privilégié -->
+                                <div th:if="${member != null and isUserPaid and (member.role.name() == 'ADMIN' or member.role.name() == 'ORGANIZER')}"
+                                     class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div class="flex items-center">
+                                        <i data-lucide="shield-check" class="w-5 h-5 text-blue-600 mr-2"></i>
+                                        <span class="text-blue-800 font-medium">Accès modérateur autorisé</span>
+                                    </div>
+                                    <p class="text-blue-700 text-sm mt-1">
+                                        Vous accédez à cette course en tant que
+                                        <span th:text="${member.role.name() == 'ADMIN' ? 'Administrateur' : 'Organisateur'}" class="font-medium"></span>.
+                                        Aucune inscription n'est requise.
+                                    </p>
+
+                                    <!-- Section chat pour modérateurs -->
+                                    <div class="mt-4 pt-4 border-t border-blue-200">
+                                        <h4 class="font-medium text-blue-800 mb-2 flex items-center">
+                                            <i data-lucide="message-circle" class="w-4 h-4 mr-2"></i>
+                                            Chat de modération
+                                        </h4>
+                                        <a href="#chat-section" onclick="accessChat()" id="access-chat-btn"
+                                           class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                                            <i data-lucide="shield" class="w-4 h-4 mr-2"></i>
                                             Accéder au chat
                                         </a>
                                     </div>
@@ -232,6 +264,23 @@
             </div>
         </div>
 
+        <!-- Section Chat - Toujours visible mais peut être réduite -->
+        <div th:if="${member != null and isUserPaid}" id="chat-section" class="">
+            <div th:if="${member.role.name() == 'ADMIN' or member.role.name() == 'ORGANIZER'}"
+                 class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded-r-lg">
+                <div class="flex items-center">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-yellow-600 mr-2"></i>
+                    <div>
+                        <p class="text-yellow-800 font-medium">Accès modérateur</p>
+                        <p class="text-yellow-700 text-sm">Vous accédez au chat en tant que
+                            <span th:text="${member.role.name() == 'ADMIN' ? 'Administrateur' : 'Organisateur'}"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="fragments/chat :: chatFragment(${course.id}, ${member})"></div>
+        </div>
+
         <!-- Map Section -->
         <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
             <div class="p-6">
@@ -288,7 +337,6 @@
     </div>
 </footer>
 
-
 <!-- Stripe JavaScript SDK -->
 <script src="https://js.stripe.com/v3/"></script>
 <!-- Initialize Lucide Icons and Map -->
@@ -310,9 +358,7 @@
         lucide.createIcons();
         initializeCourseMap();
         initializeStripePayment();
-
     });
-
 
     function initializeChat() {
         console.log('💬 Initialisation du chat pour la course:', courseId);
@@ -324,16 +370,60 @@
         loadChatMessages();
 
         // Activer le polling pour les nouveaux messages (toutes les 3 secondes)
-        setInterval(loadChatMessages, 3000);
+        // setInterval(loadChatMessages, 3000);
+        console.log('📝 Chat géré par le fragment - pas de polling ici');
     }
 
     function loadChatMessages() {
         // Cette fonction sera définie dans le fragment chat
         if (window.chatApp && window.chatApp.loadMessages) {
+            console.log('🔄 Appel loadMessages via fragment');
             window.chatApp.loadMessages();
+        } else {
+            console.log('chatApp non disponible');
         }
     }
 
+    // Fonction pour accéder au chat (ancre + déplier si nécessaire)
+    function accessChat() {
+        console.log('🔗 Accès au chat demandé');
+
+        const chatContent = document.getElementById('chat-content');
+        const toggleBtn = document.getElementById('toggle-chat-content-btn');
+        const toggleText = document.getElementById('chat-toggle-text');
+        const chevronIcon = toggleBtn?.querySelector('i[data-lucide]');
+
+        // Si le chat est replié, le déplier automatiquement
+        if (chatContent && chatContent.style.display === 'none') {
+            chatContent.style.display = 'block';
+            if (toggleText) toggleText.textContent = 'Réduire';
+            if (chevronIcon) chevronIcon.setAttribute('data-lucide', 'chevron-up');
+
+            // Réinitialiser les icônes Lucide
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            console.log('Chat déplié automatiquement');
+        }
+
+        // Initialiser le chat si pas encore fait
+        if (window.chatApp && window.chatApp.init) {
+            window.chatApp.init();
+        }
+
+        // Faire défiler vers le chat après un petit délai pour l'animation
+        setTimeout(() => {
+            const chatSection = document.getElementById('chat-section');
+            if (chatSection) {
+                chatSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                    inline: 'nearest'
+                });
+            }
+        }, 150);
+    }
 
     function initializeCourseMap() {
         // Récupérer les données de la course depuis Thymeleaf
@@ -385,7 +475,7 @@
                     .addTo(map)
                     .bindPopup(`
                         <div style="font-family: 'Poppins', sans-serif; padding: 12px; max-width: 200px;">
-                            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 8px; color: #ec4899;">🏆 Point d'arrivée</h3>
+                            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 8px; color: #ec4899;">Point d'arrivée</h3>
                             <p style="font-size: 14px; color: #374151; margin: 0;">${course.name}</p>
                             <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">Fin de la course</p>
                         </div>
@@ -397,6 +487,7 @@
             }
         }
     }
+
     // Fonction pour gérer le paiement Stripe
     function initializeStripePayment() {
         console.log('🔧 Initialisation du paiement Stripe');
@@ -435,10 +526,10 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('✅ ' + data.message);
+                            alert(data.message);
                             window.location.reload();
                         } else {
-                            alert('❌ ' + data.message);
+                            alert(data.message);
                             this.disabled = false;
                             this.innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 mr-2"></i>S\'inscrire gratuitement';
                             lucide.createIcons();
@@ -456,13 +547,13 @@
 
         // Gestion paiement Stripe
         if (inscriptionBtnStripe) {
-            console.log('💳 Configuration bouton paiement Stripe');
+            console.log('Configuration bouton paiement Stripe');
             inscriptionBtnStripe.addEventListener('click', function() {
                 const courseId = this.getAttribute('data-course-id');
                 const courseName = this.getAttribute('data-course-name');
                 const price = this.getAttribute('data-price');
 
-                console.log('💳 Inscription avec paiement demandée:', { courseId, courseName, price });
+                console.log('Inscription avec paiement demandée:', { courseId, courseName, price });
 
                 // Désactiver le bouton pendant le traitement
                 this.disabled = true;
@@ -477,11 +568,11 @@
                     body: `courseId=${courseId}&courseName=${encodeURIComponent(courseName)}&price=${price}`
                 })
                     .then(response => {
-                        console.log('📡 Réponse du serveur:', response.status);
+                        console.log('Réponse du serveur:', response.status);
                         return response.json();
                     })
                     .then(data => {
-                        console.log('📦 Données reçues:', data);
+                        console.log('Données reçues:', data);
                         if (data.error) {
                             throw new Error(data.error);
                         }
@@ -496,11 +587,11 @@
                         const stripePublicKey = 'pk_test_51RZVAjPsYYsWDUGNaF1qIxOE8wdvyyaTyHvNEjNk1w0hHZsr2dH8sgHHvFGy8mBMxeRUmxUZjdhwSji8yTAKCa6d00JILg5DZc';
                         const stripe = Stripe(stripePublicKey);
 
-                        console.log('🚀 Redirection vers Stripe Checkout...');
+                        console.log('Redirection vers Stripe Checkout...');
                         return stripe.redirectToCheckout({ sessionId: data.id });
                     })
                     .catch(error => {
-                        console.error('❌ Erreur:', error);
+                        console.error('Erreur:', error);
                         alert('Erreur lors de la création de la session de paiement: ' + error.message);
 
                         // Réactiver le bouton
