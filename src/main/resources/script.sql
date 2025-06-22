@@ -80,8 +80,8 @@ CREATE TABLE Message (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 discussionId INTEGER,
                 memberId INTEGER,
-                content VARCHAR(255),
-                date VARCHAR(32),
+                content VARCHAR(1000),
+                date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 isPin BOOLEAN DEFAULT FALSE,
                 isHidden BOOLEAN DEFAULT FALSE,
                 FOREIGN KEY (discussionId) REFERENCES Discussion(id),
@@ -128,7 +128,7 @@ CREATE TABLE Paiement (
 
     -- Insérer des membres dans les courses seulement si la table est vide
     INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus)
-    SELECT 1, 2, '2025-03-01', 'ACCEPTED'
+    SELECT 1, 1, '2025-03-01', 'ACCEPTED'
     WHERE NOT EXISTS (SELECT 1 FROM CourseMember LIMIT 1);
 
     INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus)
@@ -164,9 +164,10 @@ CREATE TABLE Paiement (
 
     -- Insérer des paiements pour les courses seulement si la table est vide
     INSERT INTO Paiement (courseMemberId, date, amount)
-    SELECT 1, '2025-03-02', 50.0
+    SELECT 2, '2025-03-02', 50.0
     WHERE NOT EXISTS (SELECT 1 FROM Paiement LIMIT 1);
 
     INSERT INTO Paiement (courseMemberId, date, amount)
-    SELECT 2, '2025-03-06', 30.0
+    SELECT 1, '2025-03-06', 30.0
     WHERE NOT EXISTS (SELECT 1 FROM Paiement LIMIT 2) AND EXISTS (SELECT 1 FROM Paiement LIMIT 1);
+
