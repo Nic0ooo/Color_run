@@ -50,7 +50,7 @@ public class Mapper {
         m.setPositionLatitude(rs.getDouble("positionLatitude"));
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
 
-        // ✅ AJOUT : Gestion du rôle
+        // Gestion du rôle
         try {
             String roleStr = rs.getString("role");
             if (roleStr != null && !roleStr.isEmpty()) {
@@ -59,7 +59,7 @@ public class Mapper {
                 m.setRole(Role.RUNNER); // Valeur par défaut
             }
         } catch (SQLException | IllegalArgumentException e) {
-            System.err.println("❌ Erreur lors de la récupération du rôle pour member " + m.getId() + ", utilisation de RUNNER par défaut");
+            System.err.println("Erreur lors de la récupération du rôle pour member " + m.getId() + ", utilisation de RUNNER par défaut");
             m.setRole(Role.RUNNER);
         }
 
@@ -90,8 +90,6 @@ public class Mapper {
         return courseMember;
     }
 
-    // Ajouter cette méthode à votre fichier Mapper.java existant
-
     public static Message mapRowToMessage(ResultSet rs) throws SQLException {
         Message message = new Message();
         message.setId(rs.getLong("id"));
@@ -99,35 +97,35 @@ public class Mapper {
         message.setMemberId(rs.getLong("memberId"));
         message.setContent(rs.getString("content"));
 
-        // ✅ Nouveau : contenu original
+        // Contenu original
         message.setOriginalContent(rs.getString("originalContent"));
 
-        // ✅ Date de création
+        // Date de création
         Timestamp timestamp = rs.getTimestamp("date");
         if (timestamp != null) {
             message.setDate(timestamp.toLocalDateTime());
         }
 
-        // ✅ Nouveau : date de modification
+        // Date de modification
         Timestamp modifiedTimestamp = rs.getTimestamp("lastModifiedDate");
         if (modifiedTimestamp != null) {
             message.setLastModifiedDate(modifiedTimestamp.toLocalDateTime());
         }
 
-        // ✅ Statuts booléens
+        // Statuts booléens
         message.setPin(rs.getBoolean("isPin"));
         message.setHidden(rs.getBoolean("isHidden"));
         message.setModified(rs.getBoolean("isModified"));
         message.setDeleted(rs.getBoolean("isDeleted"));
 
-        // ✅ Nouveau : ID du modérateur qui a masqué (peut être null)
+        // ID du modérateur qui a masqué (peut être null)
         try {
             Long hiddenBy = rs.getLong("hiddenByMemberId");
             if (!rs.wasNull()) {
                 message.setHiddenByMemberId(hiddenBy);
             }
         } catch (SQLException e) {
-            // Colonne peut ne pas exister dans d'anciennes tables
+
             message.setHiddenByMemberId(null);
         }
 
@@ -142,14 +140,14 @@ public class Mapper {
         return message;
     }
 
-    // ✅ Nouvelle méthode : mapper spécifiquement pour les messages avec jointure membre
-    public static Message mapRowToMessageWithMember(ResultSet rs) throws SQLException {
-        Message message = mapRowToMessage(rs); // Utiliser le mapper de base
-
-        // Forcer la récupération des infos du membre
-        message.setMemberFirstname(rs.getString("firstname"));
-        message.setMemberName(rs.getString("name"));
-
-        return message;
-    }
+    // Nouvelle méthode : mapper spécifiquement pour les messages avec jointure membre
+//    public static Message mapRowToMessageWithMember(ResultSet rs) throws SQLException {
+//        Message message = mapRowToMessage(rs); // Utiliser le mapper de base
+//
+//        // Forcer la récupération des infos du membre
+//        message.setMemberFirstname(rs.getString("firstname"));
+//        message.setMemberName(rs.getString("name"));
+//
+//        return message;
+//    }
 }
