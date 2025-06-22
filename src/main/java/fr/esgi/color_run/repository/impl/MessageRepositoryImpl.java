@@ -20,9 +20,9 @@ public class MessageRepositoryImpl implements MessageRepository {
     public MessageRepositoryImpl() {
         try {
             Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé pour MessageRepository");
+            System.out.println("Driver H2 chargé pour MessageRepository");
         } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable pour MessageRepository !");
+            System.err.println("Driver H2 introuvable pour MessageRepository !");
             e.printStackTrace();
         }
 
@@ -37,10 +37,10 @@ public class MessageRepositoryImpl implements MessageRepository {
     public void testDatabaseConnection() {
         try (Connection connection = getConnection()) {
             if (connection != null && !connection.isClosed()) {
-                System.out.println("✅ Connexion à la base de données réussie pour MessageRepository !");
+                System.out.println("Connexion à la base de données réussie pour MessageRepository !");
             }
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la tentative de connexion à la base de données pour MessageRepository :");
+            System.err.println("Erreur lors de la tentative de connexion à la base de données pour MessageRepository :");
             e.printStackTrace();
         }
     }
@@ -70,7 +70,7 @@ public class MessageRepositoryImpl implements MessageRepository {
 
             if (!tableExists) {
                 stmt.execute(sql);
-                System.out.println("✅ Table 'Message' créée avec succès");
+                System.out.println("Table 'Message' créée avec succès");
             } else {
                 // Vérifier et ajouter les nouvelles colonnes si elles n'existent pas
                 addColumnIfNotExists(con, "originalContent", "VARCHAR(1000)");
@@ -78,10 +78,10 @@ public class MessageRepositoryImpl implements MessageRepository {
                 addColumnIfNotExists(con, "isModified", "BOOLEAN DEFAULT FALSE");
                 addColumnIfNotExists(con, "isDeleted", "BOOLEAN DEFAULT FALSE");
                 addColumnIfNotExists(con, "hiddenByMemberId", "INTEGER");
-                System.out.println("✅ Table 'Message' existe déjà - colonnes vérifiées");
+                System.out.println("Table 'Message' existe déjà - colonnes vérifiées");
             }
         } catch (SQLException e) {
-            System.err.println("❌ Erreur création/mise à jour table Message :");
+            System.err.println("Erreur création/mise à jour table Message :");
             e.printStackTrace();
         }
     }
@@ -98,11 +98,11 @@ public class MessageRepositoryImpl implements MessageRepository {
                 String alterSql = "ALTER TABLE Message ADD COLUMN " + columnName + " " + columnDefinition;
                 try (Statement stmt = con.createStatement()) {
                     stmt.execute(alterSql);
-                    System.out.println("✅ Colonne '" + columnName + "' ajoutée à la table Message");
+                    System.out.println("Colonne '" + columnName + "' ajoutée à la table Message");
                 }
             }
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de l'ajout de la colonne " + columnName + ": " + e.getMessage());
+            System.err.println("Erreur lors de l'ajout de la colonne " + columnName + ": " + e.getMessage());
         }
     }
 
@@ -146,11 +146,11 @@ public class MessageRepositoryImpl implements MessageRepository {
                 }
             }
 
-            System.out.println("✅ Message sauvegardé : ID=" + message.getId());
+            System.out.println("Message sauvegardé : ID=" + message.getId());
             return message;
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la sauvegarde du message :");
+            System.err.println("Erreur lors de la sauvegarde du message :");
             e.printStackTrace();
             return null;
         }
@@ -189,7 +189,7 @@ public class MessageRepositoryImpl implements MessageRepository {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération des nouveaux messages :");
+            System.err.println("Erreur lors de la récupération des nouveaux messages :");
             e.printStackTrace();
         }
 
@@ -225,7 +225,7 @@ public class MessageRepositoryImpl implements MessageRepository {
             });
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération des messages récents :");
+            System.err.println("Erreur lors de la récupération des messages récents :");
             e.printStackTrace();
         }
 
@@ -250,7 +250,7 @@ public class MessageRepositoryImpl implements MessageRepository {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération du message par ID :");
+            System.err.println("Erreur lors de la récupération du message par ID :");
             e.printStackTrace();
         }
 
@@ -291,12 +291,12 @@ public class MessageRepositoryImpl implements MessageRepository {
             int rowsUpdated = stmt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                System.out.println("✅ Message mis à jour : ID=" + message.getId());
+                System.out.println("Message mis à jour : ID=" + message.getId());
                 return message;
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la mise à jour du message :");
+            System.err.println("Erreur lors de la mise à jour du message :");
             e.printStackTrace();
         }
 
@@ -336,7 +336,7 @@ public class MessageRepositoryImpl implements MessageRepository {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors du comptage des messages :");
+            System.err.println("Erreur lors du comptage des messages :");
             e.printStackTrace();
         }
 
@@ -359,7 +359,7 @@ public class MessageRepositoryImpl implements MessageRepository {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération des messages :");
+            System.err.println("Erreur lors de la récupération des messages :");
             e.printStackTrace();
         }
 
@@ -372,10 +372,10 @@ public class MessageRepositoryImpl implements MessageRepository {
 
             stmt.setLong(1, messageId);
             stmt.executeUpdate();
-            System.out.println("✅ Message " + action + " : ID=" + messageId);
+            System.out.println("Message " + action + " : ID=" + messageId);
 
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de l'action " + action + " :");
+            System.err.println("Erreur lors de l'action " + action + " :");
             e.printStackTrace();
         }
     }
