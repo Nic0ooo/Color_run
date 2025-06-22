@@ -33,30 +33,30 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Message sendMessage(Long courseId, Long memberId, String content) {
-        System.out.println("💬 Tentative d'envoi de message - Course: " + courseId + ", Member: " + memberId);
+        System.out.println("Tentative d'envoi de message - Course: " + courseId + ", Member: " + memberId);
 
         // Vérifications de sécurité
         if (!canAccessChat(courseId, memberId)) {
-            System.err.println("❌ Membre " + memberId + " non autorisé à envoyer des messages dans la course " + courseId);
+            System.err.println("Membre " + memberId + " non autorisé à envoyer des messages dans la course " + courseId);
             return null;
         }
 
         // Validation du contenu
         if (content == null || content.trim().isEmpty()) {
-            System.err.println("❌ Contenu du message vide");
+            System.err.println("Contenu du message vide");
             return null;
         }
 
         content = content.trim();
         if (content.length() > 1000) {
-            System.err.println("❌ Message trop long: " + content.length() + " caractères");
+            System.err.println("Message trop long: " + content.length() + " caractères");
             return null;
         }
 
         // 1. Trouver ou créer la discussion pour cette course
         Discussion discussion = discussionService.getOrCreateForCourse(courseId);
         if (discussion == null) {
-            System.err.println("❌ Impossible de créer/récupérer la discussion pour la course " + courseId);
+            System.err.println("Impossible de créer/récupérer la discussion pour la course " + courseId);
             return null;
         }
 
@@ -65,14 +65,14 @@ public class MessageServiceImpl implements MessageService {
         message.sanitizeContent();
 
         if (!message.isValid()) {
-            System.err.println("❌ Message invalide après validation");
+            System.err.println("Message invalide après validation");
             return null;
         }
 
         // 3. Sauvegarder
         Message savedMessage = messageRepository.save(message);
         if (savedMessage != null) {
-            System.out.println("✅ Message envoyé avec succès - ID: " + savedMessage.getId());
+            System.out.println("Message envoyé avec succès - ID: " + savedMessage.getId());
         }
 
         return savedMessage;
@@ -80,18 +80,18 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public List<Message> getCourseMessages(Long courseId, Long memberId) {
-        System.out.println("📥 Récupération des messages - Course: " + courseId + ", Member: " + memberId);
+        System.out.println("Récupération des messages - Course: " + courseId + ", Member: " + memberId);
 
         // Vérification des autorisations
         if (!canAccessChat(courseId, memberId)) {
-            System.err.println("❌ Membre " + memberId + " non autorisé à lire les messages de la course " + courseId);
+            System.err.println("Membre " + memberId + " non autorisé à lire les messages de la course " + courseId);
             return List.of();
         }
 
         // Trouver la discussion pour cette course
         Discussion discussion = discussionService.getOrCreateForCourse(courseId);
         if (discussion == null) {
-            System.err.println("❌ Aucune discussion trouvée pour la course " + courseId);
+            System.err.println("Aucune discussion trouvée pour la course " + courseId);
             return List.of();
         }
 
@@ -107,26 +107,26 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public List<Message> getNewMessages(Long courseId, Long memberId, Long sinceMessageId) {
-        System.out.println("🆕 Récupération des nouveaux messages - Course: " + courseId +
+        System.out.println("Récupération des nouveaux messages - Course: " + courseId +
                 ", Member: " + memberId + ", Since: " + sinceMessageId);
 
         // Vérification des autorisations
         if (!canAccessChat(courseId, memberId)) {
-            System.err.println("❌ Membre " + memberId + " non autorisé à lire les nouveaux messages de la course " + courseId);
+            System.err.println("Membre " + memberId + " non autorisé à lire les nouveaux messages de la course " + courseId);
             return List.of();
         }
 
         // Trouver la discussion pour cette course
         Discussion discussion = discussionService.getOrCreateForCourse(courseId);
         if (discussion == null) {
-            System.err.println("❌ Aucune discussion trouvée pour la course " + courseId);
+            System.err.println("Aucune discussion trouvée pour la course " + courseId);
             return List.of();
         }
 
         // Récupération des nouveaux messages
         List<Message> newMessages = messageRepository.findByDiscussionIdSinceId(discussion.getId(), sinceMessageId);
 
-        System.out.println("📨 " + newMessages.size() + " nouveaux messages récupérés");
+        System.out.println(newMessages.size() + " nouveaux messages récupérés");
         return newMessages;
     }
 
@@ -142,9 +142,9 @@ public class MessageServiceImpl implements MessageService {
                 Member member = memberOpt.get();
                 Role memberRole = member.getRole();
 
-                // ✅ ADMIN et ORGANIZER peuvent accéder à tous les chats sans inscription
+                // ADMIN et ORGANIZER peuvent accéder à tous les chats sans inscription
                 if (memberRole == Role.ADMIN || memberRole == Role.ORGANIZER) {
-                    System.out.println("✅ Accès chat autorisé pour modérateur " + memberId + " (" + memberRole + ") sur course " + courseId);
+                    System.out.println("Accès chat autorisé pour modérateur " + memberId + " (" + memberRole + ") sur course " + courseId);
                     return true;
                 }
             }
@@ -152,13 +152,13 @@ public class MessageServiceImpl implements MessageService {
             // Vérifier que le membre est inscrit ET a payé sa course
             boolean isRegisteredAndPaid = courseMemberService.isMemberRegisteredAndPaid(courseId, memberId);
 
-            System.out.println("🔐 Vérification accès chat - Course: " + courseId +
+            System.out.println("Vérification accès chat - Course: " + courseId +
                     ", Member: " + memberId + ", Autorisé: " + isRegisteredAndPaid);
 
             return isRegisteredAndPaid;
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la vérification d'accès au chat:");
+            System.err.println("Erreur lors de la vérification d'accès au chat:");
             e.printStackTrace();
             return false;
         }
@@ -168,7 +168,7 @@ public class MessageServiceImpl implements MessageService {
     public boolean togglePinMessage(Long messageId, Long moderatorId) {
         Optional<Message> messageOpt = messageRepository.findById(messageId);
         if (!messageOpt.isPresent()) {
-            System.err.println("❌ Message non trouvé: " + messageId);
+            System.err.println("Message non trouvé: " + messageId);
             return false;
         }
 
@@ -177,21 +177,21 @@ public class MessageServiceImpl implements MessageService {
         // Récupérer le courseId via la discussion
         Long courseId = getCourseIdFromMessage(message);
         if (courseId == null) {
-            System.err.println("❌ Impossible de récupérer le courseId pour le message: " + messageId);
+            System.err.println("Impossible de récupérer le courseId pour le message: " + messageId);
             return false;
         }
 
         if (!isModerator(courseId, moderatorId)) {
-            System.err.println("❌ Utilisateur " + moderatorId + " n'est pas modérateur de la course " + courseId);
+            System.err.println("Utilisateur " + moderatorId + " n'est pas modérateur de la course " + courseId);
             return false;
         }
 
         try {
             messageRepository.togglePin(messageId);
-            System.out.println("✅ Pin basculé pour le message: " + messageId);
+            System.out.println("Pin basculé pour le message: " + messageId);
             return true;
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors du basculement du pin:");
+            System.err.println("Erreur lors du basculement du pin:");
             e.printStackTrace();
             return false;
         }
@@ -201,7 +201,7 @@ public class MessageServiceImpl implements MessageService {
     public boolean hideMessage(Long messageId, Long moderatorId) {
         Optional<Message> messageOpt = messageRepository.findById(messageId);
         if (!messageOpt.isPresent()) {
-            System.err.println("❌ Message non trouvé: " + messageId);
+            System.err.println("Message non trouvé: " + messageId);
             return false;
         }
 
@@ -210,12 +210,12 @@ public class MessageServiceImpl implements MessageService {
         // Récupérer le courseId via la discussion
         Long courseId = getCourseIdFromMessage(message);
         if (courseId == null) {
-            System.err.println("❌ Impossible de récupérer le courseId pour le message: " + messageId);
+            System.err.println("Impossible de récupérer le courseId pour le message: " + messageId);
             return false;
         }
 
         if (!isModerator(courseId, moderatorId)) {
-            System.err.println("❌ Utilisateur " + moderatorId + " n'est pas modérateur de la course " + courseId);
+            System.err.println("Utilisateur " + moderatorId + " n'est pas modérateur de la course " + courseId);
             return false;
         }
 
@@ -229,12 +229,12 @@ public class MessageServiceImpl implements MessageService {
             Message updatedMessage = messageRepository.update(message);
 
             if (updatedMessage != null) {
-                System.out.println("✅ Message masqué par modérateur " + moderatorId + " - ID: " + messageId);
+                System.out.println("Message masqué par modérateur " + moderatorId + " - ID: " + messageId);
                 return true;
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors du masquage du message " + messageId + ":");
+            System.err.println("Erreur lors du masquage du message " + messageId + ":");
             e.printStackTrace();
         }
 
@@ -245,7 +245,7 @@ public class MessageServiceImpl implements MessageService {
     public boolean deleteMessage(Long messageId, Long requesterId) {
         Optional<Message> messageOpt = messageRepository.findById(messageId);
         if (!messageOpt.isPresent()) {
-            System.err.println("❌ Message non trouvé: " + messageId);
+            System.err.println("Message non trouvé: " + messageId);
             return false;
         }
 
@@ -254,21 +254,21 @@ public class MessageServiceImpl implements MessageService {
         // Récupérer le courseId via la discussion
         Long courseId = getCourseIdFromMessage(message);
         if (courseId == null) {
-            System.err.println("❌ Impossible de récupérer le courseId pour le message: " + messageId);
+            System.err.println("Impossible de récupérer le courseId pour le message: " + messageId);
             return false;
         }
 
-        // ✅ RÉCUPÉRER LE MEMBRE POUR VÉRIFIER SON RÔLE
+        // RÉCUPÉRER LE MEMBRE POUR VÉRIFIER SON RÔLE
         Optional<Member> memberOpt = memberService.getMember(requesterId);
         if (!memberOpt.isPresent()) {
-            System.err.println("❌ Membre non trouvé avec ID: " + requesterId);
+            System.err.println("Membre non trouvé avec ID: " + requesterId);
             return false;
         }
 
         Member requester = memberOpt.get();
         boolean isAuthor = message.getMemberId().equals(requesterId);
 
-        // ✅ VÉRIFICATION SPÉCIFIQUE : Seuls les ADMIN peuvent supprimer définitivement
+        // VÉRIFICATION SPÉCIFIQUE : Seuls les ADMIN peuvent supprimer définitivement
         boolean isAdmin = (requester.getRole() == Role.ADMIN);
         boolean isMod = isModerator(courseId, requesterId);
         // Vérifier que c'est l'auteur du message ou un modérateur
@@ -276,26 +276,26 @@ public class MessageServiceImpl implements MessageService {
 //        boolean isMod = isModerator(courseId, requesterId);
 
         if (!isAuthor && !isMod) {
-            System.err.println("❌ Utilisateur " + requesterId + " n'a pas le droit de supprimer le message " + messageId);
+            System.err.println("Utilisateur " + requesterId + " n'a pas le droit de supprimer le message " + messageId);
             return false;
         }
 
         try {
             if (isMod && !isAuthor) {
                 if (!isAdmin) {
-                    System.err.println("❌ Utilisateur " + requesterId + " (" + requester.getRole() + ") ne peut pas supprimer définitivement. Seuls les ADMIN le peuvent.");
+                    System.err.println("Utilisateur " + requesterId + " (" + requester.getRole() + ") ne peut pas supprimer définitivement. Seuls les ADMIN le peuvent.");
                     return false;
                 }
                 // Suppression définitive par un modérateur
                 messageRepository.delete(messageId);
-                System.out.println("✅ Message supprimé définitivement par modérateur " + requesterId + " - ID: " + messageId);
+                System.out.println("Message supprimé définitivement par modérateur " + requesterId + " - ID: " + messageId);
             } else {
                 // Suppression par l'auteur : marquer comme supprimé
                 message.markAsDeletedByAuthor();
                 Message updatedMessage = messageRepository.update(message);
 
                 if (updatedMessage != null) {
-                    System.out.println("✅ Message supprimé par l'auteur " + requesterId + " - ID: " + messageId);
+                    System.out.println("Message supprimé par l'auteur " + requesterId + " - ID: " + messageId);
                 } else {
                     return false;
                 }
@@ -303,7 +303,7 @@ public class MessageServiceImpl implements MessageService {
             return true;
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la suppression du message " + messageId + ":");
+            System.err.println("Erreur lors de la suppression du message " + messageId + ":");
             e.printStackTrace();
             return false;
         }
@@ -312,14 +312,14 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public boolean isModerator(Long courseId, Long memberId) {
         if (courseId == null || memberId == null) {
-            System.err.println("❌ courseId ou memberId null dans isModerator");
+            System.err.println("courseId ou memberId null dans isModerator");
             return false;
         }
 
         try {
             Optional<Member> memberOpt = memberService.getMember(memberId);
             if (!memberOpt.isPresent()) {
-                System.err.println("❌ Membre non trouvé avec ID: " + memberId);
+                System.err.println("Membre non trouvé avec ID: " + memberId);
                 return false;
             }
 
@@ -338,7 +338,7 @@ public class MessageServiceImpl implements MessageService {
             return isMod;
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la vérification du statut modérateur:");
+            System.err.println("Erreur lors de la vérification du statut modérateur:");
             e.printStackTrace();
             return false;
         }
@@ -355,7 +355,7 @@ public class MessageServiceImpl implements MessageService {
                 return discussionOpt.get().getCourseId();
             }
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la récupération du courseId:");
+            System.err.println("Erreur lors de la récupération du courseId:");
             e.printStackTrace();
         }
         return null;
@@ -365,7 +365,7 @@ public class MessageServiceImpl implements MessageService {
      * Crée un message de bienvenue automatique quand un membre accède au chat pour la première fois
      */
     public void createWelcomeMessageIfNeeded(Long courseId, Long memberId) {
-        System.out.println("🎉 Vérification message de bienvenue - Course: " + courseId + ", Member: " + memberId);
+        System.out.println("Vérification message de bienvenue - Course: " + courseId + ", Member: " + memberId);
 
         try {
             // Vérifier s'il y a déjà des messages dans cette discussion
@@ -378,7 +378,7 @@ public class MessageServiceImpl implements MessageService {
 
             // Si c'est le premier message de la discussion, créer un message de bienvenue
             if (messageCount == 0) {
-                String welcomeContent = "🏃‍♂️ Bienvenue dans le chat de la course ! " +
+                String welcomeContent = "Bienvenue dans le chat de la course ! " +
                         "Merci pour votre inscription. Vous pouvez désormais échanger avec les autres participants. " +
                         "N'hésitez pas à poser vos questions ou à partager votre enthousiasme !";
 
@@ -387,12 +387,12 @@ public class MessageServiceImpl implements MessageService {
 
                 Message savedMessage = messageRepository.save(welcomeMessage);
                 if (savedMessage != null) {
-                    System.out.println("✅ Message de bienvenue créé pour la course " + courseId);
+                    System.out.println("Message de bienvenue créé pour la course " + courseId);
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la création du message de bienvenue:");
+            System.err.println("Erreur lors de la création du message de bienvenue:");
             e.printStackTrace();
         }
     }
@@ -401,24 +401,24 @@ public class MessageServiceImpl implements MessageService {
      * Met à jour un message existant
      */
     public Message updateMessage(Long messageId, Long memberId, String newContent) {
-        System.out.println("✏️ Tentative de modification - Message: " + messageId + ", Member: " + memberId);
+        System.out.println("Tentative de modification - Message: " + messageId + ", Member: " + memberId);
 
         // Validation du contenu
         if (newContent == null || newContent.trim().isEmpty()) {
-            System.err.println("❌ Nouveau contenu vide");
+            System.err.println("Nouveau contenu vide");
             return null;
         }
 
         newContent = newContent.trim();
         if (newContent.length() > 1000) {
-            System.err.println("❌ Nouveau contenu trop long: " + newContent.length() + " caractères");
+            System.err.println("Nouveau contenu trop long: " + newContent.length() + " caractères");
             return null;
         }
 
         // Récupérer le message
         Optional<Message> messageOpt = messageRepository.findById(messageId);
         if (!messageOpt.isPresent()) {
-            System.err.println("❌ Message non trouvé: " + messageId);
+            System.err.println("Message non trouvé: " + messageId);
             return null;
         }
 
@@ -426,13 +426,13 @@ public class MessageServiceImpl implements MessageService {
 
         // Vérifier que c'est bien le message de l'utilisateur
         if (!message.getMemberId().equals(memberId)) {
-            System.err.println("❌ Utilisateur " + memberId + " ne peut pas modifier le message " + messageId + " (appartient à " + message.getMemberId() + ")");
+            System.err.println("Utilisateur " + memberId + " ne peut pas modifier le message " + messageId + " (appartient à " + message.getMemberId() + ")");
             return null;
         }
 
         // Vérifier que le message peut être modifié
         if (!message.canBeEdited()) {
-            System.err.println("❌ Message " + messageId + " ne peut pas être modifié (supprimé ou masqué)");
+            System.err.println("Message " + messageId + " ne peut pas être modifié (supprimé ou masqué)");
             return null;
         }
 
@@ -448,12 +448,12 @@ public class MessageServiceImpl implements MessageService {
             Message updatedMessage = messageRepository.update(message);
 
             if (updatedMessage != null) {
-                System.out.println("✅ Message modifié avec succès - ID: " + messageId);
+                System.out.println("Message modifié avec succès - ID: " + messageId);
                 return updatedMessage;
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la modification du message " + messageId + ":");
+            System.err.println("Erreur lors de la modification du message " + messageId + ":");
             e.printStackTrace();
         }
 
@@ -469,7 +469,7 @@ public class MessageServiceImpl implements MessageService {
         // Récupérer le message
         Optional<Message> messageOpt = messageRepository.findById(messageId);
         if (!messageOpt.isPresent()) {
-            System.err.println("❌ Message non trouvé: " + messageId);
+            System.err.println("Message non trouvé: " + messageId);
             return false;
         }
 
@@ -477,13 +477,13 @@ public class MessageServiceImpl implements MessageService {
 
         // Vérifier que c'est bien le message de l'utilisateur
         if (!message.getMemberId().equals(memberId)) {
-            System.err.println("❌ Utilisateur " + memberId + " ne peut pas supprimer le message " + messageId + " (appartient à " + message.getMemberId() + ")");
+            System.err.println("Utilisateur " + memberId + " ne peut pas supprimer le message " + messageId + " (appartient à " + message.getMemberId() + ")");
             return false;
         }
 
         // Vérifier que le message peut être supprimé
         if (!message.canBeDeleted()) {
-            System.err.println("❌ Message " + messageId + " ne peut pas être supprimé (déjà supprimé)");
+            System.err.println("Message " + messageId + " ne peut pas être supprimé (déjà supprimé)");
             return false;
         }
 
@@ -494,12 +494,12 @@ public class MessageServiceImpl implements MessageService {
             Message updatedMessage = messageRepository.update(message);
 
             if (updatedMessage != null) {
-                System.out.println("✅ Message supprimé par l'auteur - ID: " + messageId);
+                System.out.println("Message supprimé par l'auteur - ID: " + messageId);
                 return true;
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la suppression du message " + messageId + ":");
+            System.err.println("Erreur lors de la suppression du message " + messageId + ":");
             e.printStackTrace();
         }
 
