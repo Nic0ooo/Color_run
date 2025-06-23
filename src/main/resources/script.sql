@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS AssociationMember (
                                                  id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                                  memberId INTEGER,
                                                  associationId INTEGER,
+                                                joinDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                                  FOREIGN KEY (associationId) REFERENCES Association(id),
                                                  FOREIGN KEY (memberId) REFERENCES Member(id)
 );
@@ -173,6 +174,7 @@ WHERE c.name = 'Course des Héros' AND m.email = 'jean.dupont@email.com'
 );
 
 -- AssociationMember
+/*
 INSERT INTO AssociationMember (memberId, associationId)
 SELECT 1, 1
 WHERE NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = 1 AND associationId = 1);
@@ -180,6 +182,7 @@ WHERE NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = 1 AND associa
 INSERT INTO AssociationMember (memberId, associationId)
 SELECT 2, 2
 WHERE NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = 2 AND associationId = 2);
+*/
 
 -- Discussions
 INSERT INTO Discussion (courseId, isActive)
