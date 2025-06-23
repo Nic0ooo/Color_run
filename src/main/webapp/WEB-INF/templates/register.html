@@ -4,47 +4,146 @@
     <meta charset="UTF-8">
     <title th:text="${pageTitle}">Inscription</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+    <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col items-center">
 
 <div th:replace="fragments/header :: headerFragment('register', ${member})"></div>
 
-<!-- Form Container -->
 <main class="flex-grow w-full max-w-xl px-6 py-10">
     <div class="bg-white shadow rounded-lg p-8">
         <h2 class="text-center text-2xl font-bold mb-6">Créer un compte</h2>
 
         <form method="post" th:action="@{/register}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="name" placeholder="Nom" required>
-            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="firstname" placeholder="Prénom" required>
+            <!-- Nom / Prénom -->
+            <input name="name"       type="text" placeholder="Nom" required
+                   class="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
+            <input name="firstname"  type="text" placeholder="Prénom" required
+                   class="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
 
-            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="email" name="email" placeholder="Email" required>
-            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="password" name="password" placeholder="Mot de passe" required>
-            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="password" placeholder="Répétez le mot de passe">
+            <!-- Email -->
+            <input name="email" type="email" placeholder="Email" required
+                   class="md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
 
-            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="birthdate" placeholder="Date de naissance">
-            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="gender" placeholder="Genre">
+            <!-- Mot de passe / Confirmation -->
+            <input name="password"         type="password" placeholder="Mot de passe" required
+                   class="md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
+            <input name="passwordConfirm"  type="password" placeholder="Répétez le mot de passe" required
+                   class="md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
 
-            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="sportLevel" placeholder="Niveau sportif">
-            <input class="col-span-1 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="zipCode" placeholder="Code postal">
+            <!-- Date de naissance -->
+            <div class="grid grid-cols-3 gap-2 md:col-span-2">
+                <!-- Jour -->
+                <select name="birthDay" required
+                        class="border border-gray-300 px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <option value="">Jour</option>
+                    <th:block th:each="d : ${#numbers.sequence(1,31)}">
+                        <option th:value="${d}" th:text="${d}"></option>
+                    </th:block>
+                </select>
+                <!-- Mois -->
+                <select name="birthMonth" required
+                        class="border border-gray-300 px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <option value="">Mois</option>
+                    <th:block th:each="m : ${#numbers.sequence(1,12)}">
+                        <option th:value="${m}"
+                                th:text="${#dates.format(#dates.create(2000,m,1),'MMMM')}">
+                        </option>
+                    </th:block>
+                </select>
+                <!-- Année -->
+                <th:block th:with="currentYear=${#dates.createNow().year}">
+                    <select name="birthYear" required
+                            class="border border-gray-300 px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        <option value="">Année</option>
+                        <th:block th:each="age : ${#numbers.sequence(18,80)}">
+                            <option th:value="${currentYear - age}" th:text="${currentYear - age}"></option>
+                        </th:block>
+                    </select>
+                </th:block>
+            </div>
 
-            <input class="col-span-1 md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400" type="text" name="address" placeholder="Adresse">
+            <!-- Genre -->
+            <select name="gender" required
+                    class="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">Genre</option>
+                <option value="F">Femme</option>
+                <option value="M">Homme</option>
+                <option value="O">Autre</option>
+            </select>
 
-            <button type="submit" class="col-span-1 md:col-span-2 mt-4 bg-yellow-400 hover:bg-yellow-500 transition text-white font-semibold py-2 rounded">
+            <!-- Niveau sportif -->
+            <select name="sportLevel" required
+                    class="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">Niveau sportif</option>
+                <option value="debutant">Débutant</option>
+                <option value="intermediaire">Intermédiaire</option>
+                <option value="avance">Avancé</option>
+                <option value="expert">Expert</option>
+            </select>
+
+            <!-- Code postal -->
+            <input id="zipCode" name="zipCode" type="text" placeholder="Code postal" readonly required
+                   class="border border-gray-300 px-4 py-2 rounded bg-gray-100"/>
+
+            <!-- Adresse avec autocomplete -->
+            <div class="md:col-span-2 relative">
+                <input id="address" name="address" type="text" list="address-list"
+                       placeholder="Adresse" autocomplete="off" required
+                       class="w-full border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
+                <datalist id="address-list"></datalist>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit"
+                    class="md:col-span-2 mt-4 bg-yellow-400 hover:bg-yellow-500 transition text-white font-semibold py-2 rounded">
                 S'inscrire
             </button>
         </form>
 
         <p class="text-center text-sm text-gray-600 mt-6">
-            Déjà inscrit ? <a href="/login" class="text-blue-600 hover:underline">Cliquez ici !</a>
+            Déjà inscrit ? <a th:href="@{/login}" class="text-blue-600 hover:underline">Cliquez ici !</a>
         </p>
     </div>
 </main>
 
+<!-- Autocomplete API Gouv -->
+<script>
+    (function() {
+        const input = document.getElementById('address');
+        const list  = document.getElementById('address-list');
+        const zipIn = document.getElementById('zipCode');
+        let suggs   = {};
+
+        input.addEventListener('input', async () => {
+            const q = input.value.trim();
+            if (q.length < 3) return;
+
+            try {
+                const res  = await fetch('https://api-adresse.data.gouv.fr/search/?' +
+                    new URLSearchParams({ q, limit: 5 }));
+                const data = await res.json();
+                list.innerHTML = '';
+                suggs = {};
+
+                data.features.forEach(f => {
+                    const p   = f.properties;
+                    const lab = p.label;
+                    suggs[lab] = p.postcode;
+                    const opt = document.createElement('option');
+                    opt.value = lab;
+                    list.append(opt);
+                });
+            } catch (e) {
+                console.error('Autocomplete adresse :', e);
+            }
+        });
+
+        input.addEventListener('change', () => {
+            const v = input.value;
+            if (suggs[v]) zipIn.value = suggs[v];
+        });
+    })();
+</script>
 </body>
 </html>
