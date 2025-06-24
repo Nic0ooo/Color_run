@@ -2,6 +2,7 @@ package fr.esgi.color_run.servlet;
 
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
@@ -358,23 +359,31 @@ public class CoursesServlet extends HttpServlet {
                 return;
             }
 
-            // Vérifier l'état d'inscription via le SERVICE (pas le repository directement)
+            // Vérifier l'état d'inscription via le SERVICE
             boolean isUserRegistered = false;
             boolean isUserPaid = false;
 
             if (member != null) {
                 Long courseIdLong = Long.parseLong(courseId);
 
-                // Utilisation du service au lieu du repository
-                isUserRegistered = courseMemberService.isMemberInCourse(courseIdLong, member.getId());
-                isUserPaid = courseMemberService.isMemberRegisteredAndPaid(courseIdLong, member.getId());
+                Role memberRole = member.getRole();
+                boolean isModerator = (memberRole == Role.ADMIN || memberRole == Role.ORGANIZER);
 
+                if (isModerator) {
+                    // Les modérateurs ont accès direct au chat
+                    isUserRegistered = true;
+                    isUserPaid = true;
+                    System.out.println("✅ Accès modérateur accordé à " + member.getId() + " (" + memberRole + ") pour course " + courseId);
+                } else {
+                    // Pour les RUNNER : vérification classique
+                    isUserRegistered = courseMemberService.isMemberInCourse(courseIdLong, member.getId());
+                    isUserPaid = courseMemberService.isMemberRegisteredAndPaid(courseIdLong, member.getId());
+                }
                 System.out.println("🔍 État inscription pour member " + member.getId() + " course " + courseId + ":");
                 System.out.println("  - Inscrit: " + isUserRegistered);
                 System.out.println("  - Payé: " + isUserPaid);
             }
 
-            // Passer toutes les variables au contexte Thymeleaf
             context.setVariable("course", course);
             context.setVariable("member", member);
             context.setVariable("pageTitle", "Détail de la course - " + course.getName());

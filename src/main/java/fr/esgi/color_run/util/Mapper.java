@@ -4,6 +4,7 @@ import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Course_member;
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,6 +54,20 @@ public class Mapper {
         m.setZipCode(rs.getInt("zipCode"));
         m.setPositionLatitude(rs.getDouble("positionLatitude"));
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
+
+        // Gestion du rôle
+        try {
+            String roleStr = rs.getString("role");
+            if (roleStr != null && !roleStr.isEmpty()) {
+                m.setRole(Role.valueOf(roleStr.toUpperCase()));
+            } else {
+                m.setRole(Role.RUNNER); // Valeur par défaut
+            }
+        } catch (SQLException | IllegalArgumentException e) {
+            System.err.println("Erreur lors de la récupération du rôle pour member " + m.getId() + ", utilisation de RUNNER par défaut");
+            m.setRole(Role.RUNNER);
+        }
+
         return m;
     }
 
@@ -95,4 +110,65 @@ public class Mapper {
 
         return courseMember;
     }
+
+    public static Message mapRowToMessage(ResultSet rs) throws SQLException {
+        Message message = new Message();
+        message.setId(rs.getLong("id"));
+        message.setDiscussionId(rs.getLong("discussionId"));
+        message.setMemberId(rs.getLong("memberId"));
+        message.setContent(rs.getString("content"));
+
+        // Contenu original
+        message.setOriginalContent(rs.getString("originalContent"));
+
+        // Date de création
+        Timestamp timestamp = rs.getTimestamp("date");
+        if (timestamp != null) {
+            message.setDate(timestamp.toLocalDateTime());
+        }
+
+        // Date de modification
+        Timestamp modifiedTimestamp = rs.getTimestamp("lastModifiedDate");
+        if (modifiedTimestamp != null) {
+            message.setLastModifiedDate(modifiedTimestamp.toLocalDateTime());
+        }
+
+        // Statuts booléens
+        message.setPin(rs.getBoolean("isPin"));
+        message.setHidden(rs.getBoolean("isHidden"));
+        message.setModified(rs.getBoolean("isModified"));
+        message.setDeleted(rs.getBoolean("isDeleted"));
+
+        // ID du modérateur qui a masqué (peut être null)
+        try {
+            Long hiddenBy = rs.getLong("hiddenByMemberId");
+            if (!rs.wasNull()) {
+                message.setHiddenByMemberId(hiddenBy);
+            }
+        } catch (SQLException e) {
+
+            message.setHiddenByMemberId(null);
+        }
+
+        // Récupération des infos du membre via jointure (si disponibles)
+        try {
+            message.setMemberFirstname(rs.getString("firstname"));
+            message.setMemberName(rs.getString("name"));
+        } catch (SQLException e) {
+            // Ces colonnes peuvent ne pas être présentes dans toutes les requêtes
+        }
+
+        return message;
+    }
+
+    // Nouvelle méthode : mapper spécifiquement pour les messages avec jointure membre
+//    public static Message mapRowToMessageWithMember(ResultSet rs) throws SQLException {
+//        Message message = mapRowToMessage(rs); // Utiliser le mapper de base
+//
+//        // Forcer la récupération des infos du membre
+//        message.setMemberFirstname(rs.getString("firstname"));
+//        message.setMemberName(rs.getString("name"));
+//
+//        return message;
+//    }
 }

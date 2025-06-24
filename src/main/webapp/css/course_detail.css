@@ -1,0 +1,22 @@
+/* Scroll doux pour les ancres */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Style pour les bulles de chat complètes */
+.message-item {
+    scroll-margin-top: 10px;
+    scroll-margin-bottom: 10px;
+}
+
+.message-item .max-w-xs,
+.message-item .max-w-md {
+    max-width: 20rem !important; /* Forcer la largeur pour xs */
+}
+
+@media (min-width: 1024px) {
+    .message-item .max-w-xs,
+    .message-item .max-w-md {
+        max-width: 28rem !important; /* Forcer la largeur pour md */
+    }
+}
