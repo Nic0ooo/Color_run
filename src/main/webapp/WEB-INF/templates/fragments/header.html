@@ -14,6 +14,13 @@
 
             <a href="/color_run_war/courses"
                class="px-4 py-2 hover:color-gray-100">Courses</a>
+
+            <a href="/color_run_war/profile"
+               th:classappend="${page=='profile'} ? 'font-semibold underline' : ''"
+               class="px-4 py-2 hover:bg-gray-100">
+                Mon Profil
+            </a>
+
             <span th:text="'Bonjour, ' + ${member.firstname}" class="font-medium"></span>
             <a href="/color_run_war/logout" class="px-4 py-2 border rounded hover:bg-gray-100">Déconnexion</a>
         </div>
