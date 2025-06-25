@@ -66,24 +66,24 @@ CREATE TABLE IF NOT EXISTS AssociationMember (
                                                  id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                                  memberId INTEGER,
                                                  associationId INTEGER,
-                                                joinDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                 joinDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                                  FOREIGN KEY (associationId) REFERENCES Association(id),
                                                  FOREIGN KEY (memberId) REFERENCES Member(id)
 );
 
-CREATE TABLE IF NOT EXISTS OrganizerRequest (
-                                                id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                                memberId INTEGER NOT NULL ,
-                                                motivation TEXT NOT NULL ,
-                                                existingAssociationId BIGINT,
-                                                newAssociationData TEXT, // Json pour les données de la nouvelle association
-                                                requestDate TIMESTAMP NOT NULL,
-                                                status VARCHAR(32) DEFAULT 'PENDING',
-                                                adminComment TEXT,
-                                                processedByAdminId BIGINT,
-                                                processedDate TIMESTAMP,
-                                                FOREIGN KEY (memberId) REFERENCES Member(id),
-                                                FOREIGN KEY (existingAssociationId) REFERENCES Association(id)
+CREATE TABLE OrganizerRequest (
+                                  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                  memberId BIGINT NOT NULL,
+                                  motivation TEXT NOT NULL,
+                                  existingAssociationId BIGINT,
+                                  newAssociationData TEXT,
+                                  requestDate TIMESTAMP NOT NULL,
+                                  status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                                  adminComment TEXT,
+                                  processedByAdminId BIGINT,
+                                  processedDate TIMESTAMP,
+                                  requestType VARCHAR(50) DEFAULT 'BECOME_ORGANIZER',
+                                  existingAssociationName VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS Discussion (
@@ -125,8 +125,12 @@ SELECT 'RUNNER', 'Martin', 'Sophie', 'sophie.martin@email.com', 'pass456', '0612
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'sophie.martin@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Pollet', 'Theo', 'theop@mail.com', 'password123', '0765467809', '356 rue Victor Hugo', 'Dijon', 21000, 47.32136825551213, 5.041485596025622
+SELECT 'RUNNER', 'Pollet', 'Theo', 'theop@mail.com', 'password123', '0765467809', '356 rue Victor Hugo', 'Dijon', 21000, 47.32136825551213, 5.041485596025622
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email =  'theop@mail.com');
+
+INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
+SELECT 'ORGANIZER', 'Monet', 'Léa', 'lea.monet@outlook.com', 'password123', '0612425690', '16 Rue Perrière', 'Annecy', 74000, 45.89812149200697, 6.127460404462661
+WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'lea.monet@outlook.com');
 
 -- Associations
 INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
@@ -136,6 +140,14 @@ WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'contact@assoparis.com
 INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
 SELECT 'Courir Ensemble', 'Organisation de courses caritatives', 'www.courirensemble.org', '/images/logo2.png', 'contact@courirensemble.org', '0187654321', '15 rue Lafayette', 'Marseille', 13001
 WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'contact@courirensemble.org');
+
+INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
+SELECT 'Sport & Solidarité', 'Sport solidaire et courses caritatives', 'www.sportsolidarite.org', '/images/logo4.png', 'hello@sportsolidarite.org', '0156789012', '35 rue de la Paix', 'Toulouse', 31001
+WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'hello@sportsolidarite.org');
+
+INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
+SELECT 'Run For Fun Association', 'Courses colorées et événements ludiques', 'www.runforfun.fr', '/images/logo5.png', 'contact@runforfun.fr', '0134567890', '18 place des Victoires', 'Bordeaux', 33001
+WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'contact@runforfun.fr');
 
 -- Courses
 INSERT INTO course (name, description, associationId, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
@@ -151,7 +163,7 @@ SELECT 'Trail des Alpes', 'Une course en montagne avec des paysages magnifiques'
 WHERE NOT EXISTS (SELECT 1 FROM course WHERE name = 'Trail des Alpes');
 
 -- CourseMember
-INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus, stripeSessionId)
+/*INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus, stripeSessionId)
 SELECT c.id, m.id, '2025-03-01', 'ACCEPTED', '13325432'
 FROM course c, member m
 WHERE c.name = 'Marathon de Paris' AND m.email = 'sophie.martin@email.com'
@@ -171,7 +183,7 @@ WHERE c.name = 'Course des Héros' AND m.email = 'jean.dupont@email.com'
                       JOIN course c2 ON cm.courseId = c2.id
                       JOIN member m2 ON cm.memberId = m2.id
     WHERE c2.name = 'Course des Héros' AND m.email = 'jean.dupont@email.com'
-);
+);*/
 
 -- AssociationMember
 /*
@@ -183,6 +195,25 @@ INSERT INTO AssociationMember (memberId, associationId)
 SELECT 2, 2
 WHERE NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = 2 AND associationId = 2);
 */
+/*
+
+-- Demandes d'organisateur
+INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, existingAssociationId)
+SELECT 2, 'BECOME_ORGANIZER', 'Je souhaite devenir organisateur pour promouvoir le sport dans ma région. J''ai de l''expérience en gestion d''événements et je pense pouvoir apporter une contribution positive à la communauté des coureurs.', 'PENDING', '2025-06-15 14:30:00', 1
+WHERE NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = 2);
+
+INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, newAssociationName, newAssociationEmail, newAssociationDescription)
+SELECT 4, 'CREATE_ASSOCIATION', 'Je souhaite créer une association dédiée aux courses féminines. Il y a un réel besoin dans notre région pour des événements sportifs spécifiquement conçus pour encourager la participation féminine au sport.', 'APPROVED', '2025-05-20 16:45:00', '2025-05-25 10:30:00', 1, 'Excellent projet, approuvé.', 'Femmes Runners Bordeaux', 'contact@femmesrunners.fr', 'Association dédiée à la promotion de la course à pied féminine'
+WHERE NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = 4);
+
+-- AssociationMember
+INSERT INTO AssociationMember (memberId, associationId, joinDate)
+SELECT 4, 5, '2025-05-25 10:30:00'
+WHERE NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = 4 AND associationId = 5);
+
+*/
+
+/*
 
 -- Discussions
 INSERT INTO Discussion (courseId, isActive)
@@ -223,4 +254,4 @@ WHERE c.name = 'Course des Héros' AND m.email = 'jean.dupont@email.com'
   AND NOT EXISTS (
     SELECT 1 FROM Paiement p
     WHERE p.courseMemberId = cm.id
-);
+);*/

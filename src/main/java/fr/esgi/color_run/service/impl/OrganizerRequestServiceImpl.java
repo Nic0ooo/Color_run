@@ -1,10 +1,9 @@
 package fr.esgi.color_run.service.impl;
 
-import fr.esgi.color_run.business.Member;
-import fr.esgi.color_run.business.OrganizerRequest;
-import fr.esgi.color_run.business.RequestStatus;
-import fr.esgi.color_run.business.Role;
+import fr.esgi.color_run.business.*;
+import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.repository.OrganizerRequestRepository;
+import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.repository.impl.OrganizerRequestRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
 import fr.esgi.color_run.service.OrganizerRequestService;
@@ -16,10 +15,12 @@ import java.util.Optional;
 public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
     private final OrganizerRequestRepository organizerRequestRepository = new OrganizerRequestRepositoryImpl();
+    private final MemberRepository memberRepository = new MemberRepositoryImpl();
+
     private final MemberService memberService = new MemberServiceImpl();
 
     @Override
-    public OrganizerRequest submitRequest(Long memberId, String motivation, Long existingAssociationId) {
+    public void submitRequest(Long memberId, RequestType requestType, String motivation, Long existingAssociationId) {
         System.out.println("📝 OrganizerRequestService.submitRequest() appelé");
         System.out.println("  - Member ID: " + memberId);
         System.out.println("  - Motivation length: " + (motivation != null ? motivation.length() : "null"));
@@ -27,28 +28,28 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
         // Vérifications
         if (!canMemberSubmitRequest(memberId)) {
-            System.out.println("❌ Le membre ne peut pas soumettre de demande");
-            throw new IllegalStateException("Le membre ne peut pas soumettre de demande");
+            System.out.println("❌ Le membre a déjà une demande en cours ou ne peut pas soumettre de demande");
+            throw new IllegalStateException("Le membre a déjà une demande en cours ou ne peut pas soumettre de demande");
+        }
+
+        // Valider la motivation
+        if (motivation == null || motivation.trim().length() < 50) {
+            throw new IllegalArgumentException("La motivation doit contenir au moins 50 caractères");
         }
 
         try {
             OrganizerRequest request = new OrganizerRequest();
             request.setMemberId(memberId);
+            request.setRequestType(requestType);
             request.setMotivation(motivation);
             request.setExistingAssociationId(existingAssociationId);
-            request.setRequestDate(LocalDateTime.now());
             request.setStatus(RequestStatus.PENDING);
+            request.setRequestDate(LocalDateTime.now());
 
             System.out.println("💾 Sauvegarde de la demande...");
-            OrganizerRequest savedRequest = organizerRequestRepository.save(request);
+            organizerRequestRepository.save(request);
 
-            if (savedRequest != null) {
-                System.out.println("✅ Demande sauvegardée avec ID: " + savedRequest.getId());
-            } else {
-                System.out.println("❌ Échec de la sauvegarde");
-            }
-
-            return savedRequest;
+            System.out.println("✅ Service - Demande créée avec ID: " + request.getId());
 
         } catch (Exception e) {
             System.err.println("❌ Erreur dans submitRequest:");
@@ -58,13 +59,87 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
     }
 
     @Override
-    public List<OrganizerRequest> getAllRequests() {
-        return organizerRequestRepository.findAll();
+    public void submitRequestWithNewAssociation(Long memberId, RequestType requestType, String motivation, String assocName, String assocEmail, String assocDescription, String assocWebsiteLink, String assocPhone, String assocAddress, String assocZipCode, String assocCity) {
+        System.out.println("🔍 Service - submitRequestWithNewAssociation appelé pour membre " + memberId);
+
+        try {
+            // Vérifications
+            if (!canMemberSubmitRequest(memberId)) {
+                System.out.println("❌ Le membre a déjà une demande en cours ou ne peut pas soumettre de demande");
+                throw new IllegalStateException("Le membre a déjà une demande en cours ou ne peut pas soumettre de demande");
+            }
+
+            // Valider les données
+            if (motivation == null || motivation.trim().length() < 50) {
+                throw new IllegalArgumentException("La motivation doit contenir au moins 50 caractères");
+            }
+
+            if (assocName == null || assocName.trim().isEmpty()) {
+                throw new IllegalArgumentException("Le nom de l'association est obligatoire");
+            }
+
+            if (assocEmail == null || assocEmail.trim().isEmpty()) {
+                throw new IllegalArgumentException("L'email de l'association est obligatoire");
+            }
+
+            if (assocDescription == null || assocDescription.trim().isEmpty()) {
+                throw new IllegalArgumentException("La description de l'association est obligatoire");
+            }
+
+            OrganizerRequest request = new OrganizerRequest();
+            request.setMemberId(memberId);
+            request.setRequestType(requestType);
+            request.setMotivation(motivation.trim());
+            request.setStatus(RequestStatus.PENDING);
+            request.setRequestDate(LocalDateTime.now());
+
+            request.setNewAssociationName(assocName.trim());
+            request.setNewAssociationEmail(assocEmail.trim().toLowerCase());
+            request.setNewAssociationDescription(assocDescription.trim());
+            request.setNewAssociationWebsiteLink(assocWebsiteLink != null ? assocWebsiteLink.trim() : null);
+            request.setNewAssociationPhone(assocPhone != null ? assocPhone.trim() : null);
+            request.setNewAssociationAddress(assocAddress != null ? assocAddress.trim() : null);
+            request.setNewAssociationZipCode(assocZipCode != null ? assocZipCode.trim() : null);
+            request.setNewAssociationCity(assocCity != null ? assocCity.trim() : null);
+
+            System.out.println("📝 Tentative de sauvegarde de la demande...");
+            System.out.println("  - Membre ID: " + memberId);
+            System.out.println("  - Type: " + requestType);
+            System.out.println("  - Nom association: " + assocName);
+            System.out.println("  - Email association: " + assocEmail);
+
+            // Sauvegarder la demande
+            OrganizerRequest savedRequest = organizerRequestRepository.save(request);
+
+            if (savedRequest != null && savedRequest.getId() != null) {
+                System.out.println("✅ Service - Demande avec nouvelle association créée avec ID: " + savedRequest.getId());
+            } else {
+                throw new RuntimeException("Échec de la sauvegarde - aucun ID généré");
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Erreur dans submitRequestWithNewAssociation:");
+            System.err.println("  - Type: " + e.getClass().getSimpleName());
+            System.err.println("  - Message: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors de la création de la demande avec nouvelle association", e);
+        }
+    }
+
+    @Override
+    public List<OrganizerRequest> getAllRequests() throws Exception {
+        System.out.println("🔍 Service - Récupération de toutes les demandes");
+        List<OrganizerRequest> requests = organizerRequestRepository.findAll();
+        System.out.println("🔍 Service - " + requests.size() + " demandes totales trouvées");
+        return requests;
     }
 
     @Override
     public List<OrganizerRequest> getPendingRequests() {
-        return organizerRequestRepository.findPendingRequests();
+        System.out.println("🔍 Service - Récupération des demandes en attente");
+        List<OrganizerRequest> requests = organizerRequestRepository.findByStatus(RequestStatus.PENDING);
+        System.out.println("🔍 Service - " + requests.size() + " demandes en attente trouvées");
+        return requests;
     }
 
     @Override
@@ -73,12 +148,9 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
     }
 
     @Override
-    public Optional<OrganizerRequest> getRequest(Long id) {
-        return organizerRequestRepository.findById(id);
-    }
-
-    @Override
     public OrganizerRequest approveRequest(Long requestId, Long adminId, String comment) {
+        System.out.println("🔍 Service - Approbation de la demande " + requestId + " par admin " + adminId);
+
         Optional<OrganizerRequest> requestOpt = organizerRequestRepository.findById(requestId);
         if (requestOpt.isEmpty()) {
             throw new IllegalArgumentException("Demande introuvable");
@@ -86,7 +158,7 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
         OrganizerRequest request = requestOpt.get();
         if (request.getStatus() != RequestStatus.PENDING) {
-            throw new IllegalStateException("La demande a déjà été traitée");
+            throw new IllegalStateException("Cette demande a déjà été traitée");
         }
 
         // Mettre à jour le statut de la demande
@@ -95,15 +167,21 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
         request.setProcessedByAdminId(adminId);
         request.setProcessedDate(LocalDateTime.now());
 
-        // Mettre à jour le rôle du membre
-        Optional<Member> memberOpt = memberService.getMember(request.getMemberId());
-        if (memberOpt.isPresent()) {
-            Member member = memberOpt.get();
-            member.setRole(Role.ORGANIZER);
-            memberService.updateMember(member.getId(), member);
+        // Actions spécifiques selon le type de demande
+        if (request.getRequestType() == RequestType.BECOME_ORGANIZER) {
+            // Promouvoir le membre en organisateur
+            Optional<Member> memberOpt = memberService.getMember(request.getMemberId());
+            if (memberOpt.isPresent()) {
+                Member member = memberOpt.get();
+                member.setRole(Role.ORGANIZER);
+                memberService.updateMember(member.getId(), member);
+            }
         }
 
-        return organizerRequestRepository.update(request);
+        organizerRequestRepository.update(request);
+
+        System.out.println("✅ Service - Demande " + requestId + " approuvée");
+        return request;
     }
 
     @Override
@@ -115,7 +193,7 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
         OrganizerRequest request = requestOpt.get();
         if (request.getStatus() != RequestStatus.PENDING) {
-            throw new IllegalStateException("La demande a déjà été traitée");
+            throw new IllegalStateException("Cette demande a déjà été traitée");
         }
 
         request.setStatus(RequestStatus.REJECTED);
@@ -123,7 +201,23 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
         request.setProcessedByAdminId(adminId);
         request.setProcessedDate(LocalDateTime.now());
 
-        return organizerRequestRepository.update(request);
+        // Sauvegarder
+        organizerRequestRepository.update(request);
+
+        System.out.println("✅ Service - Demande " + requestId + " rejetée");
+        return request;
+    }
+
+    @Override
+    public boolean canMemberSubmitRequest(Long memberId) {
+        System.out.println("🔍 Vérification canMemberSubmitRequest pour membre: " + memberId);
+
+        // Vérifier qu'il n'a pas de demande en cours
+        boolean hasActiveRequest = hasActivePendingRequest(memberId);
+
+        System.out.println("🔍 Service - Membre " + memberId + " a une demande active: " + hasActiveRequest);
+
+        return !hasActiveRequest;
     }
 
     @Override
@@ -132,35 +226,15 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
     }
 
     @Override
-    public boolean canMemberSubmitRequest(Long memberId) {
-        System.out.println("🔍 Vérification canMemberSubmitRequest pour membre: " + memberId);
-
-        try {
-            // Vérifier que le membre existe et n'est pas déjà organisateur
-            Optional<Member> memberOpt = memberService.getMember(memberId);
-            if (memberOpt.isEmpty()) {
-                System.out.println("❌ Membre introuvable");
-                return false;
-            }
-
-            Member member = memberOpt.get();
-            System.out.println("✅ Membre trouvé: " + member.getEmail() + " (rôle: " + member.getRole() + ")");
-
-            if (member.getRole() == Role.ORGANIZER || member.getRole() == Role.ADMIN) {
-                System.out.println("❌ Membre déjà organisateur ou admin");
-                return false;
-            }
-
-            // Vérifier qu'il n'a pas déjà une demande en cours
-            boolean hasPending = hasActivePendingRequest(memberId);
-            System.out.println("🔍 A une demande en cours: " + hasPending);
-
-            return !hasPending;
-
-        } catch (Exception e) {
-            System.err.println("❌ Erreur dans canMemberSubmitRequest:");
-            e.printStackTrace();
-            return false;
-        }
+    public Optional<OrganizerRequest> getRequestById(Long requestId) throws Exception {
+        return organizerRequestRepository.findById(requestId);
     }
+
+    @Override
+    public void deleteRequest(Long requestId) throws Exception {
+        System.out.println("🔍 Service - Suppression de la demande " + requestId);
+        organizerRequestRepository.deleteById(requestId);
+        System.out.println("✅ Service - Demande " + requestId + " supprimée");
+    }
+
 }

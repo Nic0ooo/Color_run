@@ -15,7 +15,7 @@
             <!-- BOUTON ADMIN: Gestion des demandes organisateur -->
             <div th:if="${member.role != null and member.role.toString() == 'ADMIN'}"
                  class="text-red-500 font-bold">
-                <a href="/color_run_war/admin/organizer-requests"
+                <a href="/color_run_war/admin-organizer-requests"
                    class="px-4 py-2 border border-red-500 rounded hover:bg-red-50 transition-colors flex items-center gap-2">
                     <i class="w-4 h-4" data-lucide="shield-check"></i>
                     Demandes organisateur
@@ -31,32 +31,34 @@
                 </a>
             </div>
 
-            <!-- BOUTON ORGANIZER: Selon statut association -->
-            <div th:if="${member.role != null and member.role.toString() == 'ORGANIZER'}">
-                <!-- Si l'organisateur n'a pas d'association -->
-                <div th:if="${organizerHasAssociation == null or organizerHasAssociation == false}">
-                    <a href="/color_run_war/join-association"
-                       class="px-4 py-2 border border-blue-500 text-blue-600 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
-                        <i class="w-4 h-4" data-lucide="building-2"></i>
-                        Rejoindre une association
-                    </a>
-                </div>
+             <!-- BOUTON ORGANIZER: Selon statut association -->
+             <div th:if="${member.role != null and member.role.toString() == 'ORGANIZER'}" class="flex items-center gap-3">
+                 <!-- Si l'organisateur n'a pas d'association -->
+                 <div th:if="${organizerHasAssociation == null or organizerHasAssociation == false}">
+                     <a href="/color_run_war/organizer-request"
+                        class="px-4 py-2 border border-blue-500 text-blue-600 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
+                         <i class="w-4 h-4" data-lucide="building-2"></i>
+                         Rejoindre une association
+                     </a>
+                 </div>
 
-                <!-- Si l'organisateur fait partie d'une association -->
-                <div th:if="${organizerHasAssociation == true and organizerAssociation != null}">
-                    <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded">
-                        <i class="w-4 h-4 text-blue-600" data-lucide="building-2"></i>
-                        <span class="text-blue-700 text-sm font-medium" th:text="${organizerAssociation.name}">Mon Association</span>
-                    </div>
-                </div>
+                 <!-- Si l'organisateur fait partie d'une association -->
+                 <div th:if="${organizerHasAssociation == true and organizerAssociation != null}">
+                     <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded">
+                         <i class="w-4 h-4 text-blue-600" data-lucide="building-2"></i>
+                         <span class="text-blue-700 text-sm font-medium" th:text="${organizerAssociation.name}">Mon Association</span>
+                     </div>
+                 </div>
 
-                <!-- Bouton créer une course pour les organisateurs -->
-                <a href="/color_run_war/create-course"
-                   class="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors flex items-center gap-2">
-                    <i class="w-4 h-4" data-lucide="calendar-plus"></i>
-                    Créer une course
-                </a>
-            </div>
+                 <!-- Bouton créer une course pour les organisateurs -->
+                 <div>
+                     <a href="/color_run_war/create-course"
+                        class="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors flex items-center gap-2">
+                         <i class="w-4 h-4" data-lucide="calendar-plus"></i>
+                         Créer une course
+                     </a>
+                 </div>
+             </div>
 
             <!-- Navigation commune à tous les utilisateurs connectés -->
             <a href="/color_run_war/courses"

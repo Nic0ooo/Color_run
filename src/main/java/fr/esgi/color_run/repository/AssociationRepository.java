@@ -9,7 +9,7 @@ public interface AssociationRepository {
 
     List<Association> findAll();
 
-    Association findById(Long id);
+    Optional<Association> findById(Long id);
 
     Association save(Association association);
 
@@ -17,11 +17,13 @@ public interface AssociationRepository {
 
     boolean deleteById(Long id);
 
-    List<Association> findByNameContaining(String name);
-
     Optional<Association> findByName(String name);
+
+    Association findByEmail(String email);
 
     List<Association> findByCity(String city);
 
     boolean existsByName(String name);
+
+    boolean existsByEmail(String email);
 }

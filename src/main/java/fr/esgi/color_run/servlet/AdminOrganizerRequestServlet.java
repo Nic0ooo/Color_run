@@ -1,17 +1,14 @@
 package fr.esgi.color_run.servlet;
 
-import fr.esgi.color_run.business.Association;
-import fr.esgi.color_run.business.Member;
-import fr.esgi.color_run.business.OrganizerRequest;
-import fr.esgi.color_run.business.Role;
+import fr.esgi.color_run.business.*;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
+import fr.esgi.color_run.service.OrganizerRequestService;
 import fr.esgi.color_run.service.AssociationService;
 import fr.esgi.color_run.service.MemberService;
-import fr.esgi.color_run.service.OrganizerRequestService;
 import fr.esgi.color_run.service.Association_memberService;
-import fr.esgi.color_run.service.impl.AssociationServiceImpl;
 import fr.esgi.color_run.service.impl.MemberServiceImpl;
 import fr.esgi.color_run.service.impl.OrganizerRequestServiceImpl;
+import fr.esgi.color_run.service.impl.AssociationServiceImpl;
 import fr.esgi.color_run.service.impl.Association_memberServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -27,13 +24,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@WebServlet(urlPatterns = {"/admin/organizer-requests", "/admin/organizer-requests/approve", "/admin/organizer-requests/reject"})
+@WebServlet(urlPatterns = {"/admin-organizer-requests", "/admin-organizer-requests/approve", "/admin-organizer-requests/reject"})
 public class AdminOrganizerRequestServlet extends HttpServlet {
 
     private final OrganizerRequestService organizerRequestService = new OrganizerRequestServiceImpl();
+    private final AssociationService associationService = new AssociationServiceImpl();
     private final Association_memberService associationMemberService = new Association_memberServiceImpl();
     private final MemberService memberService = new MemberServiceImpl();
-    private final AssociationService associationService = new AssociationServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -60,17 +57,26 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
             var pendingRequests = organizerRequestService.getPendingRequests();
             var allRequests = organizerRequestService.getAllRequests();
 
-            System.out.println("🔍 Demandes en attente trouvées: " + pendingRequests.size());
-            System.out.println("🔍 Total demandes trouvées: " + allRequests.size());
+            for (var request : pendingRequests) {
+                if (request != null) {
+                    // Chercher le membre pour récupérer son rôle
+                    memberService.getMember(request.getMemberId()).ifPresent(foundMember -> {
+                        request.setMemberRoleName(foundMember.getRole().name());
+                    });
+                }
+            }
 
             // Enrichir avec les informations des membres
             Map<Long, Member> membersMap = loadMembersForRequests(pendingRequests, allRequests);
             context.setVariable("membersMap", membersMap);
 
-            // Enrichir avec les informations des associations
-            Map<Long, Association> associationsMap = loadAssociationsForRequests(pendingRequests, allRequests);
+            Map<Long, Association> associationsMap = loadAssociationsForRequests(allRequests);
             context.setVariable("associationsMap", associationsMap);
 
+            System.out.println("🔍 Demandes en attente trouvées: " + pendingRequests.size());
+            System.out.println("🔍 Total demandes trouvées: " + allRequests.size());
+
+            // Calculer les compteurs de façon sécurisée
             long approvedCount = 0;
             long rejectedCount = 0;
 
@@ -95,7 +101,6 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
             context.setVariable("allRequests", allRequests != null ? allRequests : java.util.Collections.emptyList());
             context.setVariable("approvedCount", approvedCount);
             context.setVariable("rejectedCount", rejectedCount);
-
             context.setVariable("pageTitle", "Gestion des demandes organisateur");
             context.setVariable("page", "admin-organizer-requests");
 
@@ -120,12 +125,12 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
                 .collect(Collectors.toMap(Member::getId, member -> member));
     }
 
-    private Map<Long, Association> loadAssociationsForRequests(List<OrganizerRequest> pendingRequests, List<OrganizerRequest> allRequests) {
+    private Map<Long, Association> loadAssociationsForRequests(List<OrganizerRequest> allRequests) {
         return allRequests.stream()
                 .filter(request -> request.getExistingAssociationId() != null)
-                .map(OrganizerRequest::getExistingAssociationId)
+                .map(request -> request.getExistingAssociationId())
                 .distinct()
-                .map(associationId -> associationService.getAssociationById(associationId))
+                .map(associationId -> associationService.findById(associationId))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toMap(Association::getId, association -> association));
@@ -149,71 +154,122 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
         try {
             String requestIdStr = req.getParameter("requestId");
             String comment = req.getParameter("comment");
+            String createAssociationStr = req.getParameter("createAssociation");
 
             System.out.println("🔍 Request ID: " + requestIdStr);
             System.out.println("🔍 Commentaire: " + (comment != null ? comment.length() + " caractères" : "null"));
+            System.out.println("🔍 Créer association: " + createAssociationStr);
 
             if (requestIdStr == null || requestIdStr.isEmpty()) {
                 System.out.println("❌ Request ID manquant");
-                resp.sendRedirect(req.getContextPath() + "/admin/organizer-requests?error=missing_id");
+                resp.sendRedirect(req.getContextPath() + "/admin-organizer-requests?error=missing_id");
                 return;
             }
 
             Long requestId = Long.parseLong(requestIdStr);
 
-            if (path.contains("/approve")) {
+            if (path.endsWith("/approve")) {
                 System.out.println("✅ Approbation de la demande " + requestId);
+
+                boolean shouldCreateAssociation = "on".equals(createAssociationStr);
                 var request = organizerRequestService.approveRequest(requestId, member.getId(), comment);
 
-                // Si une association était demandée, ajouter l'organisateur à l'association
-                if (request.getExistingAssociationId() != null) {
-                    System.out.println("🔗 Ajout de l'organisateur à l'association " + request.getExistingAssociationId());
-                    try {
-                        associationMemberService.addOrganizerToAssociation(request.getMemberId(), request.getExistingAssociationId());
-                        System.out.println("✅ Organisateur ajouté à l'association");
-                    } catch (Exception e) {
-                        System.err.println("❌ Erreur lors de l'ajout à l'association:");
-                        e.printStackTrace();
-                        // Ne pas faire échouer toute la demande pour ça
-                    }
-                } else if (request.getNewAssociation() != null && !request.getNewAssociation().getName().isEmpty()) {
-                    // Si une nouvelle association était demandée, créer l'association
-                    System.out.println("🔗 Création de la nouvelle association: " + request.getNewAssociation().getName());
-                    Association newAssociation = new Association();
-                    newAssociation.setName(request.getNewAssociation().getName());
-                    newAssociation.setDescription(request.getNewAssociation().getDescription());
-                    newAssociation.setWebsiteLink(request.getNewAssociation().getWebsiteLink());
-                    newAssociation.setLogoPath(request.getNewAssociation().getLogoPath());
-                    newAssociation.setEmail(request.getNewAssociation().getEmail());
-                    if (request.getNewAssociation().getPhoneNumber() == null) {
-                        newAssociation.setPhoneNumber("");
-                    } else {
-                        newAssociation.setPhoneNumber(request.getNewAssociation().getPhoneNumber());
-                    }
-                    newAssociation.setAddress(request.getNewAssociation().getAddress());
-                    newAssociation.setCity(request.getNewAssociation().getCity());
-                    newAssociation.setZipCode(request.getNewAssociation().getZipCode());
 
-                    associationService.createAssociation(newAssociation);
-                    System.out.println("✅ Nouvelle association créée: " + newAssociation.getName());
+                // S'assurer que le membre est bien ORGANIZER avant de continuer
+                Optional<Member> memberOpt = memberService.getMember(request.getMemberId());
+                if (memberOpt.isPresent()) {
+                    Member requestMember = memberOpt.get();
 
-                    // Ajouter l'organisateur à la nouvelle association
-                    associationMemberService.addOrganizerToAssociation(request.getMemberId(), newAssociation.getId());
-                    System.out.println("✅ Organisateur ajouté à la nouvelle association");
+                    if (requestMember.getRole() != Role.ORGANIZER) {
+                        requestMember.setRole(Role.ORGANIZER);
+                        memberService.updateMember(requestMember.getId(), requestMember);
+                        System.out.println("🔄 Mise à jour du rôle du membre " + requestMember.getEmail() + " en ORGANIZER");
+                    }
+
+                    // Traitement spécial selon le type de demande
+                    if (request.getRequestType() != null) {
+                        switch (request.getRequestType()) {
+                            case JOIN_ASSOCIATION:
+                                if (request.getExistingAssociationId() != null) {
+                                    System.out.println("🔗 Ajout de l'organisateur à l'association " + request.getExistingAssociationId());
+                                    try {
+                                        associationMemberService.addOrganizerToAssociation(
+                                                request.getMemberId(),
+                                                request.getExistingAssociationId()
+                                        );
+                                        System.out.println("✅ Organisateur ajouté à l'association");
+                                    } catch (Exception e) {
+                                        System.err.println("❌ Erreur lors de l'ajout à l'association:");
+                                        e.printStackTrace();
+                                    }
+                                }
+                                break;
+
+                            case CREATE_ASSOCIATION:
+                                if (shouldCreateAssociation && request.hasNewAssociation()) {
+                                    System.out.println("🏢 Création de nouvelle association: " + request.getNewAssociationName());
+                                    // verifier que l'association n'existe pas déja
+                                    if (associationService.existsByName(request.getNewAssociationName())) {
+                                        System.out.println("❌ L'association " + request.getNewAssociationName() + " existe déjà");
+                                        req.getSession().setAttribute("error", "L'Association existe déjà. Veuillez refaire une demande pour la rejoindre.");
+                                        resp.sendRedirect(req.getContextPath() + "/admin-organizer-requests?error=association_exists");
+                                        return;
+                                    }
+                                    if (associationService.existsByEmail(request.getNewAssociationEmail())) {
+                                        System.out.println("❌ L'association avec l'email " + request.getNewAssociationEmail() + " existe déjà");
+                                        req.getSession().setAttribute("error", "Une association avec ce mail existe déjà. Veuillez refaire une demande pour la rejoindre.");
+                                        resp.sendRedirect(req.getContextPath() + "/admin-organizer-requests?error=association_email_exists");
+                                        return;
+                                    }
+
+                                    try {
+                                        // Créer l'association
+                                        Long newAssociationId = associationService.createAssociation(
+                                                request.getNewAssociationName(),
+                                                request.getNewAssociationEmail(),
+                                                request.getNewAssociationDescription(),
+                                                request.getNewAssociationWebsiteLink(),
+                                                request.getNewAssociationPhone(),
+                                                request.getNewAssociationAddress(),
+                                                request.getNewAssociationZipCode(),
+                                                request.getNewAssociationCity()
+                                        );
+
+                                        // Ajouter le membre à la nouvelle association
+                                        associationMemberService.addOrganizerToAssociation(
+                                                request.getMemberId(),
+                                                newAssociationId
+                                        );
+
+                                        System.out.println("✅ Association créée avec ID " + newAssociationId +
+                                                " et membre ajouté");
+                                    } catch (Exception e) {
+                                        System.err.println("❌ Erreur lors de la création de l'association:");
+                                        e.printStackTrace();
+                                    }
+                                }
+                                break;
+                            case BECOME_ORGANIZER:
+                                // dans ce cas, changement de rôle fait dans le service.
+                                break;
+                        }
+                    }
                 }
-
-                resp.sendRedirect(req.getContextPath() + "/admin/organizer-requests?success=approved");
+                req.getSession().setAttribute("member", member);
+                resp.sendRedirect(req.getContextPath() + "/admin-organizer-requests?success=approved");
 
             } else if (path.endsWith("/reject")) {
                 System.out.println("❌ Rejet de la demande " + requestId);
                 organizerRequestService.rejectRequest(requestId, member.getId(), comment);
-                resp.sendRedirect(req.getContextPath() + "/admin/organizer-requests?success=rejected");
+                req.getSession().setAttribute("member", member);
+                resp.sendRedirect(req.getContextPath() + "/admin-organizer-requests?success=rejected");
             }
 
         } catch (Exception e) {
             System.err.println("❌ Erreur lors du traitement de la demande:");
             e.printStackTrace();
-            resp.sendRedirect(req.getContextPath() + "/admin/organizer-requests?error=processing_failed");
+            req.getSession().setAttribute("member", member);
+            resp.sendRedirect(req.getContextPath() + "/admin-organizer-requests?error=processing_failed");
         }
     }
 }

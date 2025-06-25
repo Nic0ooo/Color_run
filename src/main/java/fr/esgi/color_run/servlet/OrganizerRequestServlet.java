@@ -1,12 +1,16 @@
 package fr.esgi.color_run.servlet;
 
+import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.business.Role;
+import fr.esgi.color_run.business.RequestType;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.service.AssociationService;
 import fr.esgi.color_run.service.OrganizerRequestService;
+import fr.esgi.color_run.service.Association_memberService;
 import fr.esgi.color_run.service.impl.AssociationServiceImpl;
 import fr.esgi.color_run.service.impl.OrganizerRequestServiceImpl;
+import fr.esgi.color_run.service.impl.Association_memberServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -16,12 +20,15 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @WebServlet(name = "OrganizerRequestServlet", urlPatterns = {"/organizer-request"})
 public class OrganizerRequestServlet extends HttpServlet {
 
     private final OrganizerRequestService organizerRequestService = new OrganizerRequestServiceImpl();
     private final AssociationService associationService = new AssociationServiceImpl();
+    private final Association_memberService associationMemberService = new Association_memberServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -41,7 +48,6 @@ public class OrganizerRequestServlet extends HttpServlet {
             return;
         }
 
-        // Debug du rôle
         System.out.println("🔍 Rôle du membre: " + member.getRole());
 
         // Vérifier s'il a déjà une demande en cours
@@ -56,17 +62,38 @@ public class OrganizerRequestServlet extends HttpServlet {
 
         // Récupérer les associations
         try {
-            context.setVariable("associations", associationService.getAllAssociations());
-            System.out.println("✅ Associations chargées");
+            List<Association> allAssociations = associationService.getAllAssociations();
+
+            if (member.getRole() == Role.ORGANIZER) {
+                // Pour les organisateurs, charger leurs associations actuelles
+                var currentAssociations = associationMemberService.getAssociationsByOrganizer(member.getId());
+                context.setVariable("currentAssociations", currentAssociations);
+
+
+                // Pour les associations disponibles, utiliser la méthode spécialisée
+                var availableAssociations = associationMemberService.getAvailableAssociationForMember(member.getId());
+                context.setVariable("availableAssociations", availableAssociations);
+
+                System.out.println("✅ Organisateur: " + currentAssociations.size() + " associations actuelles, " +
+                        availableAssociations.size() + " disponibles");
+            } else {
+                // Pour les participants, toutes les associations sont disponibles
+                context.setVariable("associations", allAssociations);
+                context.setVariable("availableAssociations", allAssociations);
+                System.out.println("✅ Participant: " + allAssociations.size() + " associations chargées");
+            }
         } catch (Exception e) {
             System.err.println("❌ Erreur lors du chargement des associations:");
             e.printStackTrace();
             context.setVariable("associations", java.util.Collections.emptyList());
+            context.setVariable("availableAssociations", java.util.Collections.emptyList());
+            context.setVariable("currentAssociations", java.util.Collections.emptyList());
         }
 
         context.setVariable("member", member);
         context.setVariable("hasPendingRequest", hasPendingRequest);
-        context.setVariable("pageTitle", "Devenir organisateur");
+        context.setVariable("pageTitle", member.getRole() == Role.ORGANIZER ?
+                "Gérer mes associations" : "Devenir organisateur");
         context.setVariable("page", "organizer-request");
 
         System.out.println("✅ Rendu de la page organizer-request");
@@ -76,16 +103,6 @@ public class OrganizerRequestServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         System.out.println("🔍 OrganizerRequestServlet - doPost() appelé");
-
-        // Debug des paramètres reçus
-        System.out.println("🔍 Paramètres reçus:");
-        req.getParameterMap().forEach((key, values) -> {
-            if (!"motivation".equals(key)) { // Ne pas logger la motivation complète
-                System.out.println("  - " + key + ": " + String.join(", ", values));
-            } else {
-                System.out.println("  - " + key + ": [" + values[0].length() + " caractères]");
-            }
-        });
 
         // Vérifier que l'utilisateur est connecté
         Member member = (Member) req.getSession().getAttribute("member");
@@ -100,11 +117,13 @@ public class OrganizerRequestServlet extends HttpServlet {
         try {
             String motivation = req.getParameter("motivation");
             String associationType = req.getParameter("associationType");
+            String requestTypeParam = req.getParameter("requestType");
 
             System.out.println("🔍 Type d'association: " + associationType);
+            System.out.println("🔍 Type de demande: " + requestTypeParam);
             System.out.println("🔍 Longueur motivation: " + (motivation != null ? motivation.length() : "null"));
 
-            // Validation
+            // Validation de base
             if (motivation == null || motivation.trim().length() < 50) {
                 System.out.println("❌ Validation échouée: motivation trop courte");
                 resp.sendRedirect(req.getContextPath() + "/organizer-request?error=invalid_data");
@@ -118,7 +137,20 @@ public class OrganizerRequestServlet extends HttpServlet {
                 return;
             }
 
+            // Déterminer le type de demande
+            RequestType requestType = RequestType.BECOME_ORGANIZER;
+            if (member.getRole() == Role.ORGANIZER) {
+                if ("existing".equals(associationType)) {
+                    requestType = RequestType.JOIN_ASSOCIATION;
+                } else if ("new".equals(associationType)) {
+                    requestType = RequestType.CREATE_ASSOCIATION;
+                }
+            }
+
+            System.out.println("🔍 Type de demande déterminé: " + requestType);
+
             Long existingAssociationId = null;
+            String newAssociationName = null;
 
             if ("existing".equals(associationType)) {
                 String assocIdStr = req.getParameter("existingAssociationId");
@@ -129,19 +161,52 @@ public class OrganizerRequestServlet extends HttpServlet {
                         System.out.println("✅ Association existante ID: " + existingAssociationId);
                     } catch (NumberFormatException e) {
                         System.err.println("❌ Erreur parsing association ID: " + assocIdStr);
+                        resp.sendRedirect(req.getContextPath() + "/organizer-request?error=invalid_data");
+                        return;
                     }
                 }
             } else if ("new".equals(associationType)) {
-                System.out.println("📝 Demande de nouvelle association (pas encore implémenté)");
-                // TODO: Gérer la création d'une nouvelle association
+                newAssociationName = req.getParameter("assocName");
+                System.out.println("🔍 Nouvelle association: " + newAssociationName);
+
+                if (newAssociationName == null || newAssociationName.trim().isEmpty()) {
+                    System.out.println("❌ Nom d'association manquant");
+                    resp.sendRedirect(req.getContextPath() + "/organizer-request?error=invalid_data");
+                    return;
+                }
             }
 
-            // Créer la demande
+            // Créer la demande avec les informations d'association
             System.out.println("📝 Création de la demande...");
-            organizerRequestService.submitRequest(member.getId(), motivation.trim(), existingAssociationId);
-            System.out.println("✅ Demande créée avec succès");
 
-            resp.sendRedirect(req.getContextPath() + "/organizer-request?success=request_sent");
+            if ("new".equals(associationType) && newAssociationName != null) {
+                // Demande avec nouvelle association
+                organizerRequestService.submitRequestWithNewAssociation(
+                        member.getId(),
+                        requestType,
+                        motivation.trim(),
+                        req.getParameter("assocName"),
+                        req.getParameter("assocEmail"),
+                        req.getParameter("assocDescription"),
+                        req.getParameter("assocWebsiteLink"),
+                        req.getParameter("assocPhone"),
+                        req.getParameter("assocAddress"),
+                        req.getParameter("assocZipCode"),
+                        req.getParameter("assocCity")
+                );
+                System.out.println("✅ Demande avec nouvelle association créée");
+                resp.sendRedirect(req.getContextPath() + "/organizer-request?success=association_created");
+            } else {
+                // Demande standard (avec ou sans association existante)
+                organizerRequestService.submitRequest(member.getId(), requestType, motivation.trim(), existingAssociationId);
+                System.out.println("✅ Demande standard créée");
+
+                if (member.getRole() == Role.ORGANIZER) {
+                    resp.sendRedirect(req.getContextPath() + "/organizer-request?success=association_request_sent");
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/organizer-request?success=request_sent");
+                }
+            }
 
         } catch (Exception e) {
             System.err.println("❌ Erreur lors de la soumission de la demande organisateur:");

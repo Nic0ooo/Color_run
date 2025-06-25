@@ -426,4 +426,56 @@ public class CourseRepositoryImpl implements CourseRepository {
             return null;
         }
     }
+
+    @Override
+    public List<Course> findPastCoursesByAssociationId(Long associationId) {
+        // vérfier l'id de l'asso
+        if (associationId == null) {
+            System.out.println("❌ Association ID est nul, impossible de trouver des courses.");
+            return new ArrayList<>();
+        }
+        List<Course> pastAssoCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate DESC";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, associationId);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                pastAssoCourses.add(Mapper.mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (pastAssoCourses.isEmpty()) {
+            System.out.println("❌ Aucune course passée trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + pastAssoCourses.size() + " courses passée trouvées dans la base de données.");
+        }
+        return pastAssoCourses;
+    }
+
+    @Override
+    public List<Course> findUpcomingCoursesByAssociationId(Long associationId) {
+        // vérfier l'id de l'asso
+        if (associationId == null) {
+            System.out.println("❌ Association ID est nul, impossible de trouver des courses.");
+            return new ArrayList<>();
+        }
+        List<Course> upcomingAssoCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate DESC";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, associationId);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                upcomingAssoCourses.add(Mapper.mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (upcomingAssoCourses.isEmpty()) {
+            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + upcomingAssoCourses.size() + " courses à venir trouvées dans la base de données.");
+        }
+        return upcomingAssoCourses;
+    }
 }

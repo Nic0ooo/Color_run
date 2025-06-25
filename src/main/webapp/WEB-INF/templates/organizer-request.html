@@ -2,7 +2,7 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Color Run | Devenir organisateur</title>
+  <title>Color Run | Demande organisateur</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,7 +25,10 @@
       <span class="mx-2">›</span>
       <a href="/color_run_war/profile" class="hover:text-teal-600 transition-colors">Mon profil</a>
       <span class="mx-2">›</span>
-      <span class="text-gray-900">Devenir organisateur</span>
+      <span class="text-gray-900">
+        <span th:if="${member.role.name() == 'ORGANIZER'}">Gérer mes associations</span>
+        <span th:unless="${member.role.name() == 'ORGANIZER'}">Devenir organisateur</span>
+      </span>
     </nav>
 
     <!-- Page Header -->
@@ -34,8 +37,14 @@
         <div class="flex items-center">
           <i data-lucide="users" class="w-8 h-8 mr-4"></i>
           <div>
-            <h1 class="text-3xl font-bold mb-2">Devenir organisateur</h1>
-            <p class="text-white/90 text-lg">Créez et gérez vos propres courses Color Run</p>
+            <h1 class="text-3xl font-bold mb-2">
+              <span th:if="${member.role.name() == 'ORGANIZER'}">Gérer mes associations</span>
+              <span th:unless="${member.role.name() == 'ORGANIZER'}">Devenir organisateur</span>
+            </h1>
+            <p class="text-white/90 text-lg">
+              <span th:if="${member.role.name() == 'ORGANIZER'}">Rejoignez ou créez de nouvelles associations</span>
+              <span th:unless="${member.role.name() == 'ORGANIZER'}">Créez et gérez vos propres courses Color Run</span>
+            </p>
           </div>
         </div>
       </div>
@@ -46,9 +55,10 @@
       <div class="flex items-center">
         <i data-lucide="check-circle" class="w-5 h-5 text-green-600 mr-2"></i>
         <span class="text-green-800 font-medium">
-                    <span th:if="${param.success[0] == 'request_sent'}">Votre demande a été envoyée avec succès !</span>
-                    <span th:if="${param.success[0] == 'association_created'}">Association créée et demande envoyée !</span>
-                </span>
+          <span th:if="${param.success[0] == 'request_sent'}">Votre demande a été envoyée avec succès !</span>
+          <span th:if="${param.success[0] == 'association_request_sent'}">Demande d'association envoyée !</span>
+          <span th:if="${param.success[0] == 'association_created'}">Association créée et demande envoyée !</span>
+        </span>
       </div>
       <p class="text-green-700 text-sm mt-1">Un administrateur examinera votre demande prochainement.</p>
     </div>
@@ -57,11 +67,29 @@
       <div class="flex items-center">
         <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 mr-2"></i>
         <span class="text-red-800 font-medium">
-                    <span th:if="${param.error[0] == 'already_organizer'}">Vous êtes déjà organisateur</span>
-                    <span th:if="${param.error[0] == 'pending_request'}">Vous avez déjà une demande en cours</span>
-                    <span th:if="${param.error[0] == 'invalid_data'}">Données invalides</span>
-                    <span th:unless="${param.error[0] == 'already_organizer' or param.error[0] == 'pending_request' or param.error[0] == 'invalid_data'}">Une erreur est survenue</span>
-                </span>
+          <span th:if="${param.error[0] == 'already_organizer'}">Vous êtes déjà organisateur</span>
+          <span th:if="${param.error[0] == 'pending_request'}">Vous avez déjà une demande en cours</span>
+          <span th:if="${param.error[0] == 'invalid_data'}">Données invalides</span>
+          <span th:unless="${param.error[0] == 'already_organizer' or param.error[0] == 'pending_request' or param.error[0] == 'invalid_data'}">Une erreur est survenue</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Current Associations (for existing organizers) -->
+    <div th:if="${member.role.name() == 'ORGANIZER' and currentAssociations != null and not #lists.isEmpty(currentAssociations)}" class="mb-8 bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+        <i data-lucide="building-2" class="w-5 h-5 mr-2 text-teal-600"></i>
+        Mes associations actuelles
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div th:each="association : ${currentAssociations}" class="border border-gray-200 rounded-lg p-4">
+          <h3 class="font-medium text-gray-800 mb-2" th:text="${association.name}">Association Example</h3>
+          <p class="text-gray-600 text-sm mb-3" th:text="${association.description}">Description de l'association...</p>
+          <div class="flex items-center text-sm text-gray-500">
+            <i data-lucide="mail" class="w-4 h-4 mr-1"></i>
+            <span th:text="${association.email}">contact@association.com</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -71,7 +99,10 @@
         <i data-lucide="clock" class="w-6 h-6 text-yellow-600 mr-3"></i>
         <h3 class="text-xl font-semibold text-yellow-800">Demande en cours</h3>
       </div>
-      <p class="text-yellow-700 mb-4">Vous avez déjà soumis une demande pour devenir organisateur.</p>
+      <p class="text-yellow-700 mb-4">
+        <span th:if="${member.role.name() == 'ORGANIZER'}">Vous avez déjà soumis une demande d'association.</span>
+        <span th:unless="${member.role.name() == 'ORGANIZER'}">Vous avez déjà soumis une demande pour devenir organisateur.</span>
+      </p>
       <div class="bg-yellow-100 rounded-lg p-4">
         <h4 class="font-medium text-yellow-800 mb-2">Statut de votre demande :</h4>
         <div class="flex items-center">
@@ -94,8 +125,8 @@
 
     <!-- Form (only show if no pending request) -->
     <div th:unless="${hasPendingRequest}">
-      <!-- Benefits Section -->
-      <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <!-- Benefits Section (only for non-organizers) -->
+      <div th:unless="${member.role.name() == 'ORGANIZER'}" class="bg-white rounded-lg shadow-md p-6 mb-8">
         <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
           <i data-lucide="star" class="w-5 h-5 mr-2 text-teal-600"></i>
           Avantages organisateur
@@ -125,6 +156,34 @@
         </div>
       </div>
 
+      <!-- Request Type Selection (for organizers) -->
+      <div th:if="${member.role.name() == 'ORGANIZER'}" class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+          <i data-lucide="target" class="w-5 h-5 mr-2 text-teal-600"></i>
+          Type de demande
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="border border-gray-200 rounded-lg p-4 hover:border-teal-500 transition-colors cursor-pointer" onclick="selectRequestType('join')">
+            <div class="flex items-center mb-3">
+              <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                <i data-lucide="user-plus" class="w-6 h-6 text-green-600"></i>
+              </div>
+              <h3 class="font-medium text-gray-800">Rejoindre une association</h3>
+            </div>
+            <p class="text-gray-600 text-sm">Demander à rejoindre une association existante</p>
+          </div>
+          <div class="border border-gray-200 rounded-lg p-4 hover:border-teal-500 transition-colors cursor-pointer" onclick="selectRequestType('create')">
+            <div class="flex items-center mb-3">
+              <div class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                <i data-lucide="plus-circle" class="w-6 h-6 text-purple-600"></i>
+              </div>
+              <h3 class="font-medium text-gray-800">Créer une association</h3>
+            </div>
+            <p class="text-gray-600 text-sm">Ajouter une nouvelle association à la plateforme</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Request Form -->
       <form id="organizer-request-form" th:action="@{/organizer-request}" method="POST" class="bg-white rounded-lg shadow-md overflow-hidden">
         <!-- Form Header -->
@@ -136,6 +195,9 @@
         </div>
 
         <div class="p-6 space-y-8">
+          <!-- Hidden field for request type -->
+          <input type="hidden" name="requestType" id="requestType" th:value="${member.role.name() == 'ORGANIZER' ? 'ASSOCIATION_REQUEST' : 'BECOME_ORGANIZER'}">
+
           <!-- Motivation Section -->
           <div>
             <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
@@ -144,11 +206,12 @@
             </h3>
             <div>
               <label for="motivation" class="block text-sm font-medium text-gray-700 mb-2">
-                Expliquez pourquoi vous souhaitez devenir organisateur *
+                <span th:if="${member.role.name() == 'ORGANIZER'}">Expliquez pourquoi vous souhaitez rejoindre ou créer cette association *</span>
+                <span th:unless="${member.role.name() == 'ORGANIZER'}">Expliquez pourquoi vous souhaitez devenir organisateur *</span>
               </label>
               <textarea id="motivation" name="motivation" rows="5" required
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
-                        placeholder="Décrivez votre expérience, vos motivations et vos projets d'organisation de courses Color Run..."></textarea>
+                        th:placeholder="${member.role.name() == 'ORGANIZER' ? 'Décrivez vos motivations pour cette demande d\'association...' : 'Décrivez votre expérience, vos motivations et vos projets d\'organisation de courses Color Run...'}"></textarea>
               <p class="text-sm text-gray-500 mt-1">Minimum 50 caractères</p>
             </div>
           </div>
@@ -157,12 +220,13 @@
           <div>
             <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
               <i data-lucide="building-2" class="w-5 h-5 mr-2 text-teal-600"></i>
-              Association (optionnel)
+              Association
+              <span th:unless="${member.role.name() == 'ORGANIZER'}" class="text-sm font-normal text-gray-500 ml-2">(optionnel)</span>
             </h3>
 
             <!-- Association Choice -->
             <div class="space-y-4">
-              <div>
+              <div th:unless="${member.role.name() == 'ORGANIZER'}">
                 <label class="flex items-center">
                   <input type="radio" name="associationType" value="none" checked
                          class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300">
@@ -173,8 +237,12 @@
               <div>
                 <label class="flex items-center">
                   <input type="radio" name="associationType" value="existing"
+                         th:checked="${member.role.name() == 'ORGANIZER'}"
                          class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300">
-                  <span class="ml-2 text-gray-700">Je fais partie d'une association existante</span>
+                  <span class="ml-2 text-gray-700">
+                    <span th:if="${member.role.name() == 'ORGANIZER'}">Je souhaite rejoindre une association existante</span>
+                    <span th:unless="${member.role.name() == 'ORGANIZER'}">Je fais partie d'une association existante</span>
+                  </span>
                 </label>
               </div>
 
@@ -188,14 +256,14 @@
             </div>
 
             <!-- Existing Association Selection -->
-            <div id="existing-association-section" class="mt-6 hidden">
+            <div id="existing-association-section" class="mt-6" th:classappend="${member.role.name() == 'ORGANIZER'} ? '' : 'hidden'">
               <label for="existingAssociation" class="block text-sm font-medium text-gray-700 mb-2">
-                Sélectionnez votre association
+                Sélectionnez l'association
               </label>
               <select id="existingAssociation" name="existingAssociationId"
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
                 <option value="">Choisir une association...</option>
-                <option th:each="association : ${associations}"
+                <option th:each="association : ${availableAssociations}"
                         th:value="${association.id}"
                         th:text="${association.name}">Association Example</option>
               </select>
@@ -240,10 +308,10 @@
                 </div>
 
                 <div>
-                  <label for="assocWebsite" class="block text-sm font-medium text-gray-700 mb-2">
+                  <label for="assocWebsiteLink" class="block text-sm font-medium text-gray-700 mb-2">
                     Site web (optionnel)
                   </label>
-                  <input type="url" id="assocWebsite" name="assocWebsite"
+                  <input type="url" id="assocWebsiteLink" name="assocWebsiteLink"
                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                          placeholder="https://...">
                 </div>
@@ -292,15 +360,15 @@
               <input type="checkbox" id="acceptTerms" name="acceptTerms" required
                      class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-1">
               <span class="ml-3 text-sm text-gray-700">
-                                J'accepte les <a href="/terms" class="text-teal-600 hover:text-teal-700 underline">conditions d'utilisation</a>
-                                et je m'engage à respecter les règles de la communauté Color Run en tant qu'organisateur.
-                            </span>
+                J'accepte les <a href="/terms" class="text-teal-600 hover:text-teal-700 underline">conditions d'utilisation</a>
+                et je m'engage à respecter les règles de la communauté Color Run.
+              </span>
             </label>
           </div>
 
           <!-- Submit Button -->
           <div class="flex justify-between items-center pt-6 border-t">
-            <a href="/color_run_war/home" class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors">
+            <a href="/color_run_war/profile" class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors">
               <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
               Annuler
             </a>
@@ -308,7 +376,7 @@
             <button type="submit" id="submit-btn"
                     class="inline-flex items-center bg-teal-500 hover:bg-teal-600 disabled:bg-gray-400 text-white font-semibold py-3 px-8 rounded-lg transition-colors">
               <i data-lucide="send" class="w-4 h-4 mr-2"></i>
-              Envoyer ma demande
+              <span id="submit-text">Envoyer ma demande</span>
             </button>
           </div>
         </div>
@@ -325,10 +393,39 @@
 </footer>
 
 <script th:inline="javascript">
+  /*<![CDATA[*/
+  const isOrganizer = /*[[${member.role.name() == 'ORGANIZER'}]]*/ false;
+  /*]]>*/
+
   document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
     initializeForm();
   });
+
+  function selectRequestType(type) {
+    const existingSection = document.getElementById('existing-association-section');
+    const newSection = document.getElementById('new-association-section');
+    const associationRadios = document.querySelectorAll('input[name="associationType"]');
+    const submitText = document.getElementById('submit-text');
+
+    // Reset all sections
+    existingSection.classList.add('hidden');
+    newSection.classList.add('hidden');
+
+    if (type === 'join') {
+      existingSection.classList.remove('hidden');
+      document.querySelector('input[value="existing"]').checked = true;
+      document.getElementById('existingAssociation').required = true;
+      setNewAssociationRequired(false);
+      submitText.textContent = 'Demander à rejoindre';
+    } else if (type === 'create') {
+      newSection.classList.remove('hidden');
+      document.querySelector('input[value="new"]').checked = true;
+      setNewAssociationRequired(true);
+      document.getElementById('existingAssociation').required = false;
+      submitText.textContent = 'Demander la création';
+    }
+  }
 
   function initializeForm() {
     const associationTypeRadios = document.querySelectorAll('input[name="associationType"]');
@@ -381,7 +478,6 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Envoi en cours...';
 
-      // IMPORTANT: Ne plus faire preventDefault() ici, laisser le formulaire se soumettre naturellement
       console.log('✅ Formulaire validé, soumission en cours...');
     });
 

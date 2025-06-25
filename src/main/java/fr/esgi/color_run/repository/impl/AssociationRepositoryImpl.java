@@ -95,29 +95,26 @@ public class AssociationRepositoryImpl implements AssociationRepository {
     }
 
     @Override
-    public Association findById(Long id) {
+    public Optional<Association> findById(Long id) {
         Association association = null;
         String sql = "SELECT * FROM association WHERE id = ?";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             ResultSet resultSet = stmt.executeQuery();
             if (resultSet.next()) {
-                association = Mapper.mapRowToAssociation(resultSet);
-                System.out.println("✅ Association trouvée : " + association.getName());
-                return association;
+                return Optional.of(Mapper.mapRowToAssociation(resultSet));
             } else {
                 System.out.println("❌ Aucune association trouvée avec l'ID : " + id);
             }
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération de l'association par ID :");
             e.printStackTrace();
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override
     public Association save(Association association) {
-        String sql = "INSERT INTO association (name, description, website_link, logo_path, email, phone_number, address, city, zip_code) " +
+        String sql = "INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
@@ -126,12 +123,17 @@ public class AssociationRepositoryImpl implements AssociationRepository {
             ps.setString(1, association.getName());
             ps.setString(2, association.getDescription());
             ps.setString(3, association.getWebsiteLink());
-            ps.setString(4, association.getLogoPath());
+            ps.setNull(4, Types.VARCHAR); // logoPath peut être null
             ps.setString(5, association.getEmail());
             ps.setString(6, association.getPhoneNumber());
             ps.setString(7, association.getAddress());
             ps.setString(8, association.getCity());
-            ps.setInt(9, association.getZipCode() != null ? association.getZipCode() : 0);
+
+            if (association.getZipCode() != null) {
+                ps.setInt(9, association.getZipCode());
+            } else {
+                ps.setNull(9, Types.INTEGER);
+            }
 
             ps.executeUpdate();
 
@@ -153,19 +155,24 @@ public class AssociationRepositoryImpl implements AssociationRepository {
 
     @Override
     public Association update(Association association) {
-        String sql = "UPDATE association SET name=?, description=?, website_link=?, logo_path=?, email=?, phone_number=?, address=?, city=?, zip_code=? " +
+        String sql = "UPDATE association SET name=?, description=?, websiteLink=?, logoPath=?, email=?, phoneNumber=?, address=?, city=?, zipCode=? " +
                 "WHERE id=?";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, association.getName());
             ps.setString(2, association.getDescription());
             ps.setString(3, association.getWebsiteLink());
-            ps.setString(4, association.getLogoPath());
+            ps.setNull(4, Types.VARCHAR);
             ps.setString(5, association.getEmail());
             ps.setString(6, association.getPhoneNumber());
             ps.setString(7, association.getAddress());
             ps.setString(8, association.getCity());
-            ps.setInt(9, association.getZipCode() != null ? association.getZipCode() : 0);
+
+            if (association.getZipCode() != null) {
+                ps.setInt(9, association.getZipCode());
+            } else {
+                ps.setNull(9, Types.INTEGER);
+            }
             ps.setLong(10, association.getId());
 
             ps.executeUpdate();
@@ -197,34 +204,49 @@ public class AssociationRepositoryImpl implements AssociationRepository {
     }
 
     @Override
-    public List<Association> findByNameContaining(String name) {
+    public Optional<Association> findByName(String name) {
+        String sql = "SELECT * FROM association WHERE LOWER(name) = LOWER(?)";
         List<Association> associations = new ArrayList<>();
-        String sql = "SELECT * FROM association WHERE LOWER(name) LIKE LOWER(?) ORDER BY name";
+
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, "%" + name + "%");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                associations.add(Mapper.mapRowToAssociation(rs));
+
+            try (ResultSet rs = ps.executeQuery();) {
+                while (rs.next()) {
+                    associations.add(Mapper.mapRowToAssociation(rs));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return associations;
+
+        if (associations.isEmpty()) {
+            System.out.println("❌ Aucune association trouvée avec le nom : " + name);
+            return Optional.empty();
+        } else {
+            System.out.println("✅ Association trouvées : " + associations.size() + " pour le nom : " + name);
+            return associations.stream().filter(association -> name.equals(association.getName())).findFirst();
+        }
     }
 
     @Override
-    public Optional<Association> findByName(String name) {
-        String sql = "SELECT * FROM association WHERE LOWER(name) = LOWER(?)";
+    public Association findByEmail(String email) {
+        String sql = "SELECT * FROM association WHERE LOWER(email) = LOWER(?)";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, name);
+            ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return Optional.of(Mapper.mapRowToAssociation(rs));
+                return Mapper.mapRowToAssociation(rs);
+            } else {
+                System.out.println("❌ Aucune association trouvée avec l'email : " + email);
+                return null;
             }
         } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la récupération de l'association par email :");
             e.printStackTrace();
+            return null;
         }
-        return Optional.empty();
     }
 
     @Override
@@ -257,5 +279,25 @@ public class AssociationRepositoryImpl implements AssociationRepository {
         }
         return false;
     }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        String sql = "SELECT COUNT(*) FROM association WHERE LOWER(email) = LOWER(?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e)
+        {
+            System.err.println("❌ Erreur lors de la vérification de l'existence de l'email : " + email);
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 }
 

@@ -2,24 +2,25 @@ package fr.esgi.color_run.service;
 
 import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Member;
-
+import fr.esgi.color_run.business.Association_member;
 import java.util.List;
-import java.util.Optional;
 
 public interface Association_memberService {
-    void addOrganizerToAssociation(Long memberId, Long associationId);
 
-    void removeOrganizerFromAssociation(Long memberId);
+     // Ajouter un organisateur à une association
+    void addOrganizerToAssociation(Long memberId, Long associationId) throws Exception;
+
+    void removeOrganizerFromAssociation(Long memberId, Long associationId);
 
     boolean isOrganizerInAssociation(Long memberId, Long associationId);
 
-    Optional<Association> getOrganizerAssociation(Long memberId);
+    List<Member> getOrganizersByAssociation(Long associationId) throws Exception;
 
-    List<Member> getOrganizersByAssociation(Long associationId);
+    int getAssociationOrganizerCount(Long associationId) throws Exception;
 
-    boolean organizerHasAssociation(Long memberId);
+    List<Association_member> getAllAssociationMembers() throws Exception;
 
-    int countOrganizersByAssociation(Long associationId);
+    List<Association> getAvailableAssociationForMember(Long memberId) throws Exception;
 
-    void changeOrganizerAssociation(Long memberId, Long newAssociationId);
+    List<Association> getAssociationsByOrganizer(Long memberId) throws Exception;
 }

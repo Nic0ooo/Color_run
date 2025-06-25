@@ -85,7 +85,13 @@ public class Mapper {
         association.setPhoneNumber(rs.getString("phoneNumber"));
         association.setAddress(rs.getString("address"));
         association.setCity(rs.getString("city"));
-        association.setZipCode(rs.getInt("zipCode"));
+        int zipCode = rs.getInt("zipCode");
+        if (!rs.wasNull()) {
+            association.setZipCode(zipCode);
+        } else {
+            association.setZipCode(null);
+        }
+
         return association;
     }
 
