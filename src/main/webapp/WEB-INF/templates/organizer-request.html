@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -70,8 +71,47 @@
           <span th:if="${param.error[0] == 'already_organizer'}">Vous êtes déjà organisateur</span>
           <span th:if="${param.error[0] == 'pending_request'}">Vous avez déjà une demande en cours</span>
           <span th:if="${param.error[0] == 'invalid_data'}">Données invalides</span>
-          <span th:unless="${param.error[0] == 'already_organizer' or param.error[0] == 'pending_request' or param.error[0] == 'invalid_data'}">Une erreur est survenue</span>
+          <span th:if="${param.error[0] == 'association_name_exists'}">Une association avec ce nom existe déjà</span>
+          <span th:if="${param.error[0] == 'association_email_exists'}">Une association avec cet email existe déjà</span>
+          <span th:unless="${param.error[0] == 'already_organizer' or param.error[0] == 'pending_request' or param.error[0] == 'invalid_data' or param.error[0] == 'association_name_exists' or param.error[0] == 'association_email_exists'}">Une erreur est survenue</span>
         </span>
+      </div>
+      <p th:if="${param.error[0] == 'association_name_exists' or param.error[0] == 'association_email_exists'}" class="text-red-700 text-sm mt-1">
+        Veuillez choisir un autre nom/email ou faire une demande pour rejoindre l'association existante.
+      </p>
+    </div>
+
+    <!-- Rejected Request Information -->
+    <div th:if="${lastRejectedRequest != null and not hasPendingRequest}" class="mb-8 bg-orange-50 border border-orange-200 rounded-lg p-6">
+      <div class="flex items-center mb-4">
+        <i data-lucide="x-circle" class="w-6 h-6 text-orange-600 mr-3"></i>
+        <h3 class="text-xl font-semibold text-orange-800">Demande précédente refusée</h3>
+      </div>
+      <div class="bg-orange-100 rounded-lg p-4 mb-4">
+        <h4 class="font-medium text-orange-800 mb-2">Détails de votre dernière demande :</h4>
+        <div class="text-orange-700 space-y-2">
+          <p><strong>Date :</strong> <span th:text="${#temporals.format(lastRejectedRequest.requestDate, 'dd/MM/yyyy HH:mm')}"></span></p>
+          <p><strong>Type :</strong>
+            <span th:if="${lastRejectedRequest.requestType != null and lastRejectedRequest.requestType.name() == 'BECOME_ORGANIZER'}">Devenir organisateur</span>
+            <span th:if="${lastRejectedRequest.requestType != null and lastRejectedRequest.requestType.name() == 'JOIN_ASSOCIATION'}">Rejoindre une association</span>
+            <span th:if="${lastRejectedRequest.requestType != null and lastRejectedRequest.requestType.name() == 'CREATE_ASSOCIATION'}">Créer une association</span>
+          </p>
+          <div th:if="${lastRejectedRequest.adminComment != null and not #strings.isEmpty(lastRejectedRequest.adminComment)}">
+            <p><strong>Commentaire de l'administrateur :</strong></p>
+            <div class="bg-orange-200 rounded p-3 mt-1">
+              <p class="text-orange-800 italic" th:text="${lastRejectedRequest.adminComment}"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center mb-2">
+          <i data-lucide="lightbulb" class="w-5 h-5 text-blue-600 mr-2"></i>
+          <span class="text-blue-800 font-medium">Vous pouvez soumettre une nouvelle demande</span>
+        </div>
+        <p class="text-blue-700 text-sm">
+          Expliquez mieux votre motivation dans votre nouvelle demande.
+        </p>
       </div>
     </div>
 
@@ -168,15 +208,6 @@
               <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
                 <i data-lucide="user-plus" class="w-6 h-6 text-green-600"></i>
               </div>
-              <h3 class="font-medium text-gray-800">Rejoindre une association</h3>
-            </div>
-            <p class="text-gray-600 text-sm">Demander à rejoindre une association existante</p>
-          </div>
-          <div class="border border-gray-200 rounded-lg p-4 hover:border-teal-500 transition-colors cursor-pointer" onclick="selectRequestType('create')">
-            <div class="flex items-center mb-3">
-              <div class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-                <i data-lucide="plus-circle" class="w-6 h-6 text-purple-600"></i>
-              </div>
               <h3 class="font-medium text-gray-800">Créer une association</h3>
             </div>
             <p class="text-gray-600 text-sm">Ajouter une nouvelle association à la plateforme</p>
@@ -213,6 +244,13 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
                         th:placeholder="${member.role.name() == 'ORGANIZER' ? 'Décrivez vos motivations pour cette demande d\'association...' : 'Décrivez votre expérience, vos motivations et vos projets d\'organisation de courses Color Run...'}"></textarea>
               <p class="text-sm text-gray-500 mt-1">Minimum 50 caractères</p>
+              <div th:if="${lastRejectedRequest != null}" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-center mb-1">
+                  <i data-lucide="info" class="w-4 h-4 text-blue-600 mr-1"></i>
+                  <span class="text-blue-800 text-sm font-medium">Conseil pour votre nouvelle demande :</span>
+                </div>
+                <p class="text-blue-700 text-sm">Tenez compte des commentaires de l'administrateur et expliquez plus en détail vos motivations et votre expérience.</p>
+              </div>
             </div>
           </div>
 
@@ -287,7 +325,9 @@
                     Nom de l'association *
                   </label>
                   <input type="text" id="assocName" name="assocName"
-                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          >
+                  <div id="name-check-result" class="mt-1 text-sm hidden"></div>
                 </div>
 
                 <div>
@@ -295,7 +335,9 @@
                     Email de contact *
                   </label>
                   <input type="email" id="assocEmail" name="assocEmail"
-                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                         >
+                  <div id="email-check-result" class="mt-1 text-sm hidden"></div>
                 </div>
 
                 <div class="md:col-span-2">
@@ -467,6 +509,19 @@
         return;
       }
 
+      // Vérifier s'il y a des erreurs de validation d'association
+      const nameResult = document.getElementById('name-check-result');
+      const emailResult = document.getElementById('email-check-result');
+      const newAssocSection = document.getElementById('new-association-section');
+
+      if (!newAssocSection.classList.contains('hidden')) {
+        if (nameResult.textContent.includes('existe déjà') || emailResult.textContent.includes('déjà utilisée')) {
+          e.preventDefault();
+          alert('Veuillez corriger les erreurs de validation avant de soumettre.');
+          return;
+        }
+      }
+
       // Validate terms acceptance
       if (!document.getElementById('acceptTerms').checked) {
         e.preventDefault();
@@ -514,6 +569,3 @@
     motivationTextarea.dispatchEvent(new Event('input'));
   }
 </script>
-
-</body>
-</html>

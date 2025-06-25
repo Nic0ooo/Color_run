@@ -4,6 +4,8 @@ import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.business.RequestType;
+import fr.esgi.color_run.business.OrganizerRequest;
+import fr.esgi.color_run.business.RequestStatus;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.service.AssociationService;
 import fr.esgi.color_run.service.OrganizerRequestService;
@@ -21,7 +23,7 @@ import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @WebServlet(name = "OrganizerRequestServlet", urlPatterns = {"/organizer-request"})
 public class OrganizerRequestServlet extends HttpServlet {
@@ -52,11 +54,26 @@ public class OrganizerRequestServlet extends HttpServlet {
 
         // Vérifier s'il a déjà une demande en cours
         boolean hasPendingRequest = false;
+        OrganizerRequest lastRejectedRequest = null;
+
         try {
             hasPendingRequest = organizerRequestService.hasActivePendingRequest(member.getId());
             System.out.println("🔍 A une demande en cours: " + hasPendingRequest);
+
+            // Vérifier s'il a une demande récemment refusée
+            if (!hasPendingRequest) {
+                var memberRequests = organizerRequestService.getRequestsByMember(member.getId());
+                lastRejectedRequest = memberRequests.stream()
+                        .filter(request -> request.getStatus() == RequestStatus.REJECTED)
+                        .findFirst()
+                        .orElse(null);
+
+                if (lastRejectedRequest != null) {
+                    System.out.println("🔍 Dernière demande refusée trouvée: " + lastRejectedRequest.getId());
+                }
+            }
         } catch (Exception e) {
-            System.err.println("❌ Erreur lors de la vérification des demandes en cours:");
+            System.err.println("❌ Erreur lors de la vérification des demandes:");
             e.printStackTrace();
         }
 
@@ -68,7 +85,6 @@ public class OrganizerRequestServlet extends HttpServlet {
                 // Pour les organisateurs, charger leurs associations actuelles
                 var currentAssociations = associationMemberService.getAssociationsByOrganizer(member.getId());
                 context.setVariable("currentAssociations", currentAssociations);
-
 
                 // Pour les associations disponibles, utiliser la méthode spécialisée
                 var availableAssociations = associationMemberService.getAvailableAssociationForMember(member.getId());
@@ -92,6 +108,7 @@ public class OrganizerRequestServlet extends HttpServlet {
 
         context.setVariable("member", member);
         context.setVariable("hasPendingRequest", hasPendingRequest);
+        context.setVariable("lastRejectedRequest", lastRejectedRequest);
         context.setVariable("pageTitle", member.getRole() == Role.ORGANIZER ?
                 "Gérer mes associations" : "Devenir organisateur");
         context.setVariable("page", "organizer-request");
@@ -151,6 +168,7 @@ public class OrganizerRequestServlet extends HttpServlet {
 
             Long existingAssociationId = null;
             String newAssociationName = null;
+            String newAssociationEmail = null;
 
             if ("existing".equals(associationType)) {
                 String assocIdStr = req.getParameter("existingAssociationId");
@@ -167,11 +185,38 @@ public class OrganizerRequestServlet extends HttpServlet {
                 }
             } else if ("new".equals(associationType)) {
                 newAssociationName = req.getParameter("assocName");
-                System.out.println("🔍 Nouvelle association: " + newAssociationName);
+                newAssociationEmail = req.getParameter("assocEmail");
+                System.out.println("🔍 Nouvelle association: " + newAssociationName + " - " + newAssociationEmail);
 
                 if (newAssociationName == null || newAssociationName.trim().isEmpty()) {
                     System.out.println("❌ Nom d'association manquant");
                     resp.sendRedirect(req.getContextPath() + "/organizer-request?error=invalid_data");
+                    return;
+                }
+
+                if (newAssociationEmail == null || newAssociationEmail.trim().isEmpty()) {
+                    System.out.println("❌ Email d'association manquant");
+                    resp.sendRedirect(req.getContextPath() + "/organizer-request?error=invalid_data");
+                    return;
+                }
+
+                // NOUVELLE FONCTIONNALITÉ: Vérifier si l'association existe déjà
+                try {
+                    if (associationService.existsByName(newAssociationName.trim())) {
+                        System.out.println("❌ Association avec ce nom existe déjà: " + newAssociationName);
+                        resp.sendRedirect(req.getContextPath() + "/organizer-request?error=association_name_exists");
+                        return;
+                    }
+
+                    if (associationService.existsByEmail(newAssociationEmail.trim().toLowerCase())) {
+                        System.out.println("❌ Association avec cet email existe déjà: " + newAssociationEmail);
+                        resp.sendRedirect(req.getContextPath() + "/organizer-request?error=association_email_exists");
+                        return;
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Erreur lors de la vérification d'existence de l'association:");
+                    e.printStackTrace();
+                    resp.sendRedirect(req.getContextPath() + "/organizer-request?error=server_error");
                     return;
                 }
             }

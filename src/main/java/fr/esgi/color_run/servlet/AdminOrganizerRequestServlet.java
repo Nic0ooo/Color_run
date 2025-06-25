@@ -66,6 +66,15 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
                 }
             }
 
+            for (var request : allRequests) {
+                if (request != null) {
+                    // Chercher le membre pour récupérer son rôle
+                    memberService.getMember(request.getMemberId()).ifPresent(foundMember -> {
+                        request.setMemberRoleName(foundMember.getRole().name());
+                    });
+                }
+            }
+
             // Enrichir avec les informations des membres
             Map<Long, Member> membersMap = loadMembersForRequests(pendingRequests, allRequests);
             context.setVariable("membersMap", membersMap);
