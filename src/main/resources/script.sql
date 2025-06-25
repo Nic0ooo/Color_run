@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS Message (
                                        discussionId INTEGER,
                                        memberId INTEGER,
                                        content VARCHAR(255),
-                                       date VARCHAR(32),
+                                       date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                        isPin BOOLEAN DEFAULT FALSE,
                                        isHidden BOOLEAN DEFAULT FALSE,
                                        FOREIGN KEY (discussionId) REFERENCES Discussion(id),

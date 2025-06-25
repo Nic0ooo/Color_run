@@ -50,6 +50,8 @@ public class OrganizerRequestServlet extends HttpServlet {
             return;
         }
 
+
+
         System.out.println("🔍 Rôle du membre: " + member.getRole());
 
         // Vérifier s'il a déjà une demande en cours

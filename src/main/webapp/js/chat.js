@@ -1,0 +1,806 @@
+<!-- Script JavaScript pour le chat -->
+
+    (function() {
+    // Configuration du chat
+
+    console.log('💬 Initialisation du chat avec config:', CHAT_CONFIG);
+
+    // Variables globales du chat
+    let chatApp = {
+    isLoading: false,
+    lastMessageId: 0,
+    refreshTimer: null,
+    isInitialized: false,
+    currentUserIsModerator: false,
+
+    // Éléments DOM
+    elements: {
+    messagesList: null,
+    messageInput: null,
+    sendButton: null,
+    chatForm: null,
+    charCount: null,
+    loadingMessages: null,
+    noMessages: null,
+    statusIndicator: null,
+    statusText: null,
+    messagesContainer: null
+},
+
+    // Initialisation
+    init: function() {
+    if (this.isInitialized) {
+    console.log('Chat déjà initialisé');
+    return;
+}
+
+    if (!CHAT_CONFIG.memberId || CHAT_CONFIG.memberId === 'null') {
+    console.log('Utilisateur non connecté - Chat non initialisé');
+    this.stopPolling();
+    return;
+}
+
+    console.log('Initialisation du chat pour la course:', CHAT_CONFIG.courseId);
+
+    // Récupération des éléments DOM
+    this.elements.messagesList = document.getElementById('messages-list');
+    this.elements.messageInput = document.getElementById('message-input');
+    this.elements.sendButton = document.getElementById('send-button');
+    this.elements.chatForm = document.getElementById('chat-form');
+    this.elements.charCount = document.getElementById('char-count');
+    this.elements.loadingMessages = document.getElementById('loading-messages');
+    this.elements.noMessages = document.getElementById('no-messages');
+    this.elements.statusIndicator = document.getElementById('status-indicator');
+    this.elements.statusText = document.getElementById('status-text');
+    this.elements.messagesContainer = document.getElementById('messages-container');
+
+    // Vérification des éléments critiques
+    if (!this.elements.messagesList || !this.elements.messageInput || !this.elements.chatForm) {
+    console.error('Éléments DOM du chat non trouvés');
+    return;
+}
+
+    // Initialisation des événements
+    this.initializeEvents();
+
+    // Chargement initial des messages
+    this.loadMessages(true);
+
+    // Démarrage du polling
+    this.startPolling();
+
+    this.isInitialized = true;
+    console.log('Chat initialisé avec succès');
+},
+
+    // Initialisation des événements
+    initializeEvents: function() {
+    // Soumission du formulaire
+    this.elements.chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    this.sendMessage();
+});
+
+    // Compteur de caractères
+    this.elements.messageInput.addEventListener('input', () => {
+    const length = this.elements.messageInput.value.length;
+    this.elements.charCount.textContent = length;
+
+    // Changer la couleur si près de la limite
+    if (length > 900) {
+    this.elements.charCount.classList.add('text-red-500');
+    this.elements.charCount.classList.remove('text-yellow-500');
+} else if (length > 800) {
+    this.elements.charCount.classList.add('text-yellow-500');
+    this.elements.charCount.classList.remove('text-red-500');
+} else {
+    this.elements.charCount.classList.remove('text-red-500', 'text-yellow-500');
+}
+});
+
+    // Raccourci clavier (Ctrl+Enter ou Cmd+Enter pour envoyer)
+    this.elements.messageInput.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    this.sendMessage();
+}
+});
+
+    console.log('📝 Événements du chat initialisés');
+},
+
+    // Chargement des messages
+    loadMessages: function(showLoader = false) {
+    if (this.isLoading) return;
+
+    if (!CHAT_CONFIG.memberId || CHAT_CONFIG.memberId === 'null') {
+    console.log('Pas d\'authentification - Arrêt du polling');
+    this.stopPolling();
+    return;
+}
+
+    this.isLoading = true;
+    if (showLoader) {
+    this.showLoadingState(true);
+}
+
+    const url = `/color_run_war/chat/messages?courseId=${CHAT_CONFIG.courseId}&lastMessageId=${this.lastMessageId}`;
+
+    fetch(url, {
+    method: 'GET',
+    headers: {
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+}
+})
+    .then(response => {
+    if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+}
+    return response.json();
+})
+    .then(data => {
+    if (showLoader) {
+    console.log('📨 Messages reçus:', data.messages?.length || 0);
+}
+
+    // Mettre à jour le statut de modérateur
+    this.currentUserIsModerator = data.isCurrentUserModerator || false;
+    console.log('🛡Statut modérateur mis à jour:', this.currentUserIsModerator);
+
+    this.displayMessages(data.messages || []);
+    this.updateConnectionStatus(true);
+})
+    .catch(error => {
+    console.error('Erreur lors du chargement des messages:', error);
+    this.updateConnectionStatus(false);
+    if (showLoader) {
+    this.showError('Erreur lors du chargement des messages');
+}
+})
+    .finally(() => {
+    this.isLoading = false;
+    if (showLoader) {
+    this.showLoadingState(false);
+}
+});
+},
+
+    // Affichage des messages
+    displayMessages: function(messages) {
+    if (!messages || messages.length === 0) {
+    // Ne pas afficher "aucun message" s'il y a déjà le message de bienvenue
+    return;
+}
+
+    this.elements.noMessages.classList.add('hidden');
+
+    // Supprimer les indicateurs de chargement
+    if (this.elements.loadingMessages) {
+    this.elements.loadingMessages.style.display = 'none';
+}
+
+    messages.forEach(message => {
+    if (message.id > this.lastMessageId) {
+    this.addMessageToDOM(message);
+    this.lastMessageId = message.id;
+}
+});
+
+    // Scroll vers le bas pour voir les nouveaux messages
+    this.scrollToBottom();
+},
+
+    // Ajout d'un message au DOM
+    addMessageToDOM: function(message) {
+    const messageElement = document.createElement('div');
+    const isOwnMessage = message.memberId === CHAT_CONFIG.memberId;
+    const isDeleted = message.isHidden || message.isDeleted;
+    const isPinned = message.isPin;
+
+    messageElement.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'} message-item`;
+    messageElement.setAttribute('data-message-id', message.id);
+
+    // Construire le contenu avec logique d'affichage
+    let contentHtml;
+    if (isDeleted) {
+    // Message masqué - Afficher dans un encart style WhatsApp
+    const deleteText = message.isDeleted ?
+    "*Message supprimé par l'utilisateur*" :
+    "*Message masqué par la modération*";
+
+    contentHtml = `
+                    <div class="message-deleted-container">
+                        <!-- Encart grisé avec icône -->
+                        <div class="bg-gray-100 border-l-4 border-gray-400 rounded-r-lg p-3 italic text-gray-600">
+                            <div class="flex items-center mb-2">
+                                <i data-lucide="eye-off" class="w-3 h-3 mr-2 text-gray-500"></i>
+                                <span class="text-xs font-medium">${deleteText}</span>
+                            </div>
+
+                            <!-- Contenu original masqué par défaut -->
+                            ${message.originalContent ? `
+                            <div class="original-message-toggle">
+                                <button onclick="toggleOriginalMessage(${message.id})"
+                                        class="text-xs text-blue-600 hover:text-blue-800 underline">
+                                    Afficher le message original
+                                </button>
+                                <div id="original-message-${message.id}" class="hidden mt-2 p-2 bg-white rounded border text-gray-700 text-sm">
+                                    ${this.escapeHtml(message.originalContent)}
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+} else {
+    // Message normal
+    contentHtml = `
+                        <div class="text-sm whitespace-pre-wrap">
+                            ${this.escapeHtml(message.content)}
+                        </div>
+                    `;
+}
+
+    const messageContent = `
+                    <div class="max-w-xs lg:max-w-md ${isOwnMessage ? 'bg-blue-500 text-white' : 'bg-white border'} ${isDeleted ? 'opacity-80' : ''} ${isPinned ? 'ring-2 ring-yellow-400' : ''} rounded-lg px-4 py-3 shadow-sm relative group">
+
+                        ${isPinned ? '<div class="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 rounded-full p-1"><i data-lucide="pin" class="w-3 h-3"></i></div>' : ''}
+
+                        ${!isOwnMessage ? `<div class="text-xs font-medium text-gray-600 mb-1">${this.escapeHtml(message.memberName)}</div>` : ''}
+
+                        ${contentHtml}
+
+                        <div class="text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500'} mt-1 flex items-center justify-between">
+                            <span>${this.formatDate(message.date)}</span>
+
+                            <!-- CORRECTION : Actions visibles pour TOUS les messages si on est modérateur -->
+                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                <!-- Boutons pour l'auteur du message (comme avant) -->
+                                ${isOwnMessage && !isDeleted ? `
+                                    <button onclick="window.chatApp.editOwnMessage(${message.id})"
+                                            class="text-blue-600 hover:text-blue-800 transition-colors"
+                                            title="Modifier ce message">
+                                        <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                    </button>
+                                    <button onclick="window.chatApp.hideOwnMessage(${message.id})"
+                                            class="text-orange-500 hover:text-orange-700 transition-colors"
+                                            title="Supprimer ce message">
+                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                    </button>
+                                ` : ''}
+
+                                <!-- NOUVEAU : Boutons modération visibles sur TOUS les messages pour les modérateurs -->
+                                ${this.currentUserIsModerator ? `
+                                    <!-- Séparateur visuel si c'est son propre message ET on a des actions modérateur -->
+                                    ${isOwnMessage && !isDeleted ? '<span class="text-gray-400">|</span>' : ''}
+
+                                    <!-- Pin/Unpin disponible sur tous les messages non supprimés -->
+                                    ${!isDeleted ? `
+                                        <button onclick="window.chatApp.togglePinMessage(${message.id})"
+                                                class="text-yellow-600 hover:text-yellow-800 transition-colors"
+                                                title="${isPinned ? 'Désépingler' : 'Épingler'} ce message">
+                                            <i data-lucide="${isPinned ? 'pin-off' : 'pin'}" class="w-3 h-3"></i>
+                                        </button>
+                                    ` : ''}
+
+                                    <!-- Masquer disponible sur tous les messages non supprimés (même pour les autres utilisateurs) -->
+                                    ${!isDeleted ? `
+                                        <button onclick="window.chatApp.hideMessage(${message.id})"
+                                                class="text-orange-600 hover:text-orange-800 transition-colors"
+                                                title="Masquer ce message">
+                                            <i data-lucide="eye-off" class="w-3 h-3"></i>
+                                        </button>
+                                    ` : ''}
+                                ` : ''}
+
+                                <!-- SÉPARÉ : Suppression définitive UNIQUEMENT pour les ADMIN -->
+                                ${this.currentUserIsModerator && CHAT_CONFIG.memberRole === 'ADMIN' ? `
+                                    <button onclick="window.chatApp.deleteMessage(${message.id})"
+                                            class="text-red-600 hover:text-red-800 transition-colors"
+                                            title="Supprimer définitivement">
+                                        <i data-lucide="x-circle" class="w-3 h-3"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+
+    messageElement.innerHTML = messageContent;
+    this.elements.messagesList.appendChild(messageElement);
+
+    if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+},
+
+    // Envoi d'un message
+    sendMessage: function() {
+    const content = this.elements.messageInput.value.trim();
+
+    if (!content) {
+    return;
+}
+
+    if (content.length > 1000) {
+    this.showError('Message trop long (maximum 1000 caractères)');
+    return;
+}
+
+    // Désactiver le formulaire pendant l'envoi
+    this.setFormEnabled(false);
+
+    const messageData = {
+    courseId: CHAT_CONFIG.courseId,
+    content: content
+};
+
+    fetch('/color_run_war/chat/send', {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+},
+    body: JSON.stringify(messageData)
+})
+    .then(response => {
+    if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+}
+    return response.json();
+})
+    .then(data => {
+    if (data.success) {
+    console.log('Message envoyé avec succès');
+    this.elements.messageInput.value = '';
+    this.elements.charCount.textContent = '0';
+    this.elements.charCount.classList.remove('text-red-500', 'text-yellow-500');
+
+    // Recharger les messages pour voir le nouveau message
+    this.loadMessages(true);
+} else {
+    throw new Error(data.message || 'Erreur lors de l\'envoi du message');
+}
+})
+    .catch(error => {
+    console.error('Erreur lors de l\'envoi du message:', error);
+    this.showError('Erreur lors de l\'envoi du message: ' + error.message);
+})
+    .finally(() => {
+    this.setFormEnabled(true);
+});
+},
+
+    // Nouvelle fonction : Modification d'un message par l'auteur
+    editOwnMessage: function(messageId) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!messageElement) return;
+
+    const contentDiv = messageElement.querySelector('.text-sm.whitespace-pre-wrap');
+    if (!contentDiv) return;
+
+    const currentContent = contentDiv.textContent.trim();
+
+    const newContent = prompt('Modifier votre message:', currentContent);
+    if (newContent === null || newContent.trim() === currentContent) {
+    return; // Annulé ou pas de changement
+}
+
+    if (newContent.trim() === '') {
+    alert('Le message ne peut pas être vide');
+    return;
+}
+
+    if (newContent.length > 1000) {
+    alert('Message trop long (maximum 1000 caractères)');
+    return;
+}
+
+    console.log('✏️ Modification du message:', messageId);
+    this.callAPI('/color_run_war/chat/update', {
+    messageId: messageId,
+    content: newContent.trim()
+});
+},
+
+    // Pour l'utilisateur - masquer son propre message
+    hideOwnMessage: function(messageId) {
+    if (!confirm('Supprimer ce message ?\n\nIl sera remplacé par "*Message supprimé par l\'utilisateur*".')) {
+    return;
+}
+
+    console.log('🗑️ Suppression du message par l\'utilisateur:', messageId);
+    this.callAPI('/color_run_war/chat/delete-own', {
+    messageId: messageId
+});
+},
+
+    // 🛡Pour les modérateurs - masquer n'importe quel message
+    hideMessage: function(messageId) {
+    if (!confirm('Masquer ce message en tant que modérateur ?')) {
+    return;
+}
+
+    console.log('Masquage du message par modérateur:', messageId);
+
+    // 1. MISE À JOUR VISUELLE IMMÉDIATE
+    this.updateMessageVisually(messageId, 'hidden');
+
+    // 2. Appel API en arrière-plan
+    this.callAPI('/color_run_war/chat/moderate', {
+    messageId: messageId,
+    action: 'hide'
+});
+},
+
+    // 🗑Pour les modérateurs - suppression définitive
+    deleteMessage: function(messageId) {
+    if (!confirm('⚠️ SUPPRIMER DÉFINITIVEMENT ce message ?')) {
+    return;
+}
+
+    if (!confirm('DERNIÈRE CONFIRMATION')) {
+    return;
+}
+
+    console.log('Suppression définitive par modérateur:', messageId);
+
+    // 1. SUPPRESSION VISUELLE IMMÉDIATE
+    this.updateMessageVisually(messageId, 'deleted');
+
+    // 2. Appel API en arrière-plan
+    this.callAPI('/color_run_war/chat/moderate', {
+    messageId: messageId,
+    action: 'delete'
+});
+},
+
+    // Pour les modérateurs - épingler/désépingler
+    togglePinMessage: function(messageId) {
+    console.log('Toggle pin message:', messageId);
+
+    // 1. MISE À JOUR VISUELLE IMMÉDIATE
+    this.updateMessageVisually(messageId, 'pin');
+
+    // 2. Appel API en arrière-plan
+    this.callAPI('/color_run_war/chat/moderate', {
+    messageId: messageId,
+    action: 'pin'
+});
+},
+
+    updateMessageVisually: function(messageId, action) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!messageElement) {
+    console.warn('Message element non trouvé:', messageId);
+    return;
+}
+
+    console.log('Mise à jour visuelle:', action, 'pour message', messageId);
+
+    if (action === 'hidden') {
+    // Remplacer par le message "masqué par la modération"
+    const contentDiv = messageElement.querySelector('.text-sm.whitespace-pre-wrap') ||
+    messageElement.querySelector('.message-deleted-container');
+
+    if (contentDiv) {
+    contentDiv.innerHTML = `
+                <div class="bg-gray-100 border-l-4 border-gray-400 rounded-r-lg p-3 italic text-gray-600">
+                    <div class="flex items-center">
+                        <i data-lucide="eye-off" class="w-3 h-3 mr-2 text-gray-500"></i>
+                        <span class="text-xs font-medium">*Message masqué par la modération*</span>
+                    </div>
+                </div>
+            `;
+
+    // Réinitialiser les icônes Lucide
+    if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+}
+
+} else if (action === 'deleted') {
+    // Supprimer complètement l'élément
+    messageElement.style.opacity = '0';
+    messageElement.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => {
+    messageElement.remove();
+}, 300);
+
+} else if (action === 'pin') {
+    // Basculer l'épingle visuelle
+    const pinIcon = messageElement.querySelector('.absolute.-top-2.-right-2');
+    const messageContainer = messageElement.querySelector('.max-w-xs.lg\\:max-w-md');
+
+    if (pinIcon) {
+    // Déjà épinglé, le désépingler
+    pinIcon.remove();
+    if (messageContainer) {
+    messageContainer.classList.remove('ring-2', 'ring-yellow-400');
+}
+} else {
+    // Pas épinglé, l'épingler
+    const pinElement = document.createElement('div');
+    pinElement.className = 'absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 rounded-full p-1';
+    pinElement.innerHTML = '<i data-lucide="pin" class="w-3 h-3"></i>';
+
+    if (messageContainer) {
+    messageContainer.classList.add('ring-2', 'ring-yellow-400');
+    messageContainer.style.position = 'relative';
+    messageContainer.appendChild(pinElement);
+}
+
+    // Réinitialiser les icônes Lucide
+    if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+}
+}
+},
+
+    // Méthode commune pour les appels API
+    callAPI: function(url, data) {
+    fetch(url, {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+},
+    body: JSON.stringify(data)
+})
+    .then(response => {
+    if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+}
+    return response.json();
+})
+    .then(data => {
+    if (data.success) {
+    console.log('Action réussie:', data.message);
+
+    if (url.includes('/moderate') && data.action === 'delete') {
+    // Pour une suppression définitive, supprimer visuellement
+    const messageElement = document.querySelector(`[data-message-id="${data.messageId}"]`);
+    if (messageElement) {
+    messageElement.remove();
+}
+} else {
+    // Pour les autres actions, recharger les messages
+    this.loadMessages(true);
+}
+} else {
+    throw new Error(data.message || 'Erreur lors de l\'action');
+}
+})
+    .catch(error => {
+    console.error('Erreur lors de l\'action:', error);
+    this.showError('Erreur: ' + error.message);
+});
+},
+
+    // Activation/désactivation du formulaire
+    setFormEnabled: function(enabled) {
+    this.elements.messageInput.disabled = !enabled;
+    this.elements.sendButton.disabled = !enabled;
+
+    if (enabled) {
+    this.elements.sendButton.innerHTML = '<i data-lucide="send" class="w-4 h-4 mr-2"></i>Envoyer';
+    this.elements.messageInput.focus();
+} else {
+    this.elements.sendButton.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Envoi...';
+}
+
+    // Réinitialiser les icônes
+    if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+},
+
+    // Affichage de l'état de chargement
+    showLoadingState: function(loading) {
+    if (this.elements.loadingMessages) {
+    if (loading) {
+    this.elements.loadingMessages.style.display = 'block';
+} else {
+    this.elements.loadingMessages.style.display = 'none';
+}
+}
+},
+
+    // Mise à jour du statut de connexion
+    updateConnectionStatus: function(connected) {
+    if (connected) {
+    this.elements.statusIndicator.className = 'w-2 h-2 rounded-full mr-2 bg-green-500';
+    this.elements.statusText.textContent = 'Connecté';
+} else {
+    this.elements.statusIndicator.className = 'w-2 h-2 rounded-full mr-2 bg-red-500';
+    this.elements.statusText.textContent = 'Connexion perdue';
+}
+},
+
+    // Démarrage du polling
+    startPolling: function() {
+    if (this.refreshTimer) {
+    clearInterval(this.refreshTimer);
+}
+
+    this.refreshTimer = setInterval(() => {
+    this.loadMessages(false);
+}, CHAT_CONFIG.refreshInterval);
+
+    console.log('Polling démarré (intervalle:', CHAT_CONFIG.refreshInterval, 'ms)');
+},
+
+    // Arrêt du polling
+    stopPolling: function() {
+    if (this.refreshTimer) {
+    clearInterval(this.refreshTimer);
+    this.refreshTimer = null;
+    console.log('Polling arrêté');
+}
+},
+
+    // Scroll vers le bas (immédiat)
+    scrollToBottom: function() {
+    if (this.elements.messagesContainer) {
+    this.elements.messagesContainer.scrollTop = this.elements.messagesContainer.scrollHeight;
+}
+},
+
+    // Affichage d'une erreur
+    showError: function(message) {
+    // Créer un élément d'erreur temporaire
+    const errorElement = document.createElement('div');
+    errorElement.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
+    errorElement.innerHTML = `
+                <div class="flex items-center">
+                    <i data-lucide="alert-circle" class="w-4 h-4 mr-2"></i>
+                    <span>${this.escapeHtml(message)}</span>
+                </div>
+            `;
+
+    // Insérer l'erreur avant le formulaire
+    this.elements.chatForm.parentNode.insertBefore(errorElement, this.elements.chatForm);
+
+    // Réinitialiser les icônes
+    if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+
+    // Supprimer l'erreur après 5 secondes
+    setTimeout(() => {
+    if (errorElement.parentNode) {
+    errorElement.parentNode.removeChild(errorElement);
+}
+}, 5000);
+},
+
+    // Formatage de la date
+    formatDate: function(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) {
+    return 'À l\'instant';
+} else if (diffMins < 60) {
+    return `Il y a ${diffMins} min`;
+} else if (diffHours < 24) {
+    return `Il y a ${diffHours}h`;
+} else if (diffDays < 7) {
+    return `Il y a ${diffDays}j`;
+} else {
+    return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+});
+}
+},
+
+    // Échappement HTML
+    escapeHtml: function(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+},
+
+    // Nettoyage lors de la destruction
+    destroy: function() {
+    this.stopPolling();
+    console.log('🧹 Chat nettoyé');
+}
+};
+
+    // Exposer l'API du chat globalement
+    window.chatApp = chatApp;
+
+    function shouldInitializeChat() {
+    const chatSection = document.getElementById('chat-section');
+    const messagesList = document.getElementById('messages-list');
+    const hasValidMember = CHAT_CONFIG.memberId && CHAT_CONFIG.memberId !== 'null';
+    const hasValidCourse = CHAT_CONFIG.courseId && CHAT_CONFIG.courseId !== 'null';
+
+    return chatSection && messagesList && hasValidMember && hasValidCourse;
+}
+
+    if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+    if (shouldInitializeChat()) {
+    chatApp.init();
+} else {
+    console.log('Chat non initialisé - Conditions non remplies');
+}
+});
+} else {
+    setTimeout(() => {
+    if (shouldInitializeChat()) {
+    chatApp.init();
+} else {
+    console.log('Chat non initialisé - Conditions non remplies');
+}
+}, 100);
+}
+
+    // Nettoyage lors du déchargement de la page
+    window.addEventListener('beforeunload', function() {
+    chatApp.destroy();
+});
+
+})();
+
+    // Fonction globale pour afficher le message original
+    function toggleOriginalMessage(messageId) {
+    const originalDiv = document.getElementById(`original-message-${messageId}`);
+    const toggleButton = document.querySelector(`button[onclick="toggleOriginalMessage(${messageId})"]`);
+
+    if (originalDiv && toggleButton) {
+    if (originalDiv.classList.contains('hidden')) {
+    originalDiv.classList.remove('hidden');
+    toggleButton.textContent = 'Masquer le message original';
+} else {
+    originalDiv.classList.add('hidden');
+    toggleButton.textContent = 'Afficher le message original';
+}
+}
+}
+
+    // Fonction pour basculer le contenu du chat (masquer/afficher le contenu)
+    function toggleChatContent() {
+    const chatContent = document.getElementById('chat-content');
+    const toggleBtn = document.getElementById('toggle-chat-content-btn');
+    const toggleText = document.getElementById('chat-toggle-text');
+    const chevronIcon = toggleBtn.querySelector('i[data-lucide]');
+
+    if (chatContent && toggleBtn && toggleText) {
+    if (chatContent.style.display === 'none') {
+    // Afficher le contenu
+    chatContent.style.display = 'block';
+    toggleText.textContent = 'Réduire';
+    chevronIcon.setAttribute('data-lucide', 'chevron-up');
+} else {
+    // Masquer le contenu
+    chatContent.style.display = 'none';
+    toggleText.textContent = 'Développer';
+    chevronIcon.setAttribute('data-lucide', 'chevron-down');
+}
+
+    // Réinitialiser les icônes Lucide
+    if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+}
+}

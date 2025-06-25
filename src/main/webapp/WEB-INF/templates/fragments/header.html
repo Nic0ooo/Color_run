@@ -34,7 +34,7 @@
              <!-- BOUTON ORGANIZER: Selon statut association -->
              <div th:if="${member.role != null and member.role.toString() == 'ORGANIZER'}" class="flex items-center gap-3">
                  <!-- Si l'organisateur n'a pas d'association -->
-                 <div th:if="${organizerHasAssociation == null or organizerHasAssociation == false}">
+                 <div th:if="${organizerHasAssociation == null}">
                      <a href="/color_run_war/organizer-request"
                         class="px-4 py-2 border border-blue-500 text-blue-600 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
                          <i class="w-4 h-4" data-lucide="building-2"></i>
@@ -43,10 +43,10 @@
                  </div>
 
                  <!-- Si l'organisateur fait partie d'une association -->
-                 <div th:if="${organizerHasAssociation == true and organizerAssociation != null}">
+                 <div th:if="${organizerHasAssociation == true}">
                      <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded">
                          <i class="w-4 h-4 text-blue-600" data-lucide="building-2"></i>
-                         <span class="text-blue-700 text-sm font-medium" th:text="${organizerAssociation.name}">Mon Association</span>
+                         <span class="text-blue-700 text-sm font-medium">Mon Association</span>
                      </div>
                  </div>
 
@@ -66,16 +66,6 @@
 
             <!-- Salutation utilisateur -->
             <span th:text="'Bonjour, ' + ${member.firstname}" class="font-medium text-gray-700"></span>
-
-            <!-- Rôle badge -->
-<!--            <span th:if="${member.role != null}"
-                  th:class="${'px-2 py-1 text-xs font-medium rounded-full ' +
-                            (member.role.toString() == 'ADMIN' ? 'bg-red-100 text-red-800' :
-                             member.role.toString() == 'ORGANIZER' ? 'bg-blue-100 text-blue-800' :
-                             'bg-gray-100 text-gray-800')}"
-                  th:text="${member.role.displayName}">
-                Rôle
-            </span>-->
 
             <!-- Bouton déconnexion -->
             <a href="/color_run_war/logout"
