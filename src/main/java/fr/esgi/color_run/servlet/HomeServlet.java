@@ -1,13 +1,14 @@
 package fr.esgi.color_run.servlet;
 
+import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
-import fr.esgi.color_run.service.CourseSearchStrategy;
-import fr.esgi.color_run.service.CourseService;
-import fr.esgi.color_run.service.GeocodingService;
+import fr.esgi.color_run.service.*;
+import fr.esgi.color_run.service.impl.Association_memberServiceImpl;
 import fr.esgi.color_run.service.impl.CourseServiceImpl;
 import fr.esgi.color_run.service.impl.GeocodingServiceImpl;
 import fr.esgi.color_run.service.impl.search.CourseSearchStrategyFactory;
@@ -29,6 +30,7 @@ public class HomeServlet extends HttpServlet {
 
     private TemplateEngine engine;
     private CourseService courseService;
+    private Association_memberService association_memberService;
     private CourseSearchStrategyFactory searchStrategyFactory;
 
     @Override
@@ -39,6 +41,7 @@ public class HomeServlet extends HttpServlet {
         CourseRepository courseRepository = new CourseRepositoryImpl(geocodingService);
         courseService = new CourseServiceImpl(courseRepository, geocodingService);
         searchStrategyFactory = new CourseSearchStrategyFactory(courseService, geocodingService);
+        association_memberService = new Association_memberServiceImpl();
     }
 
     @Override
@@ -53,9 +56,30 @@ public class HomeServlet extends HttpServlet {
         Member member = (Member) req.getSession().getAttribute("member");
         context.setVariable("member", member);
 
+        // Si le membre est un organisateur, vérifier s'il a une association
+        if (member != null && member.getRole() == Role.ORGANIZER) {
+            // verifier si l'organisateur a une association
+            Association association = null;
+            try {
+                List<Association> associations = association_memberService.getAssociationsByOrganizer(member.getId());
+                if (!associations.isEmpty()) {
+                    association = associations.get(0); // Prendre la première association
+                    // Ajouter l'association à la session
+                    req.getSession().setAttribute("associationMember", association);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            context.setVariable("organizerAssociation", association);
+            context.setVariable("organizerHasAssociation", association != null);
+        }
+
         // Récupérer seulement les courses à venir depuis le service
         List<Course> courses = courseService.listUpcomingCourses();
         context.setVariable("courses", courses);
+
+        context.setVariable("RoleMember", member != null ? member.getRole() : null);
 
         context.setVariable("pageTitle", "Accueil");
 
@@ -182,6 +206,7 @@ public class HomeServlet extends HttpServlet {
 
         context.setVariable("member", member);
         context.setVariable("courses", courses);
+        context.setVariable("RoleMember", member != null ? member.getRole() : null);
 
         // Ajouter les paramètres de contexte spécifiques à la stratégie
         Map<String, Object> contextParams = searchStrategy.getContextParameters(req);

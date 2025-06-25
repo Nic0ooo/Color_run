@@ -31,9 +31,9 @@ public class CourseRepositoryImpl implements CourseRepository {
         try {
             // Obligatoire pour que Tomcat charge le driver H2
             Class.forName("org.h2.Driver");
-            System.out.println("Driver H2 chargé");
+            System.out.println("✅ Driver H2 chargé");
         } catch (ClassNotFoundException e) {
-            System.err.println("Driver H2 introuvable !");
+            System.err.println("❌ Driver H2 introuvable !");
             e.printStackTrace();
         }
 
@@ -48,12 +48,12 @@ public class CourseRepositoryImpl implements CourseRepository {
     public void testDatabaseConnection() {
         try (Connection connection = getConnection()) {
             if (connection != null && !connection.isClosed()) {
-                System.out.println("Connexion à la base de données réussie !");
+                System.out.println("✅ Connexion à la base de données réussie !");
             } else {
-                System.out.println("Échec de la connexion à la base de données.");
+                System.out.println("❌ Échec de la connexion à la base de données.");
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la tentative de connexion à la base de données :");
+            System.err.println("❌ Erreur lors de la tentative de connexion à la base de données :");
             e.printStackTrace();
         }
     }
@@ -87,15 +87,15 @@ public class CourseRepositoryImpl implements CourseRepository {
             boolean tableExists = tables.next();
 
             // Exécuter la création de table si nécessaire
-//            stmt.execute(sql);
+            stmt.execute(sql);
 
             if (tableExists) {
-                System.out.println("Table 'course' existe déjà");
+                System.out.println("✅ Table 'course' existe déjà");
             } else {
-                System.out.println("Table 'course' créée avec succès");
+                System.out.println("✅ Table 'course' créée avec succès");
             }
         } catch (SQLException e) {
-            System.err.println("Erreur création table :");
+            System.err.println("❌ Erreur création table :");
             e.printStackTrace();
         }
     }
@@ -114,10 +114,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (courses.isEmpty()) {
-            System.out.println("Aucune course trouvée dans la base de données.");
+            System.out.println("❌ Aucune course trouvée dans la base de données.");
         } else {
-            System.out.println(courses.size() + " courses trouvées dans la base de données.");
-            System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + courses);
+            System.out.println("✅ " + courses.size() + " courses trouvées dans la base de données.");
         }
             return courses;
     }
@@ -136,9 +135,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (upcomingCourses.isEmpty()) {
-            System.out.println("Aucune course à venir trouvée dans la base de données.");
+            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
         } else {
-            System.out.println(upcomingCourses.size() + " courses à venir trouvées dans la base de données.");
+            System.out.println("✅ " + upcomingCourses.size() + " courses à venir trouvées dans la base de données.");
         }
         return upcomingCourses;
     }
@@ -157,9 +156,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (pastCourses.isEmpty()) {
-            System.out.println("Aucune course passée trouvée dans la base de données.");
+            System.out.println("❌ Aucune course passée trouvée dans la base de données.");
         } else {
-            System.out.println(pastCourses.size() + " courses passées trouvées dans la base de données.");
+            System.out.println("✅ " + pastCourses.size() + " courses passées trouvées dans la base de données.");
         }
         return pastCourses;
     }
@@ -180,9 +179,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (searchedCourses.isEmpty()) {
-            System.out.println("Aucune course avec pour nom :" + name + " trouvée dans la base de données.");
+            System.out.println("❌ Aucune course avec pour nom :" + name + " trouvée dans la base de données.");
         } else {
-            System.out.println(searchedCourses.size() + " courses avec pour nom :" + name + "  trouvées dans la base de données.");
+            System.out.println("✅ " + searchedCourses.size() + " courses avec pour nom :" + name + "  trouvées dans la base de données.");
         }
         return searchedCourses;
     }
@@ -198,7 +197,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 course = Mapper.mapRowToCourse(resultSet);
                 System.out.println("CourseRepositoryImpl: findById() - Course trouvée avec l'ID : " + id);
             } else {
-                System.out.println("Aucune course trouvée avec l'ID : " + id);
+                System.out.println("❌ Aucune course trouvée avec l'ID : " + id);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -283,7 +282,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche et tri des courses:");
+            System.err.println("❌ Erreur lors de la recherche et tri des courses:");
             e.printStackTrace();
         }
 
@@ -374,7 +373,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 }
             }
 
-            System.out.println("Course enregistrée : " + course.getName());
+            System.out.println("✅ Course enregistrée : " + course.getName());
             return course;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -386,7 +385,7 @@ public class CourseRepositoryImpl implements CourseRepository {
     public Course updateCourse(Course course) {
         // Vérifier si l'ID de la course est valide
         if (course == null || course.getId() == null) {
-            System.out.println("Course ID est nul, impossible de mettre à jour.");
+            System.out.println("❌ Course ID est nul, impossible de mettre à jour.");
             return null;
         }
         String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, distance = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
@@ -416,15 +415,67 @@ public class CourseRepositoryImpl implements CourseRepository {
 
             int rowsUpdated = stmt.executeUpdate();
             if (rowsUpdated > 0) {
-                System.out.println("Course mise à jour : " + course.getName());
+                System.out.println("✅ Course mise à jour : " + course.getName());
                 return course;
             } else {
-                System.out.println("Aucune ligne mise à jour pour la course avec ID : " + course.getId());
+                System.out.println("❌ Aucune ligne mise à jour pour la course avec ID : " + course.getId());
                 return null;
             }
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public List<Course> findPastCoursesByAssociationId(Long associationId) {
+        // vérfier l'id de l'asso
+        if (associationId == null) {
+            System.out.println("❌ Association ID est nul, impossible de trouver des courses.");
+            return new ArrayList<>();
+        }
+        List<Course> pastAssoCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate DESC";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, associationId);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                pastAssoCourses.add(Mapper.mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (pastAssoCourses.isEmpty()) {
+            System.out.println("❌ Aucune course passée trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + pastAssoCourses.size() + " courses passée trouvées dans la base de données.");
+        }
+        return pastAssoCourses;
+    }
+
+    @Override
+    public List<Course> findUpcomingCoursesByAssociationId(Long associationId) {
+        // vérfier l'id de l'asso
+        if (associationId == null) {
+            System.out.println("❌ Association ID est nul, impossible de trouver des courses.");
+            return new ArrayList<>();
+        }
+        List<Course> upcomingAssoCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate DESC";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, associationId);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                upcomingAssoCourses.add(Mapper.mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (upcomingAssoCourses.isEmpty()) {
+            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + upcomingAssoCourses.size() + " courses à venir trouvées dans la base de données.");
+        }
+        return upcomingAssoCourses;
     }
 }

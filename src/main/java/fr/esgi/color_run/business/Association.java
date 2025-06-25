@@ -28,4 +28,16 @@ public class Association {
         this.websiteLink = "https://www.esgi.fr";
         this.logoPath = "/ressources/img/logo_esgi.png";
     }
+
+    public boolean isPresent() {
+        return this.id != null && this.id > 0;
+    }
+
+    public Object get() {
+        if (isPresent()) {
+            return this;
+        } else {
+            return null;
+        }
+    }
 }
