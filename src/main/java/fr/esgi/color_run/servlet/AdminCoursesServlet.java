@@ -22,11 +22,16 @@ import java.util.List;
 @WebServlet("/admin-courses")
 public class AdminCoursesServlet extends HttpServlet {
 
-    private final CourseService courseService =
-            new CourseServiceImpl(
-                    new CourseRepositoryImpl(new GeocodingServiceImpl()),
-                    new GeocodingServiceImpl()
-            );
+    private CourseService courseService;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        this.courseService = new CourseServiceImpl(
+                new CourseRepositoryImpl(new GeocodingServiceImpl()),
+                new GeocodingServiceImpl()
+        );
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -40,10 +45,14 @@ public class AdminCoursesServlet extends HttpServlet {
         List<Course> upcomingCourses = courseService.listUpcomingCourses();
         List<Course> pastCourses = courseService.listPastCourses();
 
+        System.out.println("🟢 AdminCoursesServlet - Courses à venir : " + upcomingCourses.size());
+        System.out.println("🔵 AdminCoursesServlet - Courses passées : " + pastCourses.size());
+
         WebContext context = new WebContext(ThymeleafConfiguration.getApplication().buildExchange(req, resp));
         context.setVariable("member", current);
         context.setVariable("upcomingCourses", upcomingCourses);
         context.setVariable("pastCourses", pastCourses);
+        context.setVariable("pageTitle", "Gestion des courses");
 
         TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         engine.process("admin/courses", context, resp.getWriter());
