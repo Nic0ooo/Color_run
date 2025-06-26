@@ -1,6 +1,7 @@
 package fr.esgi.color_run.service.impl;
 
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
@@ -86,6 +87,16 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public Optional<Member> findByEmail(String email) {
         return memberRepository.findByEmail(email);
+    }
+
+    @Override
+    public void updateRole(Long memberId, String newRole) {
+        Optional<Member> opt = memberRepository.findById(memberId);
+        if (opt.isPresent()) {
+            Member member = opt.get();
+            member.setRole(Role.valueOf(newRole));
+            memberRepository.update(member);
+        }
     }
 
 

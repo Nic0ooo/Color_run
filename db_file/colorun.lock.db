@@ -1,6 +1,6 @@
 #FileLock
-#Thu Jun 26 17:30:17 CEST 2025
-hostName=mac.home
-id=197acdc722e73c09094dd949999a7f43c69bb57b96f
+#Thu Jun 26 20:24:55 CEST 2025
+hostName=172.20.2.150
+id=197ad7c507977f62e3681ede0e002ecd601b2368018
 method=file
-server=192.168.1.25\:64413
+server=172.20.2.150\:60280
