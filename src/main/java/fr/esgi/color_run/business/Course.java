@@ -35,7 +35,7 @@ public class Course {
 
     public Course() {
         this.id = compteur++;
-        this.associationId = 0;
+        this.associationId = null;
         this.memberCreatorId = 0;
         this.startpositionLatitude = 48.8566;
         this.startpositionLongitude = 2.3522;

@@ -7,6 +7,7 @@ import fr.esgi.color_run.repository.Association_memberRepository;
 import fr.esgi.color_run.repository.AssociationRepository;
 import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 import fr.esgi.color_run.util.Mapper;
 
 import java.sql.*;
@@ -17,29 +18,22 @@ import java.util.Optional;
 
 public class Association_memberRepositoryImpl implements Association_memberRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
+
 
     private final AssociationRepository associationRepository = new AssociationRepositoryImpl();
     private final MemberRepository memberRepository = new MemberRepositoryImpl();
 
     public Association_memberRepositoryImpl() {
-        try {
-            Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé pour AssociationMember");
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable !");
-            e.printStackTrace();
-        }
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS AssociationMember (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
                 "memberId BIGINT NOT NULL," +
@@ -50,13 +44,7 @@ public class Association_memberRepositoryImpl implements Association_memberRepos
                 "UNIQUE(memberId)" + // Un organisateur = une association max
                 ");";
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            System.out.println("✅ Table 'AssociationMember' vérifiée/créée");
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur création table AssociationMember :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("AssociationMember", sql);
     }
 
     @Override

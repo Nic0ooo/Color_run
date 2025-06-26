@@ -3,33 +3,25 @@ package fr.esgi.color_run.repository.impl;
 import fr.esgi.color_run.business.Discussion;
 import fr.esgi.color_run.repository.DiscussionRepository;
 import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 
 import java.sql.*;
         import java.util.Optional;
 
 public class DiscussionRepositoryImpl implements DiscussionRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
 
     public DiscussionRepositoryImpl() {
-        try {
-            Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé pour DiscussionRepository");
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable !");
-            e.printStackTrace();
-        }
-
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS Discussion (" +
                 "id BIGINT AUTO_INCREMENT PRIMARY KEY," +
                 "courseId INTEGER," +
@@ -37,13 +29,7 @@ public class DiscussionRepositoryImpl implements DiscussionRepository {
                 "FOREIGN KEY (courseId) REFERENCES Course(id)" +
                 ");";
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            System.out.println("✅ Table 'Discussion' vérifiée/créée");
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur création table Discussion:");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("Discussion", sql);
     }
 
     @Override

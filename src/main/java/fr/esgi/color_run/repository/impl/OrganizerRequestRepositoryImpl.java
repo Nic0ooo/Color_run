@@ -4,7 +4,7 @@ import fr.esgi.color_run.business.OrganizerRequest;
 import fr.esgi.color_run.business.RequestStatus;
 import fr.esgi.color_run.business.RequestType;
 import fr.esgi.color_run.repository.OrganizerRequestRepository;
-import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -14,32 +14,24 @@ import java.util.Optional;
 
 public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
 
     public OrganizerRequestRepositoryImpl() {
-        try {
-            Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé pour OrganizerRequest");
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable !");
-            e.printStackTrace();
-        }
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS OrganizerRequest (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
                 "memberId BIGINT NOT NULL," +
                 "motivation TEXT NOT NULL," +
                 "existingAssociationId BIGINT," +
-                "newAssociationData TEXT," + // JSON pour les données nouvelle association
+                "newAssociationData TEXT," +
                 "requestDate TIMESTAMP NOT NULL," +
                 "status VARCHAR(20) NOT NULL DEFAULT 'PENDING'," +
                 "adminComment TEXT," +
@@ -47,18 +39,11 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
                 "processedDate TIMESTAMP" +
                 ");";
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            System.out.println("✅ Table 'OrganizerRequest' vérifiée/créée");
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur création table OrganizerRequest :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("OrganizerRequest", sql);
     }
 
     @Override
     public OrganizerRequest save(OrganizerRequest request) {
-        // CORRECTION: Utiliser le bon nom de colonne (tout en minuscules)
         String sql = "INSERT INTO OrganizerRequest (memberId, motivation, existingAssociationId, newassociationdata, requestDate, status, adminComment, processedByAdminId, processedDate) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -74,11 +59,9 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
                 ps.setNull(3, Types.BIGINT);
             }
 
-            // Construire le JSON pour newAssociationData si une nouvelle association est demandée
             String newAssociationJson = null;
             if (request.hasNewAssociation()) {
                 newAssociationJson = buildNewAssociationJson(request);
-                System.out.println("🔍 JSON généré: " + newAssociationJson);
             }
             ps.setString(4, newAssociationJson);
 
@@ -106,7 +89,6 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
                 }
             }
 
-            System.out.println("✅ Demande organisateur enregistrée : " + request.getId());
             return request;
 
         } catch (SQLException e) {
@@ -122,7 +104,9 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
                 "FROM OrganizerRequest oreq " +
                 "LEFT JOIN Association a ON oreq.existingAssociationId = a.id " +
                 "WHERE oreq.id = ?";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -140,9 +124,11 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
         String sql = "SELECT oreq.*, a.name as associationName FROM OrganizerRequest oreq " +
                 "LEFT JOIN Association a ON oreq.existingAssociationId = a.id " +
                 "ORDER BY oreq.requestDate DESC";
+
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
+
             while (rs.next()) {
                 requests.add(mapResultSetToOrganizerRequest(rs));
             }
@@ -190,7 +176,10 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
         String sql = "SELECT oreq.*, a.name as associationName FROM OrganizerRequest oreq " +
                 "LEFT JOIN Association a ON oreq.existingAssociationId = a.id " +
                 "WHERE oreq.memberId = ? ORDER BY oreq.requestDate DESC";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setLong(1, memberId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -206,7 +195,9 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
     public boolean hasActivePendingRequest(Long memberId) {
         String sql = "SELECT COUNT(*) FROM OrganizerRequest WHERE memberId = ? AND status = 'PENDING'";
 
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setLong(1, memberId);
             try (ResultSet resultSet = ps.executeQuery()) {
                 if (resultSet.next()) {
@@ -222,10 +213,10 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
 
     @Override
     public OrganizerRequest update(OrganizerRequest request) {
-        // CORRECTION: Utiliser le bon nom de colonne
         String sql = "UPDATE OrganizerRequest SET motivation = ?, existingAssociationId = ?, newassociationdata = ?, status=?, adminComment=?, processedByAdminId=?, processedDate=? WHERE id=?";
 
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, request.getMotivation());
 
@@ -270,7 +261,9 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
     @Override
     public Boolean deleteById(Long id) {
         String sql = "DELETE FROM OrganizerRequest WHERE id = ?";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -293,7 +286,7 @@ public class OrganizerRequestRepositoryImpl implements OrganizerRequestRepositor
             request.setExistingAssociationName(resultSet.getString("associationName"));
         }
 
-        // Nouvelle association (parsing du JSON) - CORRECTION: nom de colonne
+        // Nouvelle association (parsing du JSON)
         String newAssociationData = resultSet.getString("newassociationdata");
         if (newAssociationData != null && !newAssociationData.trim().isEmpty()) {
             parseNewAssociationJson(request, newAssociationData);

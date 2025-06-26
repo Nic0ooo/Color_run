@@ -8,33 +8,23 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 import fr.esgi.color_run.util.Mapper;
 
 public class MemberRepositoryImpl implements MemberRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
 
     public MemberRepositoryImpl() {
-        try {
-            // Obligatoire pour que Tomcat charge le driver H2
-            Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé");
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable !");
-            e.printStackTrace();
-        }
-
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS member (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
                 "role VARCHAR(20) NOT NULL DEFAULT 'RUNNER'," +
@@ -50,13 +40,7 @@ public class MemberRepositoryImpl implements MemberRepository {
                 "positionLongitude DOUBLE" +
                 ");";
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            System.out.println("✅ Table 'member' vérifiée/créée");
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur création table :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("member", sql);
     }
 
     @Override

@@ -3,28 +3,36 @@ package fr.esgi.color_run.service.impl;
 import fr.esgi.color_run.business.*;
 import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.repository.OrganizerRequestRepository;
-import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
-import fr.esgi.color_run.repository.impl.OrganizerRequestRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
 import fr.esgi.color_run.service.OrganizerRequestService;
+import fr.esgi.color_run.util.RepositoryFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
-    private final OrganizerRequestRepository organizerRequestRepository = new OrganizerRequestRepositoryImpl();
-    private final MemberRepository memberRepository = new MemberRepositoryImpl();
+    private final OrganizerRequestRepository organizerRequestRepository;
+    private final MemberRepository memberRepository;
+    private final MemberService memberService;
 
-    private final MemberService memberService = new MemberServiceImpl();
+    // Cache simple pour éviter les requêtes répétées
+    private final ConcurrentHashMap<String, List<OrganizerRequest>> requestCache = new ConcurrentHashMap<>();
+    private volatile long lastCacheUpdate = 0;
+    private static final long CACHE_DURATION = 30000; // 30 secondes
+
+    public OrganizerRequestServiceImpl() {
+        RepositoryFactory factory = RepositoryFactory.getInstance();
+        this.organizerRequestRepository = factory.getOrganizerRequestRepository();
+        this.memberRepository = factory.getMemberRepository();
+        this.memberService = new MemberServiceImpl();
+    }
 
     @Override
     public void submitRequest(Long memberId, RequestType requestType, String motivation, Long existingAssociationId) {
         System.out.println("📝 OrganizerRequestService.submitRequest() appelé");
-        System.out.println("  - Member ID: " + memberId);
-        System.out.println("  - Motivation length: " + (motivation != null ? motivation.length() : "null"));
-        System.out.println("  - Association ID: " + existingAssociationId);
 
         // Vérifications
         if (!canMemberSubmitRequest(memberId)) {
@@ -46,8 +54,10 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
             request.setStatus(RequestStatus.PENDING);
             request.setRequestDate(LocalDateTime.now());
 
-            System.out.println("💾 Sauvegarde de la demande...");
             organizerRequestRepository.save(request);
+
+            // Invalider le cache
+            clearCache();
 
             System.out.println("✅ Service - Demande créée avec ID: " + request.getId());
 
@@ -65,11 +75,10 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
         try {
             // Vérifications
             if (!canMemberSubmitRequest(memberId)) {
-                System.out.println("❌ Le membre a déjà une demande en cours ou ne peut pas soumettre de demande");
                 throw new IllegalStateException("Le membre a déjà une demande en cours ou ne peut pas soumettre de demande");
             }
 
-            // Valider les données
+            // Validations (même logique que l'original)
             if (motivation == null || motivation.trim().length() < 50) {
                 throw new IllegalArgumentException("La motivation doit contenir au moins 50 caractères");
             }
@@ -102,14 +111,10 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
             request.setNewAssociationZipCode(assocZipCode != null ? assocZipCode.trim() : null);
             request.setNewAssociationCity(assocCity != null ? assocCity.trim() : null);
 
-            System.out.println("📝 Tentative de sauvegarde de la demande...");
-            System.out.println("  - Membre ID: " + memberId);
-            System.out.println("  - Type: " + requestType);
-            System.out.println("  - Nom association: " + assocName);
-            System.out.println("  - Email association: " + assocEmail);
-
-            // Sauvegarder la demande
             OrganizerRequest savedRequest = organizerRequestRepository.save(request);
+
+            // Invalider le cache
+            clearCache();
 
             if (savedRequest != null && savedRequest.getId() != null) {
                 System.out.println("✅ Service - Demande avec nouvelle association créée avec ID: " + savedRequest.getId());
@@ -119,8 +124,6 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
         } catch (Exception e) {
             System.err.println("❌ Erreur dans submitRequestWithNewAssociation:");
-            System.err.println("  - Type: " + e.getClass().getSimpleName());
-            System.err.println("  - Message: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Erreur lors de la création de la demande avec nouvelle association", e);
         }
@@ -128,18 +131,91 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
     @Override
     public List<OrganizerRequest> getAllRequests() throws Exception {
-        System.out.println("🔍 Service - Récupération de toutes les demandes");
-        List<OrganizerRequest> requests = organizerRequestRepository.findAll();
-        System.out.println("🔍 Service - " + requests.size() + " demandes totales trouvées");
-        return requests;
+        return getCachedRequests("all", () -> {
+            System.out.println("🔍 Service - Récupération de toutes les demandes (depuis DB)");
+            List<OrganizerRequest> requests = organizerRequestRepository.findAll();
+
+            // Optimisation: charger les rôles en batch plutôt qu'individuellement
+            enrichRequestsWithMemberRoles(requests);
+
+            System.out.println("🔍 Service - " + requests.size() + " demandes totales trouvées");
+            return requests;
+        });
     }
 
     @Override
     public List<OrganizerRequest> getPendingRequests() {
-        System.out.println("🔍 Service - Récupération des demandes en attente");
-        List<OrganizerRequest> requests = organizerRequestRepository.findByStatus(RequestStatus.PENDING);
-        System.out.println("🔍 Service - " + requests.size() + " demandes en attente trouvées");
-        return requests;
+        return getCachedRequests("pending", () -> {
+            System.out.println("🔍 Service - Récupération des demandes en attente (depuis DB)");
+            List<OrganizerRequest> requests = organizerRequestRepository.findByStatus(RequestStatus.PENDING);
+
+            // Optimisation: charger les rôles en batch plutôt qu'individuellement
+            enrichRequestsWithMemberRoles(requests);
+
+            System.out.println("🔍 Service - " + requests.size() + " demandes en attente trouvées");
+            return requests;
+        });
+    }
+
+    /**
+     * Optimisation: enrichir toutes les demandes en une seule fois avec les rôles des membres
+     */
+    private void enrichRequestsWithMemberRoles(List<OrganizerRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            return;
+        }
+
+        // Créer une map des membres pour éviter les requêtes multiples
+        ConcurrentHashMap<Long, String> memberRoles = new ConcurrentHashMap<>();
+
+        for (OrganizerRequest request : requests) {
+            if (request != null && request.getMemberId() != null) {
+                memberRoles.computeIfAbsent(request.getMemberId(), memberId -> {
+                    try {
+                        Optional<Member> memberOpt = memberService.getMember(memberId);
+                        return memberOpt.map(member -> member.getRole().name()).orElse("UNKNOWN");
+                    } catch (Exception e) {
+                        System.err.println("❌ Erreur lors de la récupération du rôle pour membre " + memberId + ": " + e.getMessage());
+                        return "UNKNOWN";
+                    }
+                });
+
+                request.setMemberRoleName(memberRoles.get(request.getMemberId()));
+            }
+        }
+    }
+
+    /**
+     * Méthode utilitaire pour le cache
+     */
+    private List<OrganizerRequest> getCachedRequests(String cacheKey, RequestSupplier supplier) {
+        long currentTime = System.currentTimeMillis();
+
+        if (currentTime - lastCacheUpdate < CACHE_DURATION && requestCache.containsKey(cacheKey)) {
+            System.out.println("✅ Utilisation du cache pour " + cacheKey);
+            return requestCache.get(cacheKey);
+        }
+
+        try {
+            List<OrganizerRequest> requests = supplier.get();
+            requestCache.put(cacheKey, requests);
+            lastCacheUpdate = currentTime;
+            return requests;
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors du chargement des demandes: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void clearCache() {
+        requestCache.clear();
+        lastCacheUpdate = 0;
+        System.out.println("🗑️ Cache invalidé");
+    }
+
+    @FunctionalInterface
+    private interface RequestSupplier {
+        List<OrganizerRequest> get() throws Exception;
     }
 
     @Override
@@ -180,6 +256,9 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
 
         organizerRequestRepository.update(request);
 
+        // Invalider le cache
+        clearCache();
+
         System.out.println("✅ Service - Demande " + requestId + " approuvée");
         return request;
     }
@@ -204,8 +283,26 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
         // Sauvegarder
         organizerRequestRepository.update(request);
 
+        // Invalider le cache
+        clearCache();
+
         System.out.println("✅ Service - Demande " + requestId + " rejetée");
         return request;
+    }
+
+    @Override
+    public Optional<OrganizerRequest> getRequestById(Long requestId) {
+        System.out.println("🔍 Service - Récupération de la demande par ID: " + requestId);
+        return organizerRequestRepository.findById(requestId);
+    }
+
+    @Override
+    public void deleteRequest(Long requestId) {
+        System.out.println("🔍 Service - Suppression de la demande ID: " + requestId);
+        organizerRequestRepository.deleteById(requestId);
+
+        // Invalider le cache
+        clearCache();
     }
 
     @Override
@@ -223,18 +320,6 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
     @Override
     public boolean hasActivePendingRequest(Long memberId) {
         return organizerRequestRepository.hasActivePendingRequest(memberId);
-    }
-
-    @Override
-    public Optional<OrganizerRequest> getRequestById(Long requestId) throws Exception {
-        return organizerRequestRepository.findById(requestId);
-    }
-
-    @Override
-    public void deleteRequest(Long requestId) throws Exception {
-        System.out.println("🔍 Service - Suppression de la demande " + requestId);
-        organizerRequestRepository.deleteById(requestId);
-        System.out.println("✅ Service - Demande " + requestId + " supprimée");
     }
 
 }
