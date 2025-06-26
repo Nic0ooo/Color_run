@@ -161,6 +161,10 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Course createCourse(Course course) {
+        // Si l'associationId est 0, le mettre à null
+        if (course.getAssociationId() != null && course.getAssociationId() == 0) {
+            course.setAssociationId(null);
+        }
         return courseRepository.save(course);
     }
 

@@ -298,7 +298,11 @@ public class CourseRepositoryImpl implements CourseRepository {
 
             stmt.setString(1, course.getName());
             stmt.setString(2, course.getDescription());
-            stmt.setInt(3, course.getAssociationId());
+            if (course.getAssociationId() == null || course.getAssociationId() == 0) {
+                stmt.setNull(3, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(3, course.getAssociationId());
+            }
             stmt.setInt(4, course.getMemberCreatorId());
             stmt.setTimestamp(5, course.getStartDate() != null ?
                     Timestamp.valueOf(course.getStartDate()) : null);

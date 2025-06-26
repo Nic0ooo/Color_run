@@ -6,7 +6,6 @@ import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.repository.Association_memberRepository;
 import fr.esgi.color_run.repository.AssociationRepository;
 import fr.esgi.color_run.repository.MemberRepository;
-import fr.esgi.color_run.util.Config;
 import fr.esgi.color_run.util.DatabaseManager;
 import fr.esgi.color_run.util.Mapper;
 
@@ -14,7 +13,6 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class Association_memberRepositoryImpl implements Association_memberRepository {
 
@@ -37,7 +35,7 @@ public class Association_memberRepositoryImpl implements Association_memberRepos
         String sql = "CREATE TABLE IF NOT EXISTS AssociationMember (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
                 "memberId BIGINT NOT NULL," +
-                "associationId BIGINT NOT NULL," +
+                "associationId BIGINT," +
                 "joinDate TIMESTAMP NOT NULL," +
                 "FOREIGN KEY (memberId) REFERENCES member(id) ON DELETE CASCADE," +
                 "FOREIGN KEY (associationId) REFERENCES association(id) ON DELETE CASCADE," +
@@ -107,25 +105,26 @@ public class Association_memberRepositoryImpl implements Association_memberRepos
     }
 
     @Override
-    public Optional<Association> findAssociationByOrganizerId(Long memberId) {
+    public List<Association> findAssociationsByOrganizerId(Long memberId) {
         String sql = "SELECT a.* FROM association a " +
                 "INNER JOIN AssociationMember am ON a.id = am.associationId " +
                 "WHERE am.memberId = ? " +
                 "ORDER BY a.name";
 
+        List<Association> associations = new ArrayList<>();
+
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, memberId);
             ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) {
-                Association association = Mapper.mapRowToAssociation(rs);
-                return Optional.of(association);
+            while (rs.next()) {
+                associations.add(Mapper.mapRowToAssociation(rs));
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Optional.empty();
+        return associations;
     }
 
     @Override
