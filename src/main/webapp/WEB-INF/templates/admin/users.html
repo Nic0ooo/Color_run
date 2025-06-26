@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin | Utilisateurs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen font-poppins flex flex-col">
+
+<!-- Header -->
+<div th:replace="fragments/header :: headerFragment(page='admin', member=${member})"></div>
+
+<main class="flex-1 py-10">
+    <div class="max-w-6xl mx-auto px-6">
+        <!-- Title block -->
+        <div class="bg-gradient-to-r from-blue-500 to-teal-400 text-white p-6 rounded-lg shadow mb-8">
+            <h1 class="text-3xl font-bold mb-2">Gestion des utilisateurs</h1>
+            <p class="text-white/90">Gérez les rôles, supprimez les comptes et surveillez les utilisateurs actifs.</p>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-100 text-left text-gray-700">
+                <tr>
+                    <th class="py-2 px-4">Nom</th>
+                    <th class="py-2 px-4">Email</th>
+                    <th class="py-2 px-4">Rôle</th>
+                    <th class="py-2 px-4">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${users}" class="border-b hover:bg-gray-50 transition">
+                    <td class="py-2 px-4" th:text="${user.firstname + ' ' + user.name}">Jean Dupont</td>
+                    <td class="py-2 px-4" th:text="${user.email}">email@example.com</td>
+                    <td class="py-2 px-4" th:text="${user.role}">ADMIN</td>
+                    <td class="py-2 px-4 space-y-1">
+
+                        <!-- Promotion (sauf sur soi-même) -->
+                        <form method="post" th:action="@{/admin-users}" th:if="${user.id != member.id}" class="flex items-center space-x-2">
+                            <input type="hidden" name="id" th:value="${user.id}" />
+                            <input type="hidden" name="action" value="promote" />
+                            <select name="role" class="border rounded px-2 py-1 text-sm">
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"
+                                        th:selected="${r == user.role}"></option>
+                            </select>
+                            <button type="submit" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Changer</button>
+                        </form>
+
+                        <!-- Suppression autre utilisateur -->
+                        <form method="post" th:action="@{/admin-users}" th:if="${user.id != member.id}" class="mt-1">
+                            <input type="hidden" name="id" th:value="${user.id}" />
+                            <input type="hidden" name="action" value="delete" />
+                            <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded text-xs w-full">Supprimer</button>
+                        </form>
+
+                        <!-- Supprimer son propre compte -->
+                        <form method="post" th:action="@{/account/delete}" th:if="${user.id == member.id}" class="mt-1">
+                            <input type="hidden" name="id" th:value="${user.id}" />
+                            <button type="submit" class="bg-red-400 text-white px-2 py-1 rounded text-xs w-full">Supprimer mon compte</button>
+                        </form>
+
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

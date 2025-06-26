@@ -15,10 +15,11 @@
             <!-- BOUTON ADMIN: Gestion des demandes organisateur -->
             <div th:if="${member.role != null and member.role.toString() == 'ADMIN'}"
                  class="text-red-500 font-bold">
-                <a href="/color_run_war/admin-organizer-requests"
-                   class="px-4 py-2 border border-red-500 rounded hover:bg-red-50 transition-colors flex items-center gap-2">
-                    <i class="w-4 h-4" data-lucide="shield-check"></i>
-                    Demandes organisateur
+                <a href="/color_run_war/admin-dashboard"
+                   class="px-4 py-2 border border-red-500 rounded hover:bg-red-50 transition-colors flex items-center gap-2"
+                   th:classappend="${page == 'admin-dashboard'} ? 'bg-red-50'">
+                    <i class="w-4 h-4" data-lucide="settings"></i>
+                    Espace Admin
                 </a>
             </div>
 
