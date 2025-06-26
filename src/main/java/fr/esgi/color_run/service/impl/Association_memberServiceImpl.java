@@ -11,16 +11,23 @@ import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.Association_memberService;
 import fr.esgi.color_run.service.AssociationService;
 import fr.esgi.color_run.service.MemberService;
+import fr.esgi.color_run.util.RepositoryFactory;
 
 import java.util.List;
 import java.util.Optional;
 
 public class Association_memberServiceImpl implements Association_memberService {
 
-    private final Association_memberRepository associationMemberRepository = new Association_memberRepositoryImpl();
+    private final Association_memberRepository associationMemberRepository;
     private final MemberService memberService = new MemberServiceImpl();
     private final AssociationService associationService = new AssociationServiceImpl();
-    private final MemberRepository memberRepository = new MemberRepositoryImpl();
+    private final MemberRepository memberRepository;
+
+    public Association_memberServiceImpl() {
+        RepositoryFactory factory = RepositoryFactory.getInstance();
+        this.associationMemberRepository = factory.getAssociationMemberRepository();
+        this.memberRepository = factory.getMemberRepository();
+    }
 
     @Override
     public void addOrganizerToAssociation(Long memberId, Long associationId) throws Exception {

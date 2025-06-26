@@ -24,13 +24,29 @@ import org.thymeleaf.context.WebContext;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @WebServlet(name = "OrganizerRequestServlet", urlPatterns = {"/organizer-request"})
 public class OrganizerRequestServlet extends HttpServlet {
 
-    private final OrganizerRequestService organizerRequestService = new OrganizerRequestServiceImpl();
-    private final AssociationService associationService = new AssociationServiceImpl();
-    private final Association_memberService associationMemberService = new Association_memberServiceImpl();
+    // Services utilisant le système optimisé
+    private final OrganizerRequestService organizerRequestService;
+    private final AssociationService associationService;
+    private final Association_memberService associationMemberService;
+
+    // Cache local pour les associations (évite les requêtes répétées)
+    private final ConcurrentHashMap<String, List<Association>> associationCache = new ConcurrentHashMap<>();
+    private volatile long lastAssociationCacheUpdate = 0;
+    private static final long ASSOCIATION_CACHE_DURATION = 60000; // 1 minute
+
+    public OrganizerRequestServlet() {
+        // Utilisation du système optimisé
+        this.organizerRequestService = new OrganizerRequestServiceImpl();
+        this.associationService = new AssociationServiceImpl();
+        this.associationMemberService = new Association_memberServiceImpl();
+
+        System.out.println("✅ OrganizerRequestServlet initialisé avec services optimisés");
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -50,11 +66,9 @@ public class OrganizerRequestServlet extends HttpServlet {
             return;
         }
 
-
-
         System.out.println("🔍 Rôle du membre: " + member.getRole());
 
-        // Vérifier s'il a déjà une demande en cours
+        // Vérifier s'il a déjà une demande en cours (optimisé)
         boolean hasPendingRequest = false;
         OrganizerRequest lastRejectedRequest = null;
 
@@ -62,7 +76,7 @@ public class OrganizerRequestServlet extends HttpServlet {
             hasPendingRequest = organizerRequestService.hasActivePendingRequest(member.getId());
             System.out.println("🔍 A une demande en cours: " + hasPendingRequest);
 
-            // Vérifier s'il a une demande récemment refusée
+            // Vérifier s'il a une demande récemment refusée (optimisé)
             if (!hasPendingRequest) {
                 var memberRequests = organizerRequestService.getRequestsByMember(member.getId());
                 lastRejectedRequest = memberRequests.stream()
@@ -79,23 +93,22 @@ public class OrganizerRequestServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        // Récupérer les associations
+        // Récupérer les associations de façon optimisée avec cache
         try {
-            List<Association> allAssociations = associationService.getAllAssociations();
-
             if (member.getRole() == Role.ORGANIZER) {
                 // Pour les organisateurs, charger leurs associations actuelles
-                var currentAssociations = associationMemberService.getAssociationsByOrganizer(member.getId());
+                var currentAssociations = getCachedAssociationsByOrganizer(member.getId());
                 context.setVariable("currentAssociations", currentAssociations);
 
-                // Pour les associations disponibles, utiliser la méthode spécialisée
-                var availableAssociations = associationMemberService.getAvailableAssociationForMember(member.getId());
+                // Pour les associations disponibles, utiliser le cache
+                var availableAssociations = getCachedAvailableAssociations(member.getId());
                 context.setVariable("availableAssociations", availableAssociations);
 
                 System.out.println("✅ Organisateur: " + currentAssociations.size() + " associations actuelles, " +
                         availableAssociations.size() + " disponibles");
             } else {
                 // Pour les participants, toutes les associations sont disponibles
+                var allAssociations = getCachedAllAssociations();
                 context.setVariable("associations", allAssociations);
                 context.setVariable("availableAssociations", allAssociations);
                 System.out.println("✅ Participant: " + allAssociations.size() + " associations chargées");
@@ -117,6 +130,78 @@ public class OrganizerRequestServlet extends HttpServlet {
 
         System.out.println("✅ Rendu de la page organizer-request");
         engine.process("organizer-request", context, resp.getWriter());
+    }
+
+    /**
+     * Cache optimisé pour toutes les associations
+     */
+    private List<Association> getCachedAllAssociations() {
+        return associationCache.computeIfAbsent("all", k -> {
+            try {
+                System.out.println("🔍 Chargement de toutes les associations depuis DB");
+                return associationService.getAllAssociations();
+            } catch (Exception e) {
+                System.err.println("❌ Erreur lors du chargement des associations: " + e.getMessage());
+                return java.util.Collections.emptyList();
+            }
+        });
+    }
+
+    /**
+     * Cache optimisé pour les associations d'un organisateur
+     */
+    private List<Association> getCachedAssociationsByOrganizer(Long memberId) {
+        String cacheKey = "organizer_" + memberId;
+        long currentTime = System.currentTimeMillis();
+
+        if (currentTime - lastAssociationCacheUpdate < ASSOCIATION_CACHE_DURATION &&
+                associationCache.containsKey(cacheKey)) {
+            System.out.println("✅ Utilisation du cache pour associations organisateur " + memberId);
+            return associationCache.get(cacheKey);
+        }
+
+        try {
+            var associations = associationMemberService.getAssociationsByOrganizer(memberId);
+            associationCache.put(cacheKey, associations);
+            lastAssociationCacheUpdate = currentTime;
+            return associations;
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors du chargement des associations organisateur: " + e.getMessage());
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    /**
+     * Cache optimisé pour les associations disponibles pour un membre
+     */
+    private List<Association> getCachedAvailableAssociations(Long memberId) {
+        String cacheKey = "available_" + memberId;
+        long currentTime = System.currentTimeMillis();
+
+        if (currentTime - lastAssociationCacheUpdate < ASSOCIATION_CACHE_DURATION &&
+                associationCache.containsKey(cacheKey)) {
+            System.out.println("✅ Utilisation du cache pour associations disponibles " + memberId);
+            return associationCache.get(cacheKey);
+        }
+
+        try {
+            var associations = associationMemberService.getAvailableAssociationForMember(memberId);
+            associationCache.put(cacheKey, associations);
+            lastAssociationCacheUpdate = currentTime;
+            return associations;
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors du chargement des associations disponibles: " + e.getMessage());
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    /**
+     * Invalide le cache des associations
+     */
+    private void clearAssociationCache() {
+        associationCache.clear();
+        lastAssociationCacheUpdate = 0;
+        System.out.println("🗑️ Cache associations invalidé");
     }
 
     @Override
@@ -202,7 +287,7 @@ public class OrganizerRequestServlet extends HttpServlet {
                     return;
                 }
 
-                // NOUVELLE FONCTIONNALITÉ: Vérifier si l'association existe déjà
+                // Vérification optimisée si l'association existe déjà
                 try {
                     if (associationService.existsByName(newAssociationName.trim())) {
                         System.out.println("❌ Association avec ce nom existe déjà: " + newAssociationName);
@@ -242,6 +327,10 @@ public class OrganizerRequestServlet extends HttpServlet {
                         req.getParameter("assocCity")
                 );
                 System.out.println("✅ Demande avec nouvelle association créée");
+
+                // Invalider le cache des associations
+                clearAssociationCache();
+
                 resp.sendRedirect(req.getContextPath() + "/organizer-request?success=association_created");
             } else {
                 // Demande standard (avec ou sans association existante)

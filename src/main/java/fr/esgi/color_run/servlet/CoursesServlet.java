@@ -1,17 +1,14 @@
 package fr.esgi.color_run.servlet;
 
+import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
-import fr.esgi.color_run.service.CourseService;
-import fr.esgi.color_run.service.Course_memberService;
-import fr.esgi.color_run.service.GeocodingService;
-import fr.esgi.color_run.service.impl.CourseServiceImpl;
-import fr.esgi.color_run.service.impl.Course_memberServiceImpl;
-import fr.esgi.color_run.service.impl.GeocodingServiceImpl;
+import fr.esgi.color_run.service.*;
+import fr.esgi.color_run.service.impl.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -26,10 +23,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ArrayList;
+import java.util.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -41,6 +35,8 @@ public class CoursesServlet extends HttpServlet {
     private CourseService courseService;
     private CourseRepository courseRepository;
     private Course_memberService courseMemberService;
+    private MemberService memberService;
+    private AssociationService associationService;
 
     @Override
     public void init() throws ServletException {
@@ -50,6 +46,8 @@ public class CoursesServlet extends HttpServlet {
         this.courseService = new CourseServiceImpl(courseRepository, geocodingService);
 
         this.courseMemberService = new Course_memberServiceImpl();
+        this.memberService = new MemberServiceImpl();
+        this.associationService = new AssociationServiceImpl();
     }
 
     @Override
@@ -344,6 +342,21 @@ public class CoursesServlet extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/courses");
                 return;
             }
+
+            // Récupérer les informations de l'association
+            Optional<Association> associationOpt = Optional.empty();
+            if (course.getAssociationId() != null) {
+                associationOpt = associationService.findById(Long.valueOf(course.getAssociationId()));
+            }
+
+            // Récupérer les informations du membre créateur
+            Optional<Member> creatorOpt = Optional.empty();
+            if (course.getMemberCreatorId() != null) {
+                creatorOpt = memberService.getMember(Long.valueOf(course.getMemberCreatorId()));
+            }
+
+            context.setVariable("association", associationOpt.orElse(null));
+            context.setVariable("creator", creatorOpt.orElse(null));
 
             // Vérifier si la course est expirée
             boolean courseExpired = false;

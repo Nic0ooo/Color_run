@@ -11,16 +11,23 @@ import fr.esgi.color_run.repository.impl.Association_memberRepositoryImpl;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
 import fr.esgi.color_run.service.AssociationService;
 import fr.esgi.color_run.service.GeocodingService;
+import fr.esgi.color_run.util.RepositoryFactory;
 
 import java.util.List;
 import java.util.Optional;
 
 public class AssociationServiceImpl implements AssociationService {
 
-    private final AssociationRepository associationRepository = new AssociationRepositoryImpl();
-    private final Association_memberRepository association_memberRepository = new Association_memberRepositoryImpl();
+    private final AssociationRepository associationRepository;
+    private final Association_memberRepository association_memberRepository;
     private final GeocodingService geocodingService = new GeocodingServiceImpl();
     private final CourseRepository courseRepository = new CourseRepositoryImpl(geocodingService);
+
+    public AssociationServiceImpl() {
+        RepositoryFactory factory = RepositoryFactory.getInstance();
+        this.associationRepository = factory.getAssociationRepository();
+        this.association_memberRepository = factory.getAssociationMemberRepository();
+    }
 
     @Override
     public Long createAssociation(String name, String email, String description, String websiteLink, String phone, String address, String zipCode, String city) {

@@ -10,6 +10,7 @@ import fr.esgi.color_run.service.impl.MemberServiceImpl;
 import fr.esgi.color_run.service.impl.OrganizerRequestServiceImpl;
 import fr.esgi.color_run.service.impl.AssociationServiceImpl;
 import fr.esgi.color_run.service.impl.Association_memberServiceImpl;
+import fr.esgi.color_run.util.RepositoryFactory;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -19,18 +20,28 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = {"/admin-organizer-requests", "/admin-organizer-requests/approve", "/admin-organizer-requests/reject"})
 public class AdminOrganizerRequestServlet extends HttpServlet {
 
-    private final OrganizerRequestService organizerRequestService = new OrganizerRequestServiceImpl();
-    private final AssociationService associationService = new AssociationServiceImpl();
-    private final Association_memberService associationMemberService = new Association_memberServiceImpl();
-    private final MemberService memberService = new MemberServiceImpl();
+    // Services utilisant le système optimisé
+    private final OrganizerRequestService organizerRequestService;
+    private final AssociationService associationService;
+    private final Association_memberService associationMemberService;
+    private final MemberService memberService;
+
+    public AdminOrganizerRequestServlet() {
+        // Utilisation du singleton pour éviter les créations multiples
+        this.organizerRequestService = new OrganizerRequestServiceImpl();
+        this.associationService = new AssociationServiceImpl();
+        this.associationMemberService = new Association_memberServiceImpl();
+        this.memberService = new MemberServiceImpl();
+
+        System.out.println("✅ AdminOrganizerRequestServlet initialisé avec services optimisés");
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -53,37 +64,19 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
         try {
             context.setVariable("member", member);
 
-            // Charger les demandes
+            // Charger les demandes de façon optimisée (avec cache)
             var pendingRequests = organizerRequestService.getPendingRequests();
             var allRequests = organizerRequestService.getAllRequests();
 
-            for (var request : pendingRequests) {
-                if (request != null) {
-                    // Chercher le membre pour récupérer son rôle
-                    memberService.getMember(request.getMemberId()).ifPresent(foundMember -> {
-                        request.setMemberRoleName(foundMember.getRole().name());
-                    });
-                }
-            }
-
-            for (var request : allRequests) {
-                if (request != null) {
-                    // Chercher le membre pour récupérer son rôle
-                    memberService.getMember(request.getMemberId()).ifPresent(foundMember -> {
-                        request.setMemberRoleName(foundMember.getRole().name());
-                    });
-                }
-            }
-
-            // Enrichir avec les informations des membres
-            Map<Long, Member> membersMap = loadMembersForRequests(pendingRequests, allRequests);
-            context.setVariable("membersMap", membersMap);
-
-            Map<Long, Association> associationsMap = loadAssociationsForRequests(allRequests);
-            context.setVariable("associationsMap", associationsMap);
-
             System.out.println("🔍 Demandes en attente trouvées: " + pendingRequests.size());
             System.out.println("🔍 Total demandes trouvées: " + allRequests.size());
+
+            // Enrichir avec les informations des membres (optimisé)
+            Map<Long, Member> membersMap = loadMembersForRequestsOptimized(allRequests, pendingRequests);
+            context.setVariable("membersMap", membersMap);
+
+            Map<Long, Association> associationsMap = loadAssociationsForRequestsOptimized(allRequests);
+            context.setVariable("associationsMap", associationsMap);
 
             // Calculer les compteurs de façon sécurisée
             long approvedCount = 0;
@@ -124,25 +117,71 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
         }
     }
 
-    private Map<Long, Member> loadMembersForRequests(List<OrganizerRequest> pendingRequests, List<OrganizerRequest> allRequests) {
-        return allRequests.stream()
-                .map(request -> request.getMemberId())
-                .distinct()
-                .map(memberId -> memberService.getMember(memberId))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toMap(Member::getId, member -> member));
+    /**
+     * Version optimisée pour charger les membres en batch
+     */
+    private Map<Long, Member> loadMembersForRequestsOptimized(List<OrganizerRequest> allRequests, List<OrganizerRequest> pendingRequests) {
+        Map<Long, Member> membersMap = new ConcurrentHashMap<>();
+
+        // Collecter tous les IDs uniques de membres des deux listes
+        Set<Long> memberIds = new HashSet<>();
+
+        if (allRequests != null) {
+            allRequests.stream()
+                    .filter(request -> request != null && request.getMemberId() != null)
+                    .map(OrganizerRequest::getMemberId)
+                    .forEach(memberIds::add);
+        }
+
+        if (pendingRequests != null) {
+            pendingRequests.stream()
+                    .filter(request -> request != null && request.getMemberId() != null)
+                    .map(OrganizerRequest::getMemberId)
+                    .forEach(memberIds::add);
+        }
+
+        // Charger tous les membres
+        for (Long memberId : memberIds) {
+            try {
+                memberService.getMember(memberId).ifPresent(member ->
+                        membersMap.put(memberId, member));
+            } catch (Exception e) {
+                System.err.println("❌ Erreur lors du chargement du membre " + memberId + ": " + e.getMessage());
+            }
+        }
+
+        System.out.println("✅ " + membersMap.size() + " membres chargés");
+        return membersMap;
     }
 
-    private Map<Long, Association> loadAssociationsForRequests(List<OrganizerRequest> allRequests) {
-        return allRequests.stream()
-                .filter(request -> request.getExistingAssociationId() != null)
-                .map(request -> request.getExistingAssociationId())
-                .distinct()
-                .map(associationId -> associationService.findById(associationId))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toMap(Association::getId, association -> association));
+    /**
+     * Version optimisée pour charger les associations en batch
+     */
+    private Map<Long, Association> loadAssociationsForRequestsOptimized(List<OrganizerRequest> allRequests) {
+        Map<Long, Association> associationsMap = new ConcurrentHashMap<>();
+
+        if (allRequests == null || allRequests.isEmpty()) {
+            return associationsMap;
+        }
+
+        // Collecter tous les IDs uniques d'associations
+        var associationIds = allRequests.stream()
+                .filter(request -> request != null && request.getExistingAssociationId() != null)
+                .map(OrganizerRequest::getExistingAssociationId)
+                .collect(Collectors.toSet());
+
+        // Charger toutes les associations de façon optimisée
+        for (Long associationId : associationIds) {
+            try {
+                associationService.findById(associationId).ifPresent(association ->
+                        associationsMap.put(associationId, association));
+            } catch (Exception e) {
+                System.err.println("❌ Erreur lors du chargement de l'association " + associationId + ": " + e.getMessage());
+            }
+        }
+
+        System.out.println("✅ " + associationsMap.size() + " associations chargées");
+        return associationsMap;
     }
 
     @Override
@@ -183,7 +222,6 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
                 boolean shouldCreateAssociation = "on".equals(createAssociationStr);
                 var request = organizerRequestService.approveRequest(requestId, member.getId(), comment);
 
-
                 // S'assurer que le membre est bien ORGANIZER avant de continuer
                 Optional<Member> memberOpt = memberService.getMember(request.getMemberId());
                 if (memberOpt.isPresent()) {
@@ -217,7 +255,7 @@ public class AdminOrganizerRequestServlet extends HttpServlet {
                             case CREATE_ASSOCIATION:
                                 if (shouldCreateAssociation && request.hasNewAssociation()) {
                                     System.out.println("🏢 Création de nouvelle association: " + request.getNewAssociationName());
-                                    // verifier que l'association n'existe pas déja
+                                    // vérifier que l'association n'existe pas déjà
                                     if (associationService.existsByName(request.getNewAssociationName())) {
                                         System.out.println("❌ L'association " + request.getNewAssociationName() + " existe déjà");
                                         req.getSession().setAttribute("error", "L'Association existe déjà. Veuillez refaire une demande pour la rejoindre.");

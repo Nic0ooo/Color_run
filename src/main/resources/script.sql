@@ -152,6 +152,23 @@ INSERT INTO member (role, name, firstname, email, password, phoneNumber, address
 SELECT 'ORGANIZER', 'Monet', 'Léa', 'lea.monet@outlook.com', 'password123', '0612425690', '16 Rue Perrière', 'Annecy', 74000, 45.89812149200697, 6.127460404462661
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'lea.monet@outlook.com');
 
+INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
+SELECT 'RUNNER', 'Leroy', 'Camille', 'camille.leroy@email.com', 'password123', '0678901234', '45 rue des Oliviers', 'Marseille', 13008, 43.2715, 5.4018
+WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'camille.leroy@email.com');
+
+INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
+SELECT 'ORGANIZER', 'Dubois', 'Thomas', 'thomas.dubois@email.com', 'secure456', '0689012345', '12 avenue de la République', 'Bordeaux', 33000, 44.8378, -0.5792
+WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'thomas.dubois@email.com');
+
+INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
+SELECT 'RUNNER', 'Moreau', 'Julie', 'julie.moreau@email.com', 'julie2023', '0690123456', '8 place du Marché', 'Rennes', 35000, 48.1173, -1.6778
+WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'julie.moreau@email.com');
+
+INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
+SELECT 'ORGANIZER', 'Lefebvre', 'Antoine', 'antoine.lefebvre@email.com', 'antoine123', '0701234567', '23 boulevard Jean Jaurès', 'Grenoble', 38000, 45.1885, 5.7245
+WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'antoine.lefebvre@email.com');
+
+
 -- Associations
 INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
 SELECT 'Association Sportive Paris', 'Promouvoir la course à pied en Île-de-France', 'www.assoparis.com', '/images/logo1.png', 'contact@assoparis.com', '0145789652', '10 place de la République', 'Paris', 75011
@@ -169,6 +186,14 @@ INSERT INTO association (name, description, websiteLink, logoPath, email, phoneN
 SELECT 'Run For Fun Association', 'Courses colorées et événements ludiques', 'www.runforfun.fr', '/images/logo5.png', 'contact@runforfun.fr', '0134567890', '18 place des Victoires', 'Bordeaux', 33001
 WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'contact@runforfun.fr');
 
+INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
+SELECT 'Courir pour la Planète', 'Courses écologiques et sensibilisation environnementale', 'www.courirplanete.org', '/images/logo6.png', 'contact@courirplanete.org', '0712345678', '45 rue Verte', 'Nantes', 44000
+WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'contact@courirplanete.org');
+
+INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
+SELECT 'Montagne & Running', 'Courses en montagne et trails', 'www.montagnerunning.com', '/images/logo7.png', 'info@montagnerunning.com', '0723456789', '18 chemin des Cimes', 'Grenoble', 38000
+WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'info@montagnerunning.com');
+
 -- Courses
 INSERT INTO course (name, description, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
 SELECT 'Marathon de Paris', 'Un marathon mythique au cœur de Paris', 1, '2025-10-10 17:00', '2025-10-10 18:00', 48.8566, 2.3522, 48.8606, 2.3376, 42.195, 'Champs Élysées', 'Paris', 75008, 5000, 1200, 50.0
@@ -185,6 +210,18 @@ WHERE NOT EXISTS (SELECT 1 FROM course WHERE name = 'Trail des Alpes');
 INSERT INTO course (name, description, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
 SELECT 'Course des Fleurs', 'Une course colorée et festive', 9, '2025-06-05 10:00', '2025-06-05 12:00', 43.610769, 3.876716, 43.6150, 3.8800, 10.0, 'Jardin des Plantes', 'Montpellier', 34000, 200, 64, 25.0
 WHERE NOT EXISTS (SELECT 1 FROM course WHERE name = 'Course des Fleurs');
+
+INSERT INTO course (name, description, associationId, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+SELECT 'Eco-Trail Nantais', 'Course écologique à travers les espaces verts de Nantes', a.id, m.id, '2025-09-15 09:00', '2025-09-15 12:00', 47.2184, -1.5536, 47.2250, -1.5421, 15.0, 'Parc de Procé', 'Nantes', 44000, 1000, 250, 35.0
+FROM association a, member m
+WHERE a.name = 'Courir pour la Planète' AND m.email = 'thomas.dubois@email.com'
+  AND NOT EXISTS (SELECT 1 FROM course WHERE name = 'Eco-Trail Nantais');
+
+INSERT INTO course (name, description, associationId, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+SELECT 'Trail des Sommets', 'Parcours technique en moyenne montagne', a.id, m.id, '2025-07-12 08:30', '2025-07-12 14:00', 45.1885, 5.7245, 45.2101, 5.7689, 22.5, 'Col de Porte', 'Grenoble', 38000, 500, 120, 45.0
+FROM association a, member m
+WHERE a.name = 'Montagne & Running' AND m.email = 'antoine.lefebvre@email.com'
+  AND NOT EXISTS (SELECT 1 FROM course WHERE name = 'Trail des Sommets');
 
 -- CourseMember
 INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus, stripeSessionId)
@@ -209,16 +246,51 @@ WHERE c.name = 'Course des Héros' AND m.email = 'paul.bernard@email.com'
     WHERE c2.name = 'Course des Héros' AND m.email = 'paul.bernard@email.com'
 );
 
+INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus)
+SELECT c.id, m.id, '2025-04-15', 'ACCEPTED'
+FROM course c, member m
+WHERE c.name = 'Eco-Trail Nantais' AND m.email = 'julie.moreau@email.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM CourseMember cm
+                      JOIN course c2 ON cm.courseId = c2.id
+                      JOIN member m2 ON cm.memberId = m2.id
+    WHERE c2.name = 'Eco-Trail Nantais' AND m2.email = 'julie.moreau@email.com'
+);
+
+INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus, stripeSessionId)
+SELECT c.id, m.id, '2025-05-02', 'ACCEPTED', 'sess_23456789'
+FROM course c, member m
+WHERE c.name = 'Trail des Sommets' AND m.email = 'camille.leroy@email.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM CourseMember cm
+                      JOIN course c2 ON cm.courseId = c2.id
+                      JOIN member m2 ON cm.memberId = m2.id
+    WHERE c2.name = 'Trail des Sommets' AND m2.email = 'camille.leroy@email.com'
+);
+
 -- AssociationMember
 INSERT INTO AssociationMember (memberId, associationId)
-SELECT 4, 2
-WHERE NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = 4 AND associationId = 2);
+SELECT m.id, a.id
+FROM member m, association a
+WHERE m.email = 'thomas.dubois@email.com' AND a.name = 'Courir pour la Planète'
+  AND NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = m.id AND associationId = a.id);
+
+INSERT INTO AssociationMember (memberId, associationId)
+SELECT m.id, a.id
+FROM member m, association a
+WHERE m.email = 'antoine.lefebvre@email.com' AND a.name = 'Montagne & Running'
+  AND NOT EXISTS (SELECT 1 FROM AssociationMember WHERE memberId = m.id AND associationId = a.id);
 
 
 -- Demandes d'organisateur
 INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, existingAssociationId)
 SELECT 2, 'BECOME_ORGANIZER', 'Je souhaite devenir organisateur pour promouvoir le sport dans ma région. J''ai de l''expérience en gestion d''événements et je pense pouvoir apporter une contribution positive à la communauté des coureurs.', 'PENDING', '2025-06-15 14:30:00', 4
 WHERE NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = 2);
+
+INSERT INTO OrganizerRequest (memberId, motivation, existingAssociationId, newAssociationData, requestDate, status, requestType, existingAssociationName)
+SELECT 3, 'Je souhaite devenir organisateur de course, pour récolter des financement au profit de la préservation de la faune maritime.', NULL, '{"name":"Sea Sheperd","email":"seasheperd@contact.fr","description":"Protection de la faune maritime","websiteLink":"https://seashepherd.fr/","phone":"","address":"22 Rue Boulard","zipCode":"75014","city":"Paris"}', '2025-06-24 18:09:48.568678', 'PENDING', 'BECOME_ORGANIZER', NULL
+WHERE NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = 3);
+
 
 -- Discussions
 INSERT INTO Discussion (courseId, isActive)
@@ -229,6 +301,18 @@ INSERT INTO Discussion (courseId, isActive)
 SELECT 2, TRUE
 WHERE NOT EXISTS (SELECT 1 FROM Discussion WHERE courseId = 2);
 
+INSERT INTO Discussion (courseId, isActive)
+SELECT id, TRUE
+FROM course
+WHERE name = 'Eco-Trail Nantais'
+  AND NOT EXISTS (SELECT 1 FROM Discussion WHERE courseId = id);
+
+INSERT INTO Discussion (courseId, isActive)
+SELECT id, TRUE
+FROM course
+WHERE name = 'Trail des Sommets'
+  AND NOT EXISTS (SELECT 1 FROM Discussion WHERE courseId = id);
+
 -- Messages
 INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
 SELECT 1, 1, 'Bienvenue sur la discussion du Marathon de Paris !', '2025-03-01', FALSE, FALSE
@@ -237,6 +321,14 @@ WHERE NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = 1);
 INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
 SELECT 2, 5, 'Qui participe à la Course des Héros ?', '2025-03-02', FALSE, FALSE
 WHERE NOT EXISTS (SELECT 2 FROM Message WHERE discussionId = 5);
+
+INSERT INTO Message (discussionId, memberId, content, date, isPin)
+SELECT d.id, m.id, 'Bienvenue sur l''Eco-Trail Nantais! N''oubliez pas votre gourde réutilisable.', '2025-04-20', TRUE
+FROM Discussion d
+         JOIN course c ON d.courseId = c.id
+         JOIN member m ON m.email = 'thomas.dubois@email.com'
+WHERE c.name = 'Eco-Trail Nantais'
+  AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Bienvenue sur l''Eco-Trail%');
 
 -- Paiements
 INSERT INTO Paiement (courseMemberId, date, amount)
@@ -260,3 +352,11 @@ WHERE c.name = 'Course des Héros' AND m.email = 'paul.bernard@email.com'
     SELECT 1 FROM Paiement p
     WHERE p.courseMemberId = cm.id
 );
+
+INSERT INTO Paiement (courseMemberId, date, amount)
+SELECT cm.id, '2025-05-02', 35.0
+FROM CourseMember cm
+         JOIN course c ON cm.courseId = c.id
+         JOIN member m ON cm.memberId = m.id
+WHERE c.name = 'Eco-Trail Nantais' AND m.email = 'julie.moreau@email.com'
+  AND NOT EXISTS (SELECT 1 FROM Paiement WHERE courseMemberId = cm.id);

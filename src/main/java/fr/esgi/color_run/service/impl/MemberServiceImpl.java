@@ -5,16 +5,18 @@ import fr.esgi.color_run.repository.MemberRepository;
 import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
 import fr.esgi.color_run.utils.VerificationCodeStorage;
+import fr.esgi.color_run.util.RepositoryFactory;
 
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.*;
-import java.sql.Connection;
 
 public class MemberServiceImpl implements MemberService {
 
-    private final MemberRepository memberRepository = new MemberRepositoryImpl();
+    private final MemberRepository memberRepository;
+
+    public MemberServiceImpl() {
+        RepositoryFactory factory = RepositoryFactory.getInstance();
+        this.memberRepository = factory.getMemberRepository();
+    }
 
     @Override
     public Member createMember(Member member) {

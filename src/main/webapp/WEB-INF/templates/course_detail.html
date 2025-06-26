@@ -248,13 +248,35 @@
                                     Informations organisateur
                                 </h4>
                                 <div class="space-y-2 text-sm text-yellow-700">
-                                    <div class="flex items-center">
-                                        <i data-lucide="building" class="w-3 h-3 mr-2"></i>
-                                        <span>Association n°<span th:text="${course.associationId}" class="font-medium">1</span></span>
+                                    <!-- Informations association -->
+                                    <div class="flex items-start mb-2">
+                                        <i data-lucide="building" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                        <div>
+                                            <div class="font-medium">Association</div>
+                                            <div th:if="${association != null}">
+                                                <div th:text="${association.name}">Nom Association</div>
+                                                <div> <a th:href="${'mailto:' + association.email}" class="text-xs text-yellow-600 hover:underline" th:text="${association.email}">email@organisateur.fr</a> </div>
+                                                <div class="text-xs text-yellow-600" th:text="'Cause soutenue : ' + ${association.description}">Cause soutenue : Non indiqué</div>
+                                            </div>
+                                            <div th:unless="${association != null}" class="text-yellow-600 text-xs">
+                                                Course non-associative
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center">
-                                        <i data-lucide="user" class="w-3 h-3 mr-2"></i>
-                                        <span>Créé par le membre n°<span th:text="${course.memberCreatorId}" class="font-medium">42</span></span>
+
+                                    <!-- Informations créateur -->
+                                    <div class="flex items-start">
+                                        <i data-lucide="user" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                        <div>
+                                            <div class="font-medium">Organisateur</div>
+                                            <div th:if="${creator != null}">
+                                                <div th:text="${creator.firstname + ' ' + creator.name}">John Doe</div>
+                                                <div> <a th:href="${'mailto:' + creator.email}" class="text-xs text-yellow-600 hover:underline" th:text="${creator.email}">email@organisateur.fr</a> </div>
+                                            </div>
+                                            <div th:unless="${creator != null}" class="text-yellow-600 text-xs">
+                                                Membre n°<span th:text="${course.memberCreatorId}" class="font-medium">42</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -21,7 +21,11 @@ import java.util.Optional;
 @WebServlet(urlPatterns = {"/login", "/register", "/verify"})
 public class MemberServlet extends HttpServlet {
 
-    private final MemberService memberService = new MemberServiceImpl();
+    private final MemberService memberService;
+
+    public MemberServlet() {
+        this.memberService = new MemberServiceImpl();
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
