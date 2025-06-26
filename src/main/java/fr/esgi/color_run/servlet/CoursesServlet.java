@@ -5,6 +5,7 @@ import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
+import fr.esgi.color_run.repository.AssociationRepository;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
 import fr.esgi.color_run.service.*;
@@ -37,6 +38,7 @@ public class CoursesServlet extends HttpServlet {
     private Course_memberService courseMemberService;
     private MemberService memberService;
     private AssociationService associationService;
+    private  Association_memberService associationMemberService;
 
     @Override
     public void init() throws ServletException {
@@ -48,6 +50,7 @@ public class CoursesServlet extends HttpServlet {
         this.courseMemberService = new Course_memberServiceImpl();
         this.memberService = new MemberServiceImpl();
         this.associationService = new AssociationServiceImpl();
+        this.associationMemberService = new Association_memberServiceImpl();
     }
 
     @Override
@@ -57,6 +60,16 @@ public class CoursesServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
 
         Member member = (Member) (session != null ? session.getAttribute("member") : null);
+
+        if (member != null) {
+            List<Association> memberAssociations = null;
+            try {
+                memberAssociations = associationMemberService.getAssociationsByOrganizer(member.getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            req.setAttribute("memberAssociations", memberAssociations);
+        }
 
         // Vérifier si c'est une requête AJAX
         String isAjax = req.getParameter("ajax");
@@ -77,6 +90,21 @@ public class CoursesServlet extends HttpServlet {
         String sortBy = req.getParameter("sortBy");
         String sortDirection = req.getParameter("sortDirection");
 
+        // Récupération des paramètres de pagination
+        int upcomingPage = 1;
+        int pastPage = 1;
+        int pageSize = 6;
+
+        try {
+            upcomingPage = Integer.parseInt(req.getParameter("upcomingPage"));
+            pastPage = Integer.parseInt(req.getParameter("pastPage"));
+            if (req.getParameter("pageSize") != null) {
+                pageSize = Integer.parseInt(req.getParameter("pageSize"));
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Erreur de conversion des paramètres de pagination: " + e.getMessage());
+        }
+
         // Conversion des dates
         LocalDate fromDate = null;
         LocalDate toDate = null;
@@ -91,23 +119,62 @@ public class CoursesServlet extends HttpServlet {
             System.err.println("Erreur lors du parsing des dates: " + e.getMessage());
         }
 
-        // Récupérer les courses avec filtres et tri
-        List<Course> upcomingCourses = courseService.searchAndSortCourses(
+        // Récupérer toutes les courses avec filtres et tri
+        List<Course> allUpcomingCourses = courseService.searchAndSortCourses(
                 searchTerm, fromDate, toDate, sortBy, sortDirection, true);
-        List<Course> pastCourses = courseService.searchAndSortCourses(
+        List<Course> allPastCourses = courseService.searchAndSortCourses(
                 searchTerm, fromDate, toDate, sortBy, sortDirection, false);
 
-        System.out.println("AJAX - Courses à venir: " + upcomingCourses.size());
-        System.out.println("AJAX - Courses passées: " + pastCourses.size());
+        // Appliquer la pagination
+        List<Course> paginatedUpcomingCourses = paginateCourses(allUpcomingCourses, upcomingPage, pageSize);
+        List<Course> paginatedPastCourses = paginateCourses(allPastCourses, pastPage, pageSize);
+
+        System.out.println("AJAX - Total courses à venir: " + allUpcomingCourses.size() + ", page: " + upcomingPage);
+        System.out.println("AJAX - Total courses passées: " + allPastCourses.size() + ", page: " + pastPage);
+
+        // Créer les infos de pagination
+        Map<String, Object> upcomingPagination = createPaginationInfo(upcomingPage, pageSize, allUpcomingCourses.size());
+        Map<String, Object> pastPagination = createPaginationInfo(pastPage, pageSize, allPastCourses.size());
 
         // Créer la réponse JSON
         Map<String, Object> response = new HashMap<>();
-        response.put("upcomingCourses", convertCoursesToJson(upcomingCourses));
-        response.put("pastCourses", convertCoursesToJson(pastCourses));
+        response.put("upcomingCourses", convertCoursesToJson(paginatedUpcomingCourses));
+        response.put("pastCourses", convertCoursesToJson(paginatedPastCourses));
+        response.put("upcomingPagination", upcomingPagination);
+        response.put("pastPagination", pastPagination);
 
         // Configurer la réponse
         resp.setContentType("application/json;charset=UTF-8");
         resp.getWriter().write(objectMapper.writeValueAsString(response));
+    }
+
+    /**
+     * Pagine une liste de courses
+     */
+    private List<Course> paginateCourses(List<Course> courses, int page, int pageSize) {
+        int startIndex = (page - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, courses.size());
+
+        if (startIndex >= courses.size()) {
+            return new ArrayList<>();
+        }
+
+        return courses.subList(startIndex, endIndex);
+    }
+
+    /**
+     * Crée les informations de pagination
+     */
+    private Map<String, Object> createPaginationInfo(int currentPage, int pageSize, int totalItems) {
+        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
+        Map<String, Object> pagination = new HashMap<>();
+        pagination.put("currentPage", currentPage);
+        pagination.put("pageSize", pageSize);
+        pagination.put("totalPages", totalPages);
+        pagination.put("totalItems", totalItems);
+
+        return pagination;
     }
 
     private void handleNormalRequest(HttpServletRequest req, HttpServletResponse resp, Member member) throws ServletException, IOException {
@@ -247,7 +314,16 @@ public class CoursesServlet extends HttpServlet {
         double distance = Double.parseDouble(req.getParameter("distance"));
         int zipCode = Integer.parseInt(req.getParameter("zipCode"));
         int maxOfRunners = Integer.parseInt(req.getParameter("maxOfRunners"));
-        int associationId = Integer.parseInt(req.getParameter("associationId"));
+        Integer associationId = null;
+        try {
+            associationId = Integer.parseInt(req.getParameter("associationId"));
+        } catch (NumberFormatException e) {
+            System.err.println("Association ID invalide, valeur par défaut utilisée.");
+        }
+        // Si associationId est vide, on le met à null
+        if (associationId != null && associationId == 0) {
+            associationId = null;
+        }
         int memberCreatorId = Integer.parseInt(req.getParameter("memberCreatorId"));
         double price = Double.parseDouble(req.getParameter("price"));
 
@@ -303,7 +379,16 @@ public class CoursesServlet extends HttpServlet {
         double distance = Double.parseDouble(req.getParameter("distance"));
         int zipCode = Integer.parseInt(req.getParameter("zipCode"));
         int maxOfRunners = Integer.parseInt(req.getParameter("maxOfRunners"));
-        int associationId = Integer.parseInt(req.getParameter("associationId"));
+        Integer associationId = null;
+        try {
+            associationId = Integer.parseInt(req.getParameter("associationId"));
+        } catch (NumberFormatException e) {
+            System.err.println("Association ID invalide, valeur par défaut utilisée.");
+        }
+        // Si associationId est vide, on le met à null
+        if (associationId != null && associationId == 0) {
+            associationId = null;
+        }
         int memberCreatorId = Integer.parseInt(req.getParameter("memberCreatorId"));
         double price = Double.parseDouble(req.getParameter("price"));
 

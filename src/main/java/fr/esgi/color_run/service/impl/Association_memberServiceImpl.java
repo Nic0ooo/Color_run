@@ -77,7 +77,7 @@ public class Association_memberServiceImpl implements Association_memberService 
             throw new IllegalArgumentException("Membre non trouvé avec ID: " + memberId);
         }
 
-        Optional<Association> associations = associationMemberRepository.findAssociationByOrganizerId(memberId);
+        List<Association> associations = associationMemberRepository.findAssociationsByOrganizerId(memberId);
         if (associations.isEmpty()) {
             System.out.println("❌ Service - Aucune association trouvée pour membre " + memberId);
             return false;
@@ -156,8 +156,11 @@ public class Association_memberServiceImpl implements Association_memberService 
         }
 
         // Récupérer les associations auxquelles l'organisateur est associé
-        Optional<Association> associationOpt = associationMemberRepository.findAssociationByOrganizerId(memberId);
-        List<Association> associations = associationOpt.map(List::of).orElse(List.of());
+        List<Association> associations = associationMemberRepository.findAssociationsByOrganizerId(memberId);
+        if (associations.isEmpty()) {
+            System.out.println("❌ Service - Aucune association trouvée pour l'organisateur " + memberId);
+            return List.of(); // Retourner une liste vide si aucune association n'est trouvée
+        }
         System.out.println("✅ Service - " + associations.size() + " associations trouvées pour l'organisateur " + memberId);
         return associations;
     }

@@ -15,7 +15,9 @@ public interface Association_memberRepository {
 
     boolean isOrganizerInAssociation(Long memberId, Long associationId);
 
-    Optional<Association> findAssociationByOrganizerId(Long memberId);
+    //List<Association> findAssociationByOrganizerId(Long memberId);
+
+    List<Association> findAssociationsByOrganizerId(Long memberId);
 
     List<Member> findOrganizersByAssociationId(Long associationId);
 

@@ -153,70 +153,7 @@
 </main>
 
 <!-- Footer -->
-<footer class="bg-white border-t border-gray-200 mt-auto">
-  <div class="container mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-      <div>
-        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
-          <i data-lucide="palette" class="w-5 h-5 mr-2 text-teal-600"></i>
-          Color Run
-        </h3>
-        <p class="text-sm text-gray-600 mb-4">
-          La course la plus colorée de France ! Participez à des événements uniques
-          alliant sport, fun et solidarité.
-        </p>
-        <div class="flex space-x-3">
-          <a href="#" class="text-gray-400 hover:text-teal-600 transition-colors">
-            <i data-lucide="facebook" class="w-5 h-5"></i>
-          </a>
-          <a href="#" class="text-gray-400 hover:text-teal-600 transition-colors">
-            <i data-lucide="instagram" class="w-5 h-5"></i>
-          </a>
-          <a href="#" class="text-gray-400 hover:text-teal-600 transition-colors">
-            <i data-lucide="twitter" class="w-5 h-5"></i>
-          </a>
-        </div>
-      </div>
-
-      <div>
-        <h4 class="font-semibold text-gray-800 mb-4">Courses</h4>
-        <ul class="space-y-2 text-sm text-gray-600">
-          <li><a href="/color_run_war/courses" class="hover:text-teal-600 transition-colors">Toutes les courses</a></li>
-          <li><a href="/color_run_war/courses?filter=upcoming" class="hover:text-teal-600 transition-colors">Courses à venir</a></li>
-          <li><a href="/color_run_war/courses?filter=past" class="hover:text-teal-600 transition-colors">Courses passées</a></li>
-          <li><a href="/color_run_war/organizer-request" class="hover:text-teal-600 transition-colors">Organiser une course</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-semibold text-gray-800 mb-4">Participants</h4>
-        <ul class="space-y-2 text-sm text-gray-600">
-          <li><a href="/color_run_war/profile" class="hover:text-teal-600 transition-colors">Mon profil</a></li>
-          <li><a href="/color_run_war/my-courses" class="hover:text-teal-600 transition-colors">Mes inscriptions</a></li>
-          <li><a href="/color_run_war/help" class="hover:text-teal-600 transition-colors">Aide</a></li>
-          <li><a href="/color_run_war/contact" class="hover:text-teal-600 transition-colors">Contact</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-semibold text-gray-800 mb-4">Informations</h4>
-        <ul class="space-y-2 text-sm text-gray-600">
-          <li><a href="/color_run_war/about" class="hover:text-teal-600 transition-colors">À propos</a></li>
-          <li><a href="/color_run_war/rules" class="hover:text-teal-600 transition-colors">Règlement</a></li>
-          <li><a href="/color_run_war/privacy" class="hover:text-teal-600 transition-colors">Confidentialité</a></li>
-          <li><a href="/color_run_war/terms" class="hover:text-teal-600 transition-colors">Conditions d'utilisation</a></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="border-t border-gray-200 mt-8 pt-6 text-center">
-      <p class="text-sm text-gray-500 flex items-center justify-center">
-        <i data-lucide="copyright" class="w-4 h-4 mr-1"></i>
-        2025 Color Run. Tous droits réservés.
-      </p>
-    </div>
-  </div>
-</footer>
+<div th:replace="fragments/footer :: footerFragment"></div>
 
 <!-- Script pour initialiser les icônes -->
 <script>
