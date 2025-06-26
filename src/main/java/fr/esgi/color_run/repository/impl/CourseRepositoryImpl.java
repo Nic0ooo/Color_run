@@ -183,13 +183,13 @@ public class CourseRepositoryImpl implements CourseRepository {
 
         // Filtre par date de début
         if (fromDate != null) {
-            sql.append(" AND DATE(startdate) >= ?");
+            sql.append(" AND CAST(startdate AS DATE) >= ?");
             parameters.add(Date.valueOf(fromDate));
         }
 
         // Filtre par date de fin
         if (toDate != null) {
-            sql.append(" AND DATE(startdate) <= ?");
+            sql.append(" AND CAST(startdate AS DATE) <= ?");
             parameters.add(Date.valueOf(toDate));
         }
 
