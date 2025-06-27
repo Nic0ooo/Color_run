@@ -62,4 +62,19 @@ public interface CourseService {
      */
     List<Course> searchAndSortCoursesByCreator(String searchTerm, LocalDate fromDate, LocalDate toDate,
                                                String sortBy, String sortDirection, boolean upcoming, Long creatorId);
+
+    /**
+     * Récupérer les courses d'une association spécifique
+     */
+    List<Course> getCoursesByAssociationId(Long associationId) throws Exception;
+
+    /**
+     * Filtrer les courses à venir d'une liste existante
+     */
+    List<Course> filterUpcomingCourses(List<Course> courses);
+
+    /**
+     * Filtrer les courses passées d'une liste existante
+     */
+    List<Course> filterPastCourses(List<Course> courses);
 }

@@ -10,6 +10,7 @@ import fr.esgi.color_run.business.GeoLocation;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Comparator;
@@ -316,5 +317,37 @@ public class CourseServiceImpl implements CourseService {
             default:
                 return null;
         }
+    }
+
+    @Override
+    public List<Course> getCoursesByAssociationId(Long associationId) throws Exception {
+        if (associationId == null) {
+            return new ArrayList<>();
+        }
+
+        // Récupérer toutes les courses et filtrer par associationId
+        List<Course> allCourses = courseRepository.findAll();
+        return allCourses.stream()
+                .filter(course -> course.getAssociationId() != null &&
+                        course.getAssociationId().equals(associationId.intValue()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Course> filterUpcomingCourses(List<Course> courses) {
+        LocalDateTime now = LocalDateTime.now();
+        return courses.stream()
+                .filter(course -> course.getStartDate() != null && course.getStartDate().isAfter(now))
+                .sorted(Comparator.comparing(Course::getStartDate))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Course> filterPastCourses(List<Course> courses) {
+        LocalDateTime now = LocalDateTime.now();
+        return courses.stream()
+                .filter(course -> course.getStartDate() != null && course.getStartDate().isBefore(now))
+                .sorted(Comparator.comparing(Course::getStartDate).reversed())
+                .collect(Collectors.toList());
     }
 }
