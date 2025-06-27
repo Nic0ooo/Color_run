@@ -157,6 +157,13 @@
 
 <!-- Script pour initialiser les icônes -->
 <script>
+  window.currentMemberId = /*[[${currentMemberId}]]*/ null;
+  window.userRole = /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE';
+
+  console.log('🔍 Debug initialization:');
+  console.log('  - Member ID:', window.currentMemberId);
+  console.log('  - Member role:', /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE');
+
   document.addEventListener('DOMContentLoaded', function() {
     // Initialiser les icônes Lucide
     lucide.createIcons();

@@ -54,6 +54,42 @@
                     </div>
                 </div>
 
+                <!-- Filtres par rôle -->
+                <div th:if="${member != null}" class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                        <i data-lucide="filter" class="w-4 h-4 mr-2 text-teal-600"></i>
+                        Filtres personnalisés
+                    </h3>
+
+                    <div class="flex flex-wrap gap-3">
+                        <!-- Bouton pour toutes les courses (par défaut) -->
+                        <button th:id="${tableMode + '-filter-all'}"
+                                th:attr="onclick=|toggleCourseFilter('${tableMode}', 'all')|"
+                                class="filter-btn active inline-flex items-center bg-teal-500 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                            <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                            Toutes les courses
+                        </button>
+
+                        <!-- Filtre pour les organisateurs -->
+                        <button th:if="${member.role.name() == 'ORGANIZER' or member.role.name() == 'ADMIN'}"
+                                th:id="${tableMode + '-filter-my-created'}"
+                                th:attr="onclick=|toggleCourseFilter('${tableMode}', 'my-created')|"
+                                class="filter-btn inline-flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-2 px-4 rounded-lg transition-colors">
+                            <i data-lucide="user-check" class="w-4 h-4 mr-2"></i>
+                            Mes courses créées
+                        </button>
+
+                        <!-- Filtre pour les participants (runners et organisateurs peuvent s'inscrire) -->
+                        <button th:if="${member.role.name() == 'RUNNER' or member.role.name() == 'ORGANIZER'}"
+                                th:id="${tableMode + '-filter-my-registered'}"
+                                th:attr="onclick=|toggleCourseFilter('${tableMode}', 'my-registered')|"
+                                class="filter-btn inline-flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-2 px-4 rounded-lg transition-colors">
+                            <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+                            Mes inscriptions
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Bouton de recherche/filtrage -->
                 <div id="showSearchParamFormButton" class="mb-6">
                     <button onclick="toggleSearchParam()"
@@ -233,7 +269,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex gap-2">
-                                            <button  th:if="${tableMode == 'allCourses' and member != null and (member.role.name() == 'ORGANIZER' or member.role.name() == 'ADMIN') }"
+                                            <button  th:if="${tableMode == 'allCourses' and member != null and (member.role.name() == 'ADMIN' or (member.role.name() == 'ORGANIZER' and course.memberCreatorId == member.id))}"
                                                     th:data-id="${course.id}"
                                                     th:data-name="${course.name}"
                                                     th:data-description="${course.description}"
@@ -726,16 +762,16 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">ID Association *</label>
-                            <input type="number" id="edit-associationId" name="associationId" placeholder="1" required
-                                   class="input-style">
+                            <label for="editAssociationId" class="block text-sm font-medium text-gray-700">Association bénéficiaire</label>
+                            <select id="editAssociationId" name="associationId" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                                <option value="0">Aucune association</option>
+                                <option th:each="assoc : ${memberAssociations}" th:value="${assoc.id}" th:text="${assoc.name}"></option>
+                            </select>
+                            <p class="text-sm text-gray-500 mt-1">Sélectionnez une association.</p>
                         </div>
 
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">ID Créateur *</label>
-                            <input type="number" id="edit-memberCreatorId" name="memberCreatorId" placeholder="1" required
-                                   class="input-style">
-                        </div>
+                        <input type="hidden" id="editMemberCreatorId" name="memberCreatorId">
+
 
                         <div class="md:col-span-2 pt-4">
                             <button type="submit"
@@ -755,6 +791,12 @@
     // Variables globales pour éviter les conflits
     window.coursesApp = window.coursesApp || {};
 
+    // Récupération explicite des données du membre dans le fragment
+    const memberData = {
+        id: /*[[${member != null ? member.id : null}]]*/ null,
+        role: /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE'
+    };
+
     // Configuration
     const COURSES_APP = {
         currentTableMode: /*[[${tableMode}]]*/ 'allCourses',
@@ -764,6 +806,8 @@
         createMapState: {startMarker: null, endMarker: null, clickCount: 0},
         editMapState: {startMarker: null, endMarker: null, clickCount: 0},
         currentMapMode: 'create',
+        currentMemberId: memberData.id,
+        userRole: memberData.role,
         // Configuration de pagination
         pagination: {
             upcoming: {
@@ -790,8 +834,13 @@
         const upcomingTab = document.getElementById(COURSES_APP.currentTableMode + '-tab-upcoming');
         const pastTab = document.getElementById(COURSES_APP.currentTableMode + '-tab-past');
 
-        // Récupérer le rôle de l'utilisateur depuis Thymeleaf
-        COURSES_APP.userRole = /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE';
+        // Debug pour vérifier les valeurs
+        console.log('🔍 CoursesTable Debug:');
+        console.log('  - Membre ID:', COURSES_APP.currentMemberId);
+        console.log('  - Rôle utilisateur:', COURSES_APP.userRole);
+        console.log('  - Mode tableau:', COURSES_APP.currentTableMode);
+
+        COURSES_APP.currentFilter = 'all'; // all, my-created, my-registered
 
         if (upcomingTab && pastTab) {
             switchTabDynamic(COURSES_APP.currentTableMode, COURSES_APP.currentActiveTab);
@@ -881,6 +930,10 @@
         if (toDate) params.append('toDate', toDate);
         if (sortBy) params.append('sortBy', sortBy);
         if (sortDirection) params.append('sortDirection', sortDirection);
+
+        // Ajouter le filtre personnalisé
+        params.append('courseFilter', COURSES_APP.currentFilter);
+
         params.append('upcomingPage', upcomingPage);
         params.append('pastPage', pastPage);
         params.append('pageSize', pageSize);
@@ -914,6 +967,37 @@
         document.getElementById('hiddenSortDirection').value = newDirection;
 
         performDynamicSearch();
+    }
+
+    function toggleCourseFilter(tableMode, filterType) {
+        // Mettre à jour le filtre actuel
+        COURSES_APP.currentFilter = filterType;
+
+        // Mettre à jour l'apparence des boutons
+        const allButtons = document.querySelectorAll(`[id^="${tableMode}-filter-"]`);
+        allButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            btn.classList.remove('bg-teal-500', 'text-white');
+        });
+
+        // Activer le bouton sélectionné
+        const activeButton = document.getElementById(`${tableMode}-filter-${filterType}`);
+        if (activeButton) {
+            activeButton.classList.add('active');
+            activeButton.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            activeButton.classList.add('bg-teal-500', 'text-white');
+        }
+
+        // Réinitialiser la pagination
+        COURSES_APP.pagination.upcoming.currentPage = 1;
+        COURSES_APP.pagination.past.currentPage = 1;
+
+        // Relancer la recherche avec le nouveau filtre
+        performDynamicSearch();
+
+        // Réinitialiser les icônes
+        lucide.createIcons();
     }
 
     function updateTablesWithData(data) {
@@ -976,33 +1060,51 @@
             const distanceBadge = isUpcoming ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
             const progressColor = isUpcoming ? 'bg-teal-500' : 'bg-gray-400';
 
-            const isAdminOrOrganizer = COURSES_APP.userRole === 'ADMIN' || COURSES_APP.userRole === 'ORGANIZER';
+            // Récupérer l'ID du membre connecté depuis les variables globales
+            const currentMemberId = window.currentMemberId || null;
 
-            const actionButtons = COURSES_APP.currentTableMode === 'allCourses' && isUpcoming && isAdminOrOrganizer
+            const creatorId = course.memberCreatorId;
+            const isAdmin = COURSES_APP.userRole === 'ADMIN';
+            const isOrganizerAndCreator = COURSES_APP.userRole === 'ORGANIZER' &&
+                COURSES_APP.currentMemberId &&
+                creatorId &&
+                parseInt(creatorId) === parseInt(COURSES_APP.currentMemberId);
+
+            const canEdit = isAdmin || isOrganizerAndCreator;
+
+            console.log(`🔍 Course ${course.id} permissions:`, {
+                creatorId: creatorId,
+                currentMemberId: COURSES_APP.currentMemberId,
+                isAdmin: isAdmin,
+                isOrganizerAndCreator: isOrganizerAndCreator,
+                canEdit: canEdit
+            });
+
+            const actionButtons = COURSES_APP.currentTableMode === 'allCourses' && isUpcoming && canEdit
                 ? `<div class="flex gap-2">
-                     <button onclick="editCourseFromData(this)"
-                       data-id="${course.id}" data-name="${course.name}" data-description="${course.description}"
-                       data-city="${course.city}" data-zip-code="${course.zipCode}" data-address="${course.address}"
-                       data-distance="${course.distance}" data-price="${course.price}" data-start-date="${course.startDate}"
-                       data-end-date="${course.endDate}" data-start-lat="${course.startpositionLatitude}"
-                       data-start-long="${course.startpositionLongitude}" data-end-lat="${course.endpositionLatitude}"
-                       data-end-long="${course.endpositionLongitude}" data-max-runners="${course.maxOfRunners}"
-                       data-association-id="${course.associationId}" data-member-id="${course.memberCreatorId}"
-                       class="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
-                       <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
-                       Modifier
-                     </button>
-                     <a href="course-detail?id=${course.id}"
-                        class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
-                        <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
-                        Détails
-                     </a>
-                   </div>`
+                 <button onclick="editCourseFromData(this)"
+                   data-id="${course.id}" data-name="${course.name}" data-description="${course.description}"
+                   data-city="${course.city}" data-zip-code="${course.zipCode}" data-address="${course.address}"
+                   data-distance="${course.distance}" data-price="${course.price}" data-start-date="${course.startDate}"
+                   data-end-date="${course.endDate}" data-start-lat="${course.startpositionLatitude}"
+                   data-start-long="${course.startpositionLongitude}" data-end-lat="${course.endpositionLatitude}"
+                   data-end-long="${course.endpositionLongitude}" data-max-runners="${course.maxOfRunners}"
+                   data-association-id="${course.associationId}" data-member-id="${course.memberCreatorId}"
+                   class="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                   <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
+                   Modifier
+                 </button>
+                 <a href="course-detail?id=${course.id}"
+                    class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                    <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                    Détails
+                 </a>
+               </div>`
                 : `<a href="course-detail?id=${course.id}"
-                     class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
-                     <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
-                     Détails
-                   </a>`;
+                 class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                 <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                 Détails
+               </a>`;
 
             return `
         <tr class="hover:bg-gray-50 transition-colors">
