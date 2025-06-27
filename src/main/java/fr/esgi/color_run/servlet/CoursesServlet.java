@@ -360,7 +360,9 @@ public class CoursesServlet extends HttpServlet {
             courseMap.put("endpositionLongitude", course.getEndpositionLongitude());
             courseMap.put("maxOfRunners", course.getMaxOfRunners());
             courseMap.put("currentNumberOfRunners", course.getCurrentNumberOfRunners());
-            courseMap.put("associationId", course.getAssociationId());
+
+            // Gestion sécurisée de l'associationId - peut être null
+            courseMap.put("associationId", course.getAssociationId() != null ? course.getAssociationId() : 0);
             courseMap.put("memberCreatorId", course.getMemberCreatorId());
 
             result.add(courseMap);
@@ -390,6 +392,7 @@ public class CoursesServlet extends HttpServlet {
         }
     }
 
+    // MODIFICATION SIMILAIRE POUR handleCreate (pour la cohérence)
     private void handleCreate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String name = req.getParameter("name");
         String description = req.getParameter("description");
@@ -410,23 +413,51 @@ public class CoursesServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
-        double startLongitude = Double.parseDouble(req.getParameter("startLongitude"));
-        double endLatitude = Double.parseDouble(req.getParameter("endLatitude"));
-        double endLongitude = Double.parseDouble(req.getParameter("endLongitude"));
+        // VALIDATION DES COORDONNÉES - NOUVEAU
+        String startLatStr = req.getParameter("startLatitude");
+        String startLongStr = req.getParameter("startLongitude");
+        String endLatStr = req.getParameter("endLatitude");
+        String endLongStr = req.getParameter("endLongitude");
+
+        if (startLatStr == null || startLatStr.isEmpty() ||
+                startLongStr == null || startLongStr.isEmpty() ||
+                endLatStr == null || endLatStr.isEmpty() ||
+                endLongStr == null || endLongStr.isEmpty()) {
+
+            resp.sendRedirect(req.getContextPath() + "/courses?error=missing_coordinates");
+            return;
+        }
+
+        double startLatitude, startLongitude, endLatitude, endLongitude;
+        try {
+            startLatitude = Double.parseDouble(startLatStr);
+            startLongitude = Double.parseDouble(startLongStr);
+            endLatitude = Double.parseDouble(endLatStr);
+            endLongitude = Double.parseDouble(endLongStr);
+        } catch (NumberFormatException e) {
+            resp.sendRedirect(req.getContextPath() + "/courses?error=invalid_coordinates");
+            return;
+        }
+
         double distance = Double.parseDouble(req.getParameter("distance"));
         int zipCode = Integer.parseInt(req.getParameter("zipCode"));
         int maxOfRunners = Integer.parseInt(req.getParameter("maxOfRunners"));
+
+        // GESTION COHÉRENTE DE L'ASSOCIATION ID
         Integer associationId = null;
-        try {
-            associationId = Integer.parseInt(req.getParameter("associationId"));
-        } catch (NumberFormatException e) {
-            System.err.println("Association ID invalide, valeur par défaut utilisée.");
+        String associationIdParam = req.getParameter("associationId");
+
+        if (associationIdParam != null && !associationIdParam.trim().isEmpty()) {
+            try {
+                int tempAssocId = Integer.parseInt(associationIdParam.trim());
+                if (tempAssocId > 0) {
+                    associationId = tempAssocId;
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Association ID invalide lors de la création, aucune association sera assignée.");
+            }
         }
-        // Si associationId est vide, on le met à null
-        if (associationId != null && associationId == 0) {
-            associationId = null;
-        }
+
         int memberCreatorId = Integer.parseInt(req.getParameter("memberCreatorId"));
         double price = Double.parseDouble(req.getParameter("price"));
 
@@ -449,9 +480,14 @@ public class CoursesServlet extends HttpServlet {
         course.setMemberCreatorId(memberCreatorId);
         course.setPrice(price);
 
-        courseService.createCourse(course);
-
-        resp.sendRedirect(req.getContextPath() + "/courses");
+        try {
+            courseService.createCourse(course);
+            resp.sendRedirect(req.getContextPath() + "/courses?success=course_created");
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la création de la course: " + e.getMessage());
+            e.printStackTrace();
+            resp.sendRedirect(req.getContextPath() + "/courses?error=creation_failed");
+        }
     }
 
     private void handleUpdate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -475,23 +511,56 @@ public class CoursesServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        double startLatitude = Double.parseDouble(req.getParameter("startLatitude"));
-        double startLongitude = Double.parseDouble(req.getParameter("startLongitude"));
-        double endLatitude = Double.parseDouble(req.getParameter("endLatitude"));
-        double endLongitude = Double.parseDouble(req.getParameter("endLongitude"));
+        // VALIDATION DES COORDONNÉES - NOUVEAU
+        String startLatStr = req.getParameter("startLatitude");
+        String startLongStr = req.getParameter("startLongitude");
+        String endLatStr = req.getParameter("endLatitude");
+        String endLongStr = req.getParameter("endLongitude");
+
+        if (startLatStr == null || startLatStr.isEmpty() ||
+                startLongStr == null || startLongStr.isEmpty() ||
+                endLatStr == null || endLatStr.isEmpty() ||
+                endLongStr == null || endLongStr.isEmpty()) {
+
+            // Rediriger avec un message d'erreur
+            resp.sendRedirect(req.getContextPath() + "/courses?error=missing_coordinates");
+            return;
+        }
+
+        double startLatitude, startLongitude, endLatitude, endLongitude;
+        try {
+            startLatitude = Double.parseDouble(startLatStr);
+            startLongitude = Double.parseDouble(startLongStr);
+            endLatitude = Double.parseDouble(endLatStr);
+            endLongitude = Double.parseDouble(endLongStr);
+        } catch (NumberFormatException e) {
+            resp.sendRedirect(req.getContextPath() + "/courses?error=invalid_coordinates");
+            return;
+        }
+
         double distance = Double.parseDouble(req.getParameter("distance"));
         int zipCode = Integer.parseInt(req.getParameter("zipCode"));
         int maxOfRunners = Integer.parseInt(req.getParameter("maxOfRunners"));
+
+        // GESTION AMÉLIORÉE DE L'ASSOCIATION ID - MODIFIÉ
         Integer associationId = null;
-        try {
-            associationId = Integer.parseInt(req.getParameter("associationId"));
-        } catch (NumberFormatException e) {
-            System.err.println("Association ID invalide, valeur par défaut utilisée.");
+        String associationIdParam = req.getParameter("associationId");
+
+        if (associationIdParam != null && !associationIdParam.trim().isEmpty()) {
+            try {
+                int tempAssocId = Integer.parseInt(associationIdParam.trim());
+                // Si la valeur est 0 ou négative, on considère qu'aucune association n'est sélectionnée
+                if (tempAssocId > 0) {
+                    associationId = tempAssocId;
+                }
+                // Sinon associationId reste null
+            } catch (NumberFormatException e) {
+                System.err.println("Association ID invalide: '" + associationIdParam + "', aucune association sera assignée.");
+                // associationId reste null
+            }
         }
-        // Si associationId est vide, on le met à null
-        if (associationId != null && associationId == 0) {
-            associationId = null;
-        }
+
+        System.out.println("🔧 Association ID final: " + associationId);
 
         // IMPORTANT: Ne pas modifier le memberCreatorId lors d'une mise à jour
         // Récupérer la course existante pour conserver le créateur original
@@ -519,6 +588,8 @@ public class CoursesServlet extends HttpServlet {
         course.setZipCode(zipCode);
         course.setMaxOfRunners(maxOfRunners);
         course.setCurrentNumberOfRunners(existingCourse.getCurrentNumberOfRunners()); // Conserver le nombre actuel
+
+        // ASSIGNATION DE L'ASSOCIATION ID (peut être null) - MODIFIÉ
         course.setAssociationId(associationId);
 
         // CONSERVER le memberCreatorId original - ne jamais le modifier lors d'une mise à jour
@@ -526,9 +597,14 @@ public class CoursesServlet extends HttpServlet {
 
         course.setPrice(price);
 
-        courseService.updateCourse(course);
-
-        resp.sendRedirect(req.getContextPath() + "/courses");
+        try {
+            courseService.updateCourse(course);
+            resp.sendRedirect(req.getContextPath() + "/courses?success=course_updated");
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la mise à jour de la course: " + e.getMessage());
+            e.printStackTrace();
+            resp.sendRedirect(req.getContextPath() + "/courses?error=update_failed");
+        }
     }
 
     private void showCourseDetail(String courseId, WebContext context, TemplateEngine engine,
