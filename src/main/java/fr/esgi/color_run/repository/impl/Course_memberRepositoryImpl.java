@@ -249,7 +249,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
 
         @Override
         public List<Course> findPastCoursesByMemberId(long memberId) {
-            String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.end_date < NOW()";
+            String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.enddate < NOW()";
             try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setLong(1, memberId);
                 ResultSet rs = pstmt.executeQuery();
@@ -267,7 +267,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
 
     @Override
     public List<Course> findUpcomingCoursesByMemberId(long memberId) {
-        String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.end_date > NOW()";
+        String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.enddate > NOW()";
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, memberId);
             ResultSet rs = pstmt.executeQuery();

@@ -168,6 +168,9 @@ INSERT INTO member (role, name, firstname, email, password, phoneNumber, address
 SELECT 'ORGANIZER', 'Lefebvre', 'Antoine', 'antoine.lefebvre@email.com', 'antoine123', '0701234567', '23 boulevard Jean Jaurès', 'Grenoble', 38000, 45.1885, 5.7245
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'antoine.lefebvre@email.com');
 
+INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
+SELECT 'ORGANIZER', 'Varin', 'Elise', 'elisevarin@email.com', 'elise123', '0781235537', '19 Pl. des Célestins','Lyon', '69002', 45.75989913978603, 4.831608799811371
+WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'elisevarin@email.com');
 
 -- Associations
 INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
@@ -193,6 +196,10 @@ WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'contact@courirplanete
 INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode)
 SELECT 'Montagne & Running', 'Courses en montagne et trails', 'www.montagnerunning.com', '/images/logo7.png', 'info@montagnerunning.com', '0723456789', '18 chemin des Cimes', 'Grenoble', 38000
 WHERE NOT EXISTS (SELECT 1 FROM association WHERE email = 'info@montagnerunning.com');
+
+INSERT INTO association (name, description, websiteLink, email, phoneNumber, address, city, zipCode)
+SELECT 'Run In Lyon', 'Association sportive de Lyon pour promouvoir le sport et la culture lyonnaise.', 'https://www.runinlyon.com/fr', 'info@runinlyon.fr', '0450709654', '9 Pl. des Célestins', 'Lyon', '69002'
+WHERE NOT EXISTS(SELECT 1 FROM association WHERE email = 'info@runinlyon.fr');
 
 -- Courses
 INSERT INTO course (name, description, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
@@ -222,6 +229,19 @@ SELECT 'Trail des Sommets', 'Parcours technique en moyenne montagne', a.id, m.id
 FROM association a, member m
 WHERE a.name = 'Montagne & Running' AND m.email = 'antoine.lefebvre@email.com'
   AND NOT EXISTS (SELECT 1 FROM course WHERE name = 'Trail des Sommets');
+
+INSERT INTO course(name, description, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+SELECT 'Color Beer Run', 'Une course festive avec de la bière et de la couleur', m.id, '2025-08-20 16:00', '2025-08-20 19:00', 48.8566, 2.3522, 48.8606, 2.3376, 5.0, 'Parc des Buttes-Chaumont', 'Paris', 75019, 2000, 500, 20.0
+FROM member m
+WHERE m.email = 'alice.durand@email.com'
+  AND NOT EXISTS (SELECT 1 FROM course WHERE name = 'Color Beer Run');
+
+INSERT INTO course(name, description, associationId, memberCreatorId, startDate, endDate, startPositionLatitude, startPositionLongitude, endPositionLatitude, endPositionLongitude, distance, address, city, zipCode, maxOfRunners, currentNumberOfRunners, price)
+SELECT 'Bocuse Color Run', 'Une course colorée et gourmande à Lyon', a.id, m.id, '2025-09-10 10:00', '2025-09-10 12:00', 45.764, 4.8357, 45.7700, 4.8300, 8.0, 'Parc de la Tête d''Or', 'Lyon', 69006, 1500, 300, 30.0
+FROM association a, member m
+WHERE a.name = 'Run In Lyon' AND m.email = 'elisevarin@email.com'
+  AND NOT EXISTS (SELECT 1 FROM course WHERE name = 'Bocuse Color Run');
+
 
 -- CourseMember
 INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus, stripeSessionId)

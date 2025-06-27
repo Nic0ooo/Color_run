@@ -54,6 +54,42 @@
                     </div>
                 </div>
 
+                <!-- Filtres par rôle -->
+                <div th:if="${member != null}" class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                        <i data-lucide="filter" class="w-4 h-4 mr-2 text-teal-600"></i>
+                        Filtres personnalisés
+                    </h3>
+
+                    <div class="flex flex-wrap gap-3">
+                        <!-- Bouton pour toutes les courses (par défaut) -->
+                        <button th:id="${tableMode + '-filter-all'}"
+                                th:attr="onclick=|toggleCourseFilter('${tableMode}', 'all')|"
+                                class="filter-btn active inline-flex items-center bg-teal-500 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                            <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                            Toutes les courses
+                        </button>
+
+                        <!-- Filtre pour les organisateurs -->
+                        <button th:if="${member.role.name() == 'ORGANIZER' or member.role.name() == 'ADMIN'}"
+                                th:id="${tableMode + '-filter-my-created'}"
+                                th:attr="onclick=|toggleCourseFilter('${tableMode}', 'my-created')|"
+                                class="filter-btn inline-flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-2 px-4 rounded-lg transition-colors">
+                            <i data-lucide="user-check" class="w-4 h-4 mr-2"></i>
+                            Mes courses créées
+                        </button>
+
+                        <!-- Filtre pour les participants (runners et organisateurs peuvent s'inscrire) -->
+                        <button th:if="${member.role.name() == 'RUNNER' or member.role.name() == 'ORGANIZER'}"
+                                th:id="${tableMode + '-filter-my-registered'}"
+                                th:attr="onclick=|toggleCourseFilter('${tableMode}', 'my-registered')|"
+                                class="filter-btn inline-flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-2 px-4 rounded-lg transition-colors">
+                            <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+                            Mes inscriptions
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Bouton de recherche/filtrage -->
                 <div id="showSearchParamFormButton" class="mb-6">
                     <button onclick="toggleSearchParam()"
@@ -233,7 +269,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex gap-2">
-                                            <button  th:if="${tableMode == 'allCourses' and member != null and (member.role.name() == 'ORGANIZER' or member.role.name() == 'ADMIN') }"
+                                            <button  th:if="${tableMode == 'allCourses' and member != null and (member.role.name() == 'ADMIN' or (member.role.name() == 'ORGANIZER' and course.memberCreatorId == member.id))}"
                                                     th:data-id="${course.id}"
                                                     th:data-name="${course.name}"
                                                     th:data-description="${course.description}"
@@ -544,10 +580,10 @@
                     </div>
 
                     <!-- Champs cachés pour les coordonnées -->
-                    <input type="hidden" id="startLatitude" name="startLatitude" />
-                    <input type="hidden" id="startLongitude" name="startLongitude" />
-                    <input type="hidden" id="endLatitude" name="endLatitude" />
-                    <input type="hidden" id="endLongitude" name="endLongitude" />
+                    <input type="hidden" id="startLatitude" name="startLatitude" required />
+                    <input type="hidden" id="startLongitude" name="startLongitude" required />
+                    <input type="hidden" id="endLatitude" name="endLatitude" required/>
+                    <input type="hidden" id="endLongitude" name="endLongitude" required />
 
                     <div class="md:col-span-2 space-y-4">
                         <div class="flex items-center space-x-4">
@@ -709,10 +745,10 @@
                         </div>
 
                         <!-- Champs cachés pour les coordonnées -->
-                        <input type="hidden" id="edit-startLatitude" name="startLatitude" />
-                        <input type="hidden" id="edit-startLongitude" name="startLongitude" />
-                        <input type="hidden" id="edit-endLatitude" name="endLatitude" />
-                        <input type="hidden" id="edit-endLongitude" name="endLongitude" />
+                        <input type="hidden" id="edit-startLatitude" name="startLatitude" required />
+                        <input type="hidden" id="edit-startLongitude" name="startLongitude" required />
+                        <input type="hidden" id="edit-endLatitude" name="endLatitude" required />
+                        <input type="hidden" id="edit-endLongitude" name="endLongitude" required />
 
                         <div class="md:col-span-2 space-y-4">
                             <div class="flex items-center space-x-4">
@@ -726,16 +762,16 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">ID Association *</label>
-                            <input type="number" id="edit-associationId" name="associationId" placeholder="1" required
-                                   class="input-style">
+                            <label for="editAssociationId" class="block text-sm font-medium text-gray-700">Association bénéficiaire</label>
+                            <select id="editAssociationId" name="associationId" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                                <option value="0">Aucune association</option>
+                                <option th:each="assoc : ${memberAssociations}" th:value="${assoc.id}" th:text="${assoc.name}"></option>
+                            </select>
+                            <p class="text-sm text-gray-500 mt-1">Sélectionnez une association.</p>
                         </div>
 
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">ID Créateur *</label>
-                            <input type="number" id="edit-memberCreatorId" name="memberCreatorId" placeholder="1" required
-                                   class="input-style">
-                        </div>
+                        <input type="hidden" id="editMemberCreatorId" name="memberCreatorId">
+
 
                         <div class="md:col-span-2 pt-4">
                             <button type="submit"
@@ -755,6 +791,12 @@
     // Variables globales pour éviter les conflits
     window.coursesApp = window.coursesApp || {};
 
+    // Récupération explicite des données du membre dans le fragment
+    const memberData = {
+        id: /*[[${member != null ? member.id : null}]]*/ null,
+        role: /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE'
+    };
+
     // Configuration
     const COURSES_APP = {
         currentTableMode: /*[[${tableMode}]]*/ 'allCourses',
@@ -764,6 +806,8 @@
         createMapState: {startMarker: null, endMarker: null, clickCount: 0},
         editMapState: {startMarker: null, endMarker: null, clickCount: 0},
         currentMapMode: 'create',
+        currentMemberId: memberData.id,
+        userRole: memberData.role,
         // Configuration de pagination
         pagination: {
             upcoming: {
@@ -783,6 +827,78 @@
 
     // Initialisation au chargement de la page
     document.addEventListener('DOMContentLoaded', function() {
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const success = urlParams.get('success');
+
+        if (error) {
+            let message = '';
+            switch(error) {
+                case 'missing_coordinates':
+                    message = 'Veuillez renseigner les points de départ et d\'arrivée avant d\'enregistrer la course.';
+                    break;
+                case 'invalid_coordinates':
+                    message = 'Les coordonnées fournies ne sont pas valides.';
+                    break;
+                case 'update_failed':
+                    message = 'Erreur lors de la mise à jour de la course.';
+                    break;
+                case 'creation_failed':
+                    message = 'Erreur lors de la création de la course.';
+                    break;
+                default:
+                    message = 'Une erreur est survenue.';
+            }
+
+            // Afficher le message d'erreur
+            showNotification(message, 'error');
+        }
+
+        if (success) {
+            let message = '';
+            switch(success) {
+                case 'course_created':
+                    message = 'Course créée avec succès !';
+                    break;
+                case 'course_updated':
+                    message = 'Course mise à jour avec succès !';
+                    break;
+                default:
+                    message = 'Opération réussie !';
+            }
+
+            showNotification(message, 'success');
+        }
+
+        // Nettoyer l'URL
+        if (error || success) {
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+
+        // Validation pour le formulaire de création
+        const createForm = document.querySelector('#courseForm form');
+        if (createForm) {
+            createForm.addEventListener('submit', function(e) {
+                if (!validateCoordinates('create')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+
+        // Validation pour le formulaire de modification
+        const editForm = document.querySelector('#editCourseForm form');
+        if (editForm) {
+            editForm.addEventListener('submit', function(e) {
+                if (!validateCoordinates('edit')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+
         // Initialiser les icônes Lucide
         lucide.createIcons();
 
@@ -790,8 +906,7 @@
         const upcomingTab = document.getElementById(COURSES_APP.currentTableMode + '-tab-upcoming');
         const pastTab = document.getElementById(COURSES_APP.currentTableMode + '-tab-past');
 
-        // Récupérer le rôle de l'utilisateur depuis Thymeleaf
-        COURSES_APP.userRole = /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE';
+        COURSES_APP.currentFilter = 'all'; // all, my-created, my-registered
 
         if (upcomingTab && pastTab) {
             switchTabDynamic(COURSES_APP.currentTableMode, COURSES_APP.currentActiveTab);
@@ -803,6 +918,45 @@
         // Déclencher la pagination dès le chargement initial
         performDynamicSearch();
     });
+
+    // Fonction pour afficher les notifications
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            type === 'error'
+                ? 'bg-red-500 text-white'
+                : 'bg-green-500 text-white'
+        } transform transition-all duration-300 translate-x-full`;
+
+        notification.innerHTML = `
+        <div class="flex items-center">
+            <i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 mr-2"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+
+        document.body.appendChild(notification);
+
+        // Animer l'entrée
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+
+        // Auto-suppression après 5 secondes
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
 
     function initializeDynamicSearch() {
         const searchInput = document.getElementById('searchInput');
@@ -881,6 +1035,10 @@
         if (toDate) params.append('toDate', toDate);
         if (sortBy) params.append('sortBy', sortBy);
         if (sortDirection) params.append('sortDirection', sortDirection);
+
+        // Ajouter le filtre personnalisé
+        params.append('courseFilter', COURSES_APP.currentFilter);
+
         params.append('upcomingPage', upcomingPage);
         params.append('pastPage', pastPage);
         params.append('pageSize', pageSize);
@@ -914,6 +1072,37 @@
         document.getElementById('hiddenSortDirection').value = newDirection;
 
         performDynamicSearch();
+    }
+
+    function toggleCourseFilter(tableMode, filterType) {
+        // Mettre à jour le filtre actuel
+        COURSES_APP.currentFilter = filterType;
+
+        // Mettre à jour l'apparence des boutons
+        const allButtons = document.querySelectorAll(`[id^="${tableMode}-filter-"]`);
+        allButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            btn.classList.remove('bg-teal-500', 'text-white');
+        });
+
+        // Activer le bouton sélectionné
+        const activeButton = document.getElementById(`${tableMode}-filter-${filterType}`);
+        if (activeButton) {
+            activeButton.classList.add('active');
+            activeButton.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            activeButton.classList.add('bg-teal-500', 'text-white');
+        }
+
+        // Réinitialiser la pagination
+        COURSES_APP.pagination.upcoming.currentPage = 1;
+        COURSES_APP.pagination.past.currentPage = 1;
+
+        // Relancer la recherche avec le nouveau filtre
+        performDynamicSearch();
+
+        // Réinitialiser les icônes
+        lucide.createIcons();
     }
 
     function updateTablesWithData(data) {
@@ -976,33 +1165,51 @@
             const distanceBadge = isUpcoming ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
             const progressColor = isUpcoming ? 'bg-teal-500' : 'bg-gray-400';
 
-            const isAdminOrOrganizer = COURSES_APP.userRole === 'ADMIN' || COURSES_APP.userRole === 'ORGANIZER';
+            // Récupérer l'ID du membre connecté depuis les variables globales
+            const currentMemberId = window.currentMemberId || null;
 
-            const actionButtons = COURSES_APP.currentTableMode === 'allCourses' && isUpcoming && isAdminOrOrganizer
+            const creatorId = course.memberCreatorId;
+            const isAdmin = COURSES_APP.userRole === 'ADMIN';
+            const isOrganizerAndCreator = COURSES_APP.userRole === 'ORGANIZER' &&
+                COURSES_APP.currentMemberId &&
+                creatorId &&
+                parseInt(creatorId) === parseInt(COURSES_APP.currentMemberId);
+
+            const canEdit = isAdmin || isOrganizerAndCreator;
+
+            console.log(`🔍 Course ${course.id} permissions:`, {
+                creatorId: creatorId,
+                currentMemberId: COURSES_APP.currentMemberId,
+                isAdmin: isAdmin,
+                isOrganizerAndCreator: isOrganizerAndCreator,
+                canEdit: canEdit
+            });
+
+            const actionButtons = COURSES_APP.currentTableMode === 'allCourses' && isUpcoming && canEdit
                 ? `<div class="flex gap-2">
-                     <button onclick="editCourseFromData(this)"
-                       data-id="${course.id}" data-name="${course.name}" data-description="${course.description}"
-                       data-city="${course.city}" data-zip-code="${course.zipCode}" data-address="${course.address}"
-                       data-distance="${course.distance}" data-price="${course.price}" data-start-date="${course.startDate}"
-                       data-end-date="${course.endDate}" data-start-lat="${course.startpositionLatitude}"
-                       data-start-long="${course.startpositionLongitude}" data-end-lat="${course.endpositionLatitude}"
-                       data-end-long="${course.endpositionLongitude}" data-max-runners="${course.maxOfRunners}"
-                       data-association-id="${course.associationId}" data-member-id="${course.memberCreatorId}"
-                       class="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
-                       <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
-                       Modifier
-                     </button>
-                     <a href="course-detail?id=${course.id}"
-                        class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
-                        <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
-                        Détails
-                     </a>
-                   </div>`
+                 <button onclick="editCourseFromData(this)"
+                   data-id="${course.id}" data-name="${course.name}" data-description="${course.description}"
+                   data-city="${course.city}" data-zip-code="${course.zipCode}" data-address="${course.address}"
+                   data-distance="${course.distance}" data-price="${course.price}" data-start-date="${course.startDate}"
+                   data-end-date="${course.endDate}" data-start-lat="${course.startpositionLatitude}"
+                   data-start-long="${course.startpositionLongitude}" data-end-lat="${course.endpositionLatitude}"
+                   data-end-long="${course.endpositionLongitude}" data-max-runners="${course.maxOfRunners}"
+                   data-association-id="${course.associationId || 0}" data-member-id="${course.memberCreatorId}"
+                   class="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                   <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
+                   Modifier
+                 </button>
+                 <a href="course-detail?id=${course.id}"
+                    class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                    <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                    Détails
+                 </a>
+               </div>`
                 : `<a href="course-detail?id=${course.id}"
-                     class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
-                     <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
-                     Détails
-                   </a>`;
+                 class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                 <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                 Détails
+               </a>`;
 
             return `
         <tr class="hover:bg-gray-50 transition-colors">
@@ -1115,6 +1322,22 @@
         performDynamicSearch();
     }
 
+    function validateCoordinates(formType = 'create') {
+        const prefix = formType === 'edit' ? 'edit-' : '';
+
+        const startLat = document.getElementById(prefix + 'startLatitude')?.value;
+        const startLng = document.getElementById(prefix + 'startLongitude')?.value;
+        const endLat = document.getElementById(prefix + 'endLatitude')?.value;
+        const endLng = document.getElementById(prefix + 'endLongitude')?.value;
+
+        if (!startLat || !startLng || !endLat || !endLng) {
+            alert('Veuillez renseigner les points de départ et d\'arrivée avant d\'enregistrer la course.');
+            return false;
+        }
+
+        return true;
+    }
+
     function editCourseFromData(button) {
         const dataset = button.dataset;
 
@@ -1144,6 +1367,19 @@
                 element.value = value;
             }
         });
+
+        // NOUVEAU: Gestion spéciale pour l'association
+        const associationSelect = document.getElementById('editAssociationId');
+        if (associationSelect) {
+            const associationId = dataset.associationId;
+            // Si associationId existe et n'est pas null/undefined/0
+            if (associationId && associationId !== '0' && associationId !== 'null') {
+                associationSelect.value = associationId;
+            } else {
+                // Aucune association - sélectionner "Aucune association"
+                associationSelect.value = '0';
+            }
+        }
 
         // Afficher le formulaire de modification
         const editForm = document.getElementById("editCourseForm");

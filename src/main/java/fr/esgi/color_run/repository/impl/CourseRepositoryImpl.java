@@ -77,7 +77,7 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public List<Course> findUpcomingCourses() {
         List<Course> upcomingCourses = new ArrayList<>();
-        String sql = "SELECT * FROM course WHERE startdate > CURRENT_TIMESTAMP";
+        String sql = "SELECT * FROM course WHERE startdate > CURRENT_TIMESTAMP ORDER BY startdate ASC";
         System.out.println("CourseRepositoryImpl: findUpcomingCourses() - Exécution de la requête pour récupérer les courses à venir.");
 
         try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
@@ -98,7 +98,7 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public List<Course> findPastCourses() {
         List<Course> pastCourses = new ArrayList<>();
-        String sql = "SELECT * FROM course WHERE startdate < CURRENT_TIMESTAMP";
+        String sql = "SELECT * FROM course WHERE startdate < CURRENT_TIMESTAMP ORDER BY startdate DESC";
         System.out.println("CourseRepositoryImpl: findPastCourses() - Exécution de la requête pour récupérer les courses passées.");
 
         try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
@@ -349,7 +349,11 @@ public class CourseRepositoryImpl implements CourseRepository {
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, course.getName());
             stmt.setString(2, course.getDescription());
-            stmt.setInt(3, course.getAssociationId());
+            if (course.getAssociationId() == null || course.getAssociationId() == 0) {
+                stmt.setNull(3, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(3, course.getAssociationId());
+            }
             stmt.setInt(4, course.getMemberCreatorId());
             stmt.setTimestamp(5, course.getStartDate()!= null ?
                     Timestamp.valueOf(course.getStartDate()) : null);
@@ -392,11 +396,11 @@ public class CourseRepositoryImpl implements CourseRepository {
             return new ArrayList<>();
         }
         List<Course> pastAssoCourses = new ArrayList<>();
-        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate DESC";
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate < CURRENT_TIMESTAMP ORDER BY startdate DESC";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, associationId);
             ResultSet resultSet = stmt.executeQuery();
-            if (resultSet.next()) {
+            while (resultSet.next()) {
                 pastAssoCourses.add(Mapper.mapRowToCourse(resultSet));
             }
         } catch (SQLException e) {
@@ -418,11 +422,11 @@ public class CourseRepositoryImpl implements CourseRepository {
             return new ArrayList<>();
         }
         List<Course> upcomingAssoCourses = new ArrayList<>();
-        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate DESC";
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate ASC";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, associationId);
             ResultSet resultSet = stmt.executeQuery();
-            if (resultSet.next()) {
+            while (resultSet.next()) {
                 upcomingAssoCourses.add(Mapper.mapRowToCourse(resultSet));
             }
         } catch (SQLException e) {

@@ -37,3 +37,10 @@
 .transition-all {
     transition: all 0.3s ease;
 }
+
+.filter-btn.active {
+    @apply bg-teal-500 text-white;
+}
+.filter-btn:not(.active) {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300;
+}
