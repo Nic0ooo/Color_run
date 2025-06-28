@@ -60,29 +60,11 @@
 
                 <!-- BOUTON ORGANIZER: Selon statut association -->
                 <div th:if="${member.role != null and member.role.toString() == 'ORGANIZER'}" class="flex flex-col md:flex-row items-center gap-3">
-                    <!-- Si l'organisateur n'a pas d'association -->
-                    <div th:if="${organizerHasAssociation == null}">
+                    <div>
                         <a href="/color_run_war/organizer-request"
                            class="px-4 py-2 border border-blue-500 text-blue-600 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
                             <i class="w-4 h-4" data-lucide="building-2"></i>
                             Rejoindre une association
-                        </a>
-                    </div>
-
-                    <!-- Si l'organisateur fait partie d'une association -->
-                    <div th:if="${organizerHasAssociation == true}">
-                        <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded">
-                            <i class="w-4 h-4 text-blue-600" data-lucide="building-2"></i>
-                            <span class="text-blue-700 text-sm font-medium">Mon Association</span>
-                        </div>
-                    </div>
-
-                    <!-- Bouton créer une course pour les organisateurs -->
-                    <div>
-                        <a href="/color_run_war/create-course"
-                           class="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors flex items-center gap-2">
-                            <i class="w-4 h-4" data-lucide="calendar-plus"></i>
-                            Créer une course
                         </a>
                     </div>
                 </div>

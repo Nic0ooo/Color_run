@@ -912,6 +912,8 @@
             switchTabDynamic(COURSES_APP.currentTableMode, COURSES_APP.currentActiveTab);
         }
 
+        handleFooterRedirection();
+
         // Initialiser les événements de recherche dynamique
         initializeDynamicSearch();
 
@@ -957,6 +959,35 @@
             }
         }, 5000);
     }
+
+    // Fonction globale pour gérer les redirections depuis le footer
+    window.handleFooterRedirection = function() {
+        // Vérifier si nous devons ouvrir l'onglet des courses passées
+        const openTab = sessionStorage.getItem('openTab');
+        if (openTab === 'past') {
+            console.log('🔄 Redirection footer: ouverture onglet courses passées');
+            setTimeout(function() {
+                const tableMode = COURSES_APP ? COURSES_APP.currentTableMode : 'allCourses';
+                if (typeof switchTabDynamic === 'function') {
+                    switchTabDynamic(tableMode, 'past');
+                }
+            }, 200);
+            sessionStorage.removeItem('openTab');
+        }
+
+        // Vérifier si nous devons ouvrir le filtre "mes inscriptions"
+        const openFilter = sessionStorage.getItem('openFilter');
+        if (openFilter === 'my-registered') {
+            console.log('🔄 Redirection footer: activation filtre mes inscriptions');
+            setTimeout(function() {
+                const tableMode = COURSES_APP ? COURSES_APP.currentTableMode : 'allCourses';
+                if (typeof toggleCourseFilter === 'function') {
+                    toggleCourseFilter(tableMode, 'my-registered');
+                }
+            }, 200);
+            sessionStorage.removeItem('openFilter');
+        }
+    };
 
     function initializeDynamicSearch() {
         const searchInput = document.getElementById('searchInput');

@@ -353,11 +353,7 @@
 </main>
 
 <!-- Footer -->
-<footer class="bg-white border-t p-4 mt-auto">
-    <div class="container mx-auto px-4 text-center">
-        <p class="text-sm text-gray-500">&copy; 2025 Color Run. Tous droits réservés.</p>
-    </div>
-</footer>
+<div th:replace="fragments/footer :: footerFragment"></div>
 
 <!-- Stripe JavaScript SDK -->
 <script src="https://js.stripe.com/v3/"></script>
