@@ -1,6 +1,7 @@
 package fr.esgi.color_run.servlet;
 
 import fr.esgi.color_run.business.Course;
+import fr.esgi.color_run.business.Course_member;
 import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -99,6 +101,10 @@ public class CoursesServlet extends HttpServlet {
         List<Course> pastCourses = courseService.searchAndSortCourses(
                 searchTerm, fromDate, toDate, sortBy, sortDirection, false);
 
+        // ✅ MISE À JOUR DES COMPTEURS RÉELS
+        updateCoursesWithRealCounts(upcomingCourses);
+        updateCoursesWithRealCounts(pastCourses);
+
         System.out.println("AJAX - Courses à venir: " + upcomingCourses.size());
         System.out.println("AJAX - Courses passées: " + pastCourses.size());
 
@@ -116,15 +122,12 @@ public class CoursesServlet extends HttpServlet {
         TemplateEngine engine = ThymeleafConfiguration.getTemplateEngine();
         WebContext context = new WebContext(ThymeleafConfiguration.getApplication().buildExchange(req, resp));
 
-
         // Vérifier si appel course détail
         String courseId = req.getParameter("id");
 
         if (courseId != null && !courseId.isEmpty()) {
-
             showCourseDetail(courseId, context, engine, resp, req, member);
         } else {
-
             // Récupérer la liste des courses
             var courses = courseService.listAllCourses();
             System.out.println("CoursesServlet: Nombre de courses récupérées = " + courses.size());
@@ -157,6 +160,10 @@ public class CoursesServlet extends HttpServlet {
             List<Course> upcomingCourses = courseService.listUpcomingCourses();
             List<Course> pastCourses = courseService.listPastCourses();
 
+            // ✅ MISE À JOUR DES COMPTEURS RÉELS
+            updateCoursesWithRealCounts(upcomingCourses);
+            updateCoursesWithRealCounts(pastCourses);
+
             System.out.println("CoursesServlet: Nombre de courses à venir récupérées = " + upcomingCourses.size());
             System.out.println("CoursesServlet: Nombre de courses passées récupérées = " + pastCourses.size());
 
@@ -169,11 +176,24 @@ public class CoursesServlet extends HttpServlet {
         }
     }
 
+    // ✅ NOUVEAU : Mise à jour des courses avec les compteurs réels
+    private void updateCoursesWithRealCounts(List<Course> courses) {
+        for (Course course : courses) {
+            if (course.getId() != null) {
+                int realCount = courseMemberService.countRegisteredAndPaidMembers(course.getId());
+                course.setCurrentNumberOfRunners(realCount);
+                System.out.println("🔄 Course " + course.getName() + " (" + course.getId() + "): " + realCount + " participants payés");
+            }
+        }
+    }
+
     private List<Map<String, Object>> convertCoursesToJson(List<Course> courses) {
         List<Map<String, Object>> result = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
 
         for (Course course : courses) {
+            // ✅ Pas de recalcul ici puisque déjà fait par updateCoursesWithRealCounts()
+
             Map<String, Object> courseMap = new HashMap<>();
             courseMap.put("id", course.getId());
             courseMap.put("name", course.getName());
@@ -191,9 +211,17 @@ public class CoursesServlet extends HttpServlet {
             courseMap.put("endpositionLatitude", course.getEndpositionLatitude());
             courseMap.put("endpositionLongitude", course.getEndpositionLongitude());
             courseMap.put("maxOfRunners", course.getMaxOfRunners());
-            courseMap.put("currentNumberOfRunners", course.getCurrentNumberOfRunners());
+            courseMap.put("currentNumberOfRunners", course.getCurrentNumberOfRunners()); // Déjà mis à jour
             courseMap.put("associationId", course.getAssociationId());
             courseMap.put("memberCreatorId", course.getMemberCreatorId());
+
+            // Calculs dérivés
+            int placesRestantes = course.getMaxOfRunners() - course.getCurrentNumberOfRunners();
+            courseMap.put("placesRestantes", placesRestantes);
+            courseMap.put("isComplet", placesRestantes <= 0);
+            courseMap.put("isPeuDePlace", placesRestantes > 0 && placesRestantes <= 10);
+            courseMap.put("tauxRemplissage", course.getMaxOfRunners() > 0 ?
+                    Math.round((double) course.getCurrentNumberOfRunners() / course.getMaxOfRunners() * 100) : 0);
 
             result.add(courseMap);
         }
@@ -334,16 +362,38 @@ public class CoursesServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/courses");
     }
 
+    // ✅ MÉTHODE MISE À JOUR pour showCourseDetail avec calcul des participants
+
     private void showCourseDetail(String courseId, WebContext context, TemplateEngine engine,
                                   HttpServletResponse resp, HttpServletRequest req, Member member) throws IOException {
+        System.out.println("🔍 DEBUG: showCourseDetail appelé avec courseId = " + courseId);
+
         try {
+            System.out.println("🔍 DEBUG: Tentative getCourseById...");
             var course = courseService.getCourseById(Long.parseLong(courseId));
 
             if (course == null) {
-                System.err.println("Course non trouvée avec l'ID: " + courseId);
+                System.err.println("🔍 DEBUG: Course NULL - redirection vers /courses");
                 resp.sendRedirect(req.getContextPath() + "/courses");
                 return;
             }
+
+            System.out.println("🔍 DEBUG: Course trouvée = " + course.getName());
+
+            // ✅ NOUVEAU : Calculer le nombre réel d'inscrits payés
+            Long courseIdLong = Long.parseLong(courseId);
+            int realRegisteredCount = courseMemberService.countRegisteredAndPaidMembers(courseIdLong);
+
+            // ✅ Mettre à jour le nombre réel de participants dans l'objet course
+            course.setCurrentNumberOfRunners(realRegisteredCount);
+
+            // ✅ Calculer les places restantes
+            int placesRestantes = course.getMaxOfRunners() - realRegisteredCount;
+
+            System.out.println("📊 Statistiques course " + courseId + ":");
+            System.out.println("   - Participants réels: " + realRegisteredCount);
+            System.out.println("   - Places max: " + course.getMaxOfRunners());
+            System.out.println("   - Places restantes: " + placesRestantes);
 
             // Vérifier si la course est expirée
             boolean courseExpired = false;
@@ -362,10 +412,9 @@ public class CoursesServlet extends HttpServlet {
             // Vérifier l'état d'inscription via le SERVICE
             boolean isUserRegistered = false;
             boolean isUserPaid = false;
+            String bibNumber = null;
 
             if (member != null) {
-                Long courseIdLong = Long.parseLong(courseId);
-
                 Role memberRole = member.getRole();
                 boolean isModerator = (memberRole == Role.ADMIN || memberRole == Role.ORGANIZER);
 
@@ -378,11 +427,24 @@ public class CoursesServlet extends HttpServlet {
                     // Pour les RUNNER : vérification classique
                     isUserRegistered = courseMemberService.isMemberInCourse(courseIdLong, member.getId());
                     isUserPaid = courseMemberService.isMemberRegisteredAndPaid(courseIdLong, member.getId());
+
+                    if (isUserPaid) {
+                        Optional<Course_member> registrationOpt = courseMemberService.getRegistrationDetails(courseIdLong, member.getId());
+                        if (registrationOpt.isPresent()) {
+                            bibNumber = registrationOpt.get().getBibNumber();
+                            System.out.println("🎫 Dossard pour member " + member.getId() + " course " + courseId + ": " + bibNumber);
+                        }
+                    }
                 }
                 System.out.println("🔍 État inscription pour member " + member.getId() + " course " + courseId + ":");
                 System.out.println("  - Inscrit: " + isUserRegistered);
                 System.out.println("  - Payé: " + isUserPaid);
+                System.out.println("  - Dossard: " + bibNumber);
+            } else {
+                System.out.println("🔍 DEBUG: Aucun member connecté");
             }
+
+            System.out.println("🔍 DEBUG: Avant configuration context...");
 
             context.setVariable("course", course);
             context.setVariable("member", member);
@@ -390,17 +452,24 @@ public class CoursesServlet extends HttpServlet {
             context.setVariable("contextPath", req.getContextPath());
             context.setVariable("isUserRegistered", isUserRegistered);
             context.setVariable("isUserPaid", isUserPaid);
+            context.setVariable("bibNumber", bibNumber);
 
+            // ✅ NOUVEAU : Ajouter les statistiques pour l'affichage
+            context.setVariable("placesRestantes", placesRestantes);
+            context.setVariable("realRegisteredCount", realRegisteredCount);
+
+            System.out.println("🔍 DEBUG: Avant process template...");
             resp.setContentType("text/html;charset=UTF-8");
             engine.process("course_detail", context, resp.getWriter());
 
+            System.out.println("🔍 DEBUG: Template processé avec succès !");
             System.out.println("CoursesServlet: Détail affiché pour la course ID = " + courseId);
 
         } catch (NumberFormatException e) {
-            System.err.println("ID de course invalide: " + courseId);
+            System.err.println("🔍 DEBUG: NumberFormatException - ID de course invalide: " + courseId);
             resp.sendRedirect(req.getContextPath() + "/courses");
         } catch (Exception e) {
-            System.err.println("Erreur lors de la récupération de la course: " + e.getMessage());
+            System.err.println("🔍 DEBUG: EXCEPTION dans showCourseDetail: " + e.getMessage());
             e.printStackTrace();
             resp.sendRedirect(req.getContextPath() + "/courses");
         }
