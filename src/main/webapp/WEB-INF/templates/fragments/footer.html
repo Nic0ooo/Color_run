@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="footerFragment ()">
+<!-- Footer -->
+<footer class="bg-white border-t border-gray-200 mt-auto">
+  <div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div>
+        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+          <i data-lucide="palette" class="w-5 h-5 mr-2 text-teal-600"></i>
+          Color Run
+        </h3>
+        <p class="text-sm text-gray-600 mb-4">
+          Les courses les plus colorées de France ! Participez à des événements uniques
+          alliant sport, fun et solidarité.
+        </p>
+      </div>
+
+      <div>
+        <h4 style="color: rgb(234, 179, 8);" class="font-semibold text-gray-800 mb-4">Courses</h4>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li><a href="/color_run_war/courses" class="hover:text-teal-600 transition-colors">Toutes les courses</a></li>
+          <li><a href="/color_run_war/courses" class="hover:text-teal-600 transition-colors">Courses à venir</a></li>
+          <li><a href="javascript:void(0)" onclick="redirectToPastCourses()" class="text-gray-600 hover:text-teal-500">Courses passées</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 style="color: rgb(236, 72, 153);" class="font-semibold text-gray-800 mb-4">Participants</h4>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li><a href="/color_run_war/profile" class="hover:text-teal-600 transition-colors">Mon profil</a></li>
+          <li><a href="javascript:void(0)" onclick="redirectToMyRegistrations()" class="hover:text-teal-600 transition-colors">Mes inscriptions</a></li>
+          <li><a href="/color_run_war/organizer-request" class="hover:text-teal-600 transition-colors">Devenir organisateur</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 style="color: rgb(20, 184, 166);" class="font-semibold text-gray-800 mb-4">Informations</h4>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li><a href="/color_run_war/contact" class="hover:text-teal-600 transition-colors">Contact</a></li>
+          <li><a href="/color_run_war/terms#race-rules" class="hover:text-teal-600 transition-colors">Règlement</a></li>
+          <li><a href="/color_run_war/terms#general-conditions" class="hover:text-teal-600 transition-colors">Conditions d'utilisation</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-200 mt-8 pt-6 text-center">
+      <p class="text-sm text-gray-500 flex items-center justify-center">
+        <i data-lucide="copyright" class="w-4 h-4 mr-1"></i>
+        2025 Color Run. Tous droits réservés.
+      </p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Fonction pour rediriger vers les courses passées
+  function redirectToPastCourses() {
+    // Stocker dans sessionStorage que nous voulons ouvrir l'onglet des courses passées
+    sessionStorage.setItem('openTab', 'past');
+    // Rediriger vers la page des courses
+    window.location.href = '/color_run_war/courses';
+  }
+
+  // Fonction pour rediriger vers mes inscriptions
+  function redirectToMyRegistrations() {
+    // Stocker dans sessionStorage que nous voulons ouvrir le filtre "mes inscriptions"
+    sessionStorage.setItem('openFilter', 'my-registered');
+    // Rediriger vers la page des courses
+    window.location.href = '/color_run_war/courses';
+  }
+
+  // Script à exécuter quand la page courses se charge
+  document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier si nous sommes sur la page courses
+    if (window.location.pathname.includes('/courses')) {
+
+      // Vérifier si nous devons ouvrir l'onglet des courses passées
+      const openTab = sessionStorage.getItem('openTab');
+      if (openTab === 'past') {
+        // Attendre que la page soit complètement chargée
+        setTimeout(function() {
+          // Déclencher le clic sur l'onglet courses passées
+          const tableMode = window.COURSES_APP ? window.COURSES_APP.currentTableMode : 'allCourses';
+          if (typeof switchTabDynamic === 'function') {
+            switchTabDynamic(tableMode, 'past');
+          }
+        }, 500);
+        // Nettoyer le sessionStorage
+        sessionStorage.removeItem('openTab');
+      }
+
+      // Vérifier si nous devons ouvrir le filtre "mes inscriptions"
+      const openFilter = sessionStorage.getItem('openFilter');
+      if (openFilter === 'my-registered') {
+        // Attendre que la page soit complètement chargée
+        setTimeout(function() {
+          const tableMode = window.COURSES_APP ? window.COURSES_APP.currentTableMode : 'allCourses';
+          if (typeof toggleCourseFilter === 'function') {
+            toggleCourseFilter(tableMode, 'my-registered');
+          }
+        }, 500);
+        // Nettoyer le sessionStorage
+        sessionStorage.removeItem('openFilter');
+      }
+    }
+  });
+</script>
+</footer>
+</html>

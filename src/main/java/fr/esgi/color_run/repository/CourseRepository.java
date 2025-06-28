@@ -31,7 +31,6 @@ public interface CourseRepository {
 
     Course findById(Long id);
 
-
     /**
      * Recherche et trie les courses selon les critères donnés
      * @param searchTerm terme de recherche (nom, ville, code postal)
@@ -44,4 +43,8 @@ public interface CourseRepository {
      */
     List<Course> searchAndSortCourses(String searchTerm, LocalDate fromDate, LocalDate toDate,
                                       String sortBy, String sortDirection, boolean upcoming);
+
+    List<Course> findPastCoursesByAssociationId(Long associationId);
+
+    List<Course> findUpcomingCoursesByAssociationId(Long associationId);
 }

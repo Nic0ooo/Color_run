@@ -4,7 +4,7 @@ package fr.esgi.color_run.repository.impl;
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.service.GeocodingService;
-import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 import fr.esgi.color_run.util.Mapper;
 
 import java.sql.*;
@@ -13,52 +13,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.sql.DriverManager.getConnection;
-
 public class CourseRepositoryImpl implements CourseRepository {
 
-/*
-    private final String jdbcUrl = "jdbc:h2:./db_file/color_run";
-*/
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
     private final GeocodingService geocodingService;
 
     public CourseRepositoryImpl(GeocodingService geocodingService) {
         this.geocodingService = geocodingService;
-
-        try {
-            // Obligatoire pour que Tomcat charge le driver H2
-            Class.forName("org.h2.Driver");
-            System.out.println("Driver H2 chargé");
-        } catch (ClassNotFoundException e) {
-            System.err.println("Driver H2 introuvable !");
-            e.printStackTrace();
-        }
-
-        testDatabaseConnection();
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    public void testDatabaseConnection() {
-        try (Connection connection = getConnection()) {
-            if (connection != null && !connection.isClosed()) {
-                System.out.println("Connexion à la base de données réussie !");
-            } else {
-                System.out.println("Échec de la connexion à la base de données.");
-            }
-        } catch (SQLException e) {
-            System.err.println("Erreur lors de la tentative de connexion à la base de données :");
-            e.printStackTrace();
-        }
-    }
-
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS course (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
                 "name VARCHAR(255)," +
@@ -80,24 +50,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 "price DOUBLE" +
                 ");";
 
-        try(Connection con = getConnection(); Statement stmt = con.createStatement()) {
-            // Vérifier si la table existe déjà
-            DatabaseMetaData metaData = con.getMetaData();
-            ResultSet tables = metaData.getTables(null, "PUBLIC", "COURSE", null);
-            boolean tableExists = tables.next();
-
-            // Exécuter la création de table si nécessaire
-//            stmt.execute(sql);
-
-            if (tableExists) {
-                System.out.println("Table 'course' existe déjà");
-            } else {
-                System.out.println("Table 'course' créée avec succès");
-            }
-        } catch (SQLException e) {
-            System.err.println("Erreur création table :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("course", sql);
     }
 
     @Override
@@ -114,10 +67,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (courses.isEmpty()) {
-            System.out.println("Aucune course trouvée dans la base de données.");
+            System.out.println("❌ Aucune course trouvée dans la base de données.");
         } else {
-            System.out.println(courses.size() + " courses trouvées dans la base de données.");
-            System.out.println("CourseRepositoryImpl: findAll() Courses trouvées en base: " + courses);
+            System.out.println("✅ " + courses.size() + " courses trouvées dans la base de données.");
         }
             return courses;
     }
@@ -125,7 +77,7 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public List<Course> findUpcomingCourses() {
         List<Course> upcomingCourses = new ArrayList<>();
-        String sql = "SELECT * FROM course WHERE startdate > CURRENT_TIMESTAMP";
+        String sql = "SELECT * FROM course WHERE startdate > CURRENT_TIMESTAMP ORDER BY startdate ASC";
         System.out.println("CourseRepositoryImpl: findUpcomingCourses() - Exécution de la requête pour récupérer les courses à venir.");
 
         try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
@@ -136,9 +88,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (upcomingCourses.isEmpty()) {
-            System.out.println("Aucune course à venir trouvée dans la base de données.");
+            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
         } else {
-            System.out.println(upcomingCourses.size() + " courses à venir trouvées dans la base de données.");
+            System.out.println("✅ " + upcomingCourses.size() + " courses à venir trouvées dans la base de données.");
         }
         return upcomingCourses;
     }
@@ -146,7 +98,7 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public List<Course> findPastCourses() {
         List<Course> pastCourses = new ArrayList<>();
-        String sql = "SELECT * FROM course WHERE startdate < CURRENT_TIMESTAMP";
+        String sql = "SELECT * FROM course WHERE startdate < CURRENT_TIMESTAMP ORDER BY startdate DESC";
         System.out.println("CourseRepositoryImpl: findPastCourses() - Exécution de la requête pour récupérer les courses passées.");
 
         try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
@@ -157,9 +109,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (pastCourses.isEmpty()) {
-            System.out.println("Aucune course passée trouvée dans la base de données.");
+            System.out.println("❌ Aucune course passée trouvée dans la base de données.");
         } else {
-            System.out.println(pastCourses.size() + " courses passées trouvées dans la base de données.");
+            System.out.println("✅ " + pastCourses.size() + " courses passées trouvées dans la base de données.");
         }
         return pastCourses;
     }
@@ -180,9 +132,9 @@ public class CourseRepositoryImpl implements CourseRepository {
             e.printStackTrace();
         }
         if (searchedCourses.isEmpty()) {
-            System.out.println("Aucune course avec pour nom :" + name + " trouvée dans la base de données.");
+            System.out.println("❌ Aucune course avec pour nom :" + name + " trouvée dans la base de données.");
         } else {
-            System.out.println(searchedCourses.size() + " courses avec pour nom :" + name + "  trouvées dans la base de données.");
+            System.out.println("✅ " + searchedCourses.size() + " courses avec pour nom :" + name + "  trouvées dans la base de données.");
         }
         return searchedCourses;
     }
@@ -198,7 +150,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 course = Mapper.mapRowToCourse(resultSet);
                 System.out.println("CourseRepositoryImpl: findById() - Course trouvée avec l'ID : " + id);
             } else {
-                System.out.println("Aucune course trouvée avec l'ID : " + id);
+                System.out.println("❌ Aucune course trouvée avec l'ID : " + id);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -231,13 +183,13 @@ public class CourseRepositoryImpl implements CourseRepository {
 
         // Filtre par date de début
         if (fromDate != null) {
-            sql.append(" AND DATE(startdate) >= ?");
+            sql.append(" AND CAST(startdate AS DATE) >= ?");
             parameters.add(Date.valueOf(fromDate));
         }
 
         // Filtre par date de fin
         if (toDate != null) {
-            sql.append(" AND DATE(startdate) <= ?");
+            sql.append(" AND CAST(startdate AS DATE) <= ?");
             parameters.add(Date.valueOf(toDate));
         }
 
@@ -283,7 +235,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche et tri des courses:");
+            System.err.println("❌ Erreur lors de la recherche et tri des courses:");
             e.printStackTrace();
         }
 
@@ -346,7 +298,11 @@ public class CourseRepositoryImpl implements CourseRepository {
 
             stmt.setString(1, course.getName());
             stmt.setString(2, course.getDescription());
-            stmt.setInt(3, course.getAssociationId());
+            if (course.getAssociationId() == null || course.getAssociationId() == 0) {
+                stmt.setNull(3, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(3, course.getAssociationId());
+            }
             stmt.setInt(4, course.getMemberCreatorId());
             stmt.setTimestamp(5, course.getStartDate() != null ?
                     Timestamp.valueOf(course.getStartDate()) : null);
@@ -374,7 +330,7 @@ public class CourseRepositoryImpl implements CourseRepository {
                 }
             }
 
-            System.out.println("Course enregistrée : " + course.getName());
+            System.out.println("✅ Course enregistrée : " + course.getName());
             return course;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -386,14 +342,18 @@ public class CourseRepositoryImpl implements CourseRepository {
     public Course updateCourse(Course course) {
         // Vérifier si l'ID de la course est valide
         if (course == null || course.getId() == null) {
-            System.out.println("Course ID est nul, impossible de mettre à jour.");
+            System.out.println("❌ Course ID est nul, impossible de mettre à jour.");
             return null;
         }
         String sql = "UPDATE course SET name = ?, description = ?, associationid = ?, membercreatorid = ?, startdate = ?, enddate = ?, startpositionlatitude = ?, startpositionlongitude = ?, endpositionlatitude = ?, endpositionlongitude = ?, distance = ?, address = ?, city = ?, zipcode = ?, maxofrunners = ?, currentnumberofrunners = ?, price = ? WHERE id = ?";
         try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, course.getName());
             stmt.setString(2, course.getDescription());
-            stmt.setInt(3, course.getAssociationId());
+            if (course.getAssociationId() == null || course.getAssociationId() == 0) {
+                stmt.setNull(3, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(3, course.getAssociationId());
+            }
             stmt.setInt(4, course.getMemberCreatorId());
             stmt.setTimestamp(5, course.getStartDate()!= null ?
                     Timestamp.valueOf(course.getStartDate()) : null);
@@ -416,15 +376,67 @@ public class CourseRepositoryImpl implements CourseRepository {
 
             int rowsUpdated = stmt.executeUpdate();
             if (rowsUpdated > 0) {
-                System.out.println("Course mise à jour : " + course.getName());
+                System.out.println("✅ Course mise à jour : " + course.getName());
                 return course;
             } else {
-                System.out.println("Aucune ligne mise à jour pour la course avec ID : " + course.getId());
+                System.out.println("❌ Aucune ligne mise à jour pour la course avec ID : " + course.getId());
                 return null;
             }
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public List<Course> findPastCoursesByAssociationId(Long associationId) {
+        // vérfier l'id de l'asso
+        if (associationId == null) {
+            System.out.println("❌ Association ID est nul, impossible de trouver des courses.");
+            return new ArrayList<>();
+        }
+        List<Course> pastAssoCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate < CURRENT_TIMESTAMP ORDER BY startdate DESC";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, associationId);
+            ResultSet resultSet = stmt.executeQuery();
+            while (resultSet.next()) {
+                pastAssoCourses.add(Mapper.mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (pastAssoCourses.isEmpty()) {
+            System.out.println("❌ Aucune course passée trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + pastAssoCourses.size() + " courses passée trouvées dans la base de données.");
+        }
+        return pastAssoCourses;
+    }
+
+    @Override
+    public List<Course> findUpcomingCoursesByAssociationId(Long associationId) {
+        // vérfier l'id de l'asso
+        if (associationId == null) {
+            System.out.println("❌ Association ID est nul, impossible de trouver des courses.");
+            return new ArrayList<>();
+        }
+        List<Course> upcomingAssoCourses = new ArrayList<>();
+        String sql = "SELECT * FROM course WHERE associationid = ? AND startdate > CURRENT_TIMESTAMP ORDER BY startdate ASC";
+        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, associationId);
+            ResultSet resultSet = stmt.executeQuery();
+            while (resultSet.next()) {
+                upcomingAssoCourses.add(Mapper.mapRowToCourse(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (upcomingAssoCourses.isEmpty()) {
+            System.out.println("❌ Aucune course à venir trouvée dans la base de données.");
+        } else {
+            System.out.println("✅ " + upcomingAssoCourses.size() + " courses à venir trouvées dans la base de données.");
+        }
+        return upcomingAssoCourses;
     }
 }

@@ -1,43 +1,124 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:fragment="headerFragment (page, member)">
-<header class="w-full px-6 py-4 bg-white shadow-sm flex justify-between items-center">
-    <div class="flex items-center gap-3">
-        <a href="/color_run_war/home" class="flex items-center gap-3">
-            <img src="/color_run_war/images/logo.png" alt="logo" class="h-10 w-auto">
-            <span class="text-2xl font-semibold tracking-tight">Color Run</span>
-        </a>
-    </div>
-
-    <div class="space-x-4 text-sm">
-        <!-- Si connecté -->
-        <div th:if="${member != null}" class="flex items-center gap-3">
-
-            <a href="/color_run_war/courses"
-               class="px-4 py-2 hover:color-gray-100">Courses</a>
-
-            <a href="/color_run_war/profile"
-               th:classappend="${page=='profile'} ? 'font-semibold underline' : ''"
-               class="px-4 py-2 hover:bg-gray-100">
-                Mon Profil
+<header class="w-full px-6 py-4 bg-white shadow-sm">
+    <!-- Container principal -->
+    <div class="container mx-auto flex flex-col md:flex-row md:justify-between md:items-center">
+        <!-- Logo -->
+        <div class="flex items-center justify-between">
+            <a href="/color_run_war/home" class="flex items-center gap-3">
+                <img src="/color_run_war/images/logo.png" alt="logo" class="h-10 w-auto">
+                <span class="text-2xl font-semibold tracking-tight">Color Run</span>
             </a>
-
-            <span th:text="'Bonjour, ' + ${member.firstname}" class="font-medium"></span>
-            <a href="/color_run_war/logout" class="px-4 py-2 border rounded hover:bg-gray-100">Déconnexion</a>
+            <!-- Bouton menu mobile -->
+            <button id="mobile-menu-button" class="md:hidden p-2 rounded-md hover:bg-gray-100">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
         </div>
 
-        <!-- Si non connecté -->
-        <div th:if="${member == null}">
-            <a th:if="${page} == 'register'" href="/color_run_war/login"
-               class="px-4 py-2 border rounded hover:bg-gray-100">Connexion</a>
-            <a th:if="${page} == 'login'" href="/color_run_war/register"
-               class="px-4 py-2 border rounded hover:bg-gray-100">S'inscrire</a>
-        </div>
-        <div th:if="${member == null and page == 'home'}">
-            <a href="/color_run_war/login"
-               class="px-4 py-2 border rounded hover:bg-gray-100">Connexion</a>
-            <a href="/color_run_war/register"
-               class="px-4 py-2 border rounded hover:bg-gray-100">S'inscrire</a>
-        </div>
+        <!-- Navigation principale (masquée sur mobile par défaut) -->
+        <nav id="main-navigation" class="hidden md:flex flex-col md:flex-row items-center gap-3 mt-4 md:mt-0">
+            <!-- Navigation commune à tous (connectés ou non) -->
+            <div class="flex flex-col md:flex-row items-center gap-3">
+                <a href="/color_run_war/associations"
+                   th:classappend="${page == 'associations'} ? 'text-teal-400' : 'hover:text-teal-300'"
+                   class="transition-colors flex items-center py-2">
+                    <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                    Associations
+                </a>
+                <a href="/color_run_war/courses"
+                   th:classappend="${page == 'courses'} ? 'text-teal-400' : 'hover:text-teal-300'"
+                   class="transition-colors flex items-center py-2">
+                    <i data-lucide="flag" class="w-4 h-4 mr-1"></i>
+                    Courses
+                </a>
+            </div>
+
+            <!-- Séparateur -->
+            <div class="hidden md:block h-8 w-px bg-gray-200 mx-2"></div>
+
+            <!-- Si connecté -->
+            <div th:if="${member != null}" class="flex flex-col md:flex-row items-center gap-3">
+                <!-- BOUTON ADMIN: Gestion des demandes organisateur -->
+                <div th:if="${member.role != null and member.role.toString() == 'ADMIN'}"
+                     class="text-red-500 font-bold">
+                    <a href="/color_run_war/admin-dashboard"
+                       class="px-4 py-2 border border-red-500 rounded hover:bg-red-50 transition-colors flex items-center gap-2"
+                       th:classappend="${page == 'admin-dashboard'} ? 'bg-red-50'">
+                        <i class="w-4 h-4" data-lucide="settings"></i>
+                        Espace Admin
+                    </a>
+                </div>
+
+                <!-- BOUTON RUNNER: Devenir organisateur -->
+                <div th:if="${member.role != null and member.role.toString() == 'RUNNER'}">
+                    <a href="/color_run_war/organizer-request"
+                       class="px-4 py-2 border border-teal-500 text-teal-600 rounded hover:bg-teal-50 transition-colors flex items-center gap-2">
+                        <i class="w-4 h-4" data-lucide="user-plus"></i>
+                        Devenir organisateur
+                    </a>
+                </div>
+
+                <!-- BOUTON ORGANIZER: Selon statut association -->
+                <div th:if="${member.role != null and member.role.toString() == 'ORGANIZER'}" class="flex flex-col md:flex-row items-center gap-3">
+                    <div>
+                        <a href="/color_run_war/organizer-request"
+                           class="px-4 py-2 border border-blue-500 text-blue-600 rounded hover:bg-blue-50 transition-colors flex items-center gap-2">
+                            <i class="w-4 h-4" data-lucide="building-2"></i>
+                            Rejoindre une association
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Profil utilisateur -->
+                <a href="/color_run_war/profile"
+                   th:classappend="${page=='profile'} ? 'font-semibold underline' : ''"
+                   class="px-4 py-2 hover:bg-gray-100 rounded">
+                    <i data-lucide="user" class="w-4 h-4 mr-1 inline"></i>
+                    Mon Profil
+                </a>
+
+                <div class="flex items-center gap-2">
+                    <span th:text="'Bonjour, ' + ${member.firstname}" class="font-medium hidden md:inline"></span>
+                    <a href="/color_run_war/logout" class="px-4 py-2 border rounded hover:bg-gray-100">Déconnexion</a>
+                </div>
+            </div>
+
+            <!-- Si non connecté -->
+            <div th:if="${member == null}" class="flex flex-col md:flex-row items-center gap-3">
+                <a href="/color_run_war/login"
+                   class="px-4 py-2 border rounded hover:bg-gray-100 transition-colors">Connexion</a>
+                <a href="/color_run_war/register"
+                   class="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors">S'inscrire</a>
+            </div>
+        </nav>
     </div>
 </header>
+
+<!-- Scripts pour la gestion responsive et les icônes -->
+<script>
+    // Initialiser les icônes Lucide
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+
+        // Gestion du menu mobile
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mainNavigation = document.getElementById('main-navigation');
+
+        if (mobileMenuButton && mainNavigation) {
+            mobileMenuButton.addEventListener('click', function() {
+                mainNavigation.classList.toggle('hidden');
+
+                // Changer l'icône
+                const icon = mobileMenuButton.querySelector('i');
+                if (icon) {
+                    const currentIcon = icon.getAttribute('data-lucide');
+                    icon.setAttribute('data-lucide', currentIcon === 'menu' ? 'x' : 'menu');
+                    lucide.createIcons();
+                }
+            });
+        }
+    });
+</script>
 </html>

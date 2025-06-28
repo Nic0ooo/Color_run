@@ -4,6 +4,7 @@ package fr.esgi.color_run.repository.impl;
 import fr.esgi.color_run.business.Message;
 import fr.esgi.color_run.repository.MessageRepository;
 import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -13,39 +14,18 @@ import java.util.Optional;
 
 public class MessageRepositoryImpl implements MessageRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
 
     public MessageRepositoryImpl() {
-        try {
-            Class.forName("org.h2.Driver");
-            System.out.println("Driver H2 chargé pour MessageRepository");
-        } catch (ClassNotFoundException e) {
-            System.err.println("Driver H2 introuvable pour MessageRepository !");
-            e.printStackTrace();
-        }
-
-        testDatabaseConnection();
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    public void testDatabaseConnection() {
-        try (Connection connection = getConnection()) {
-            if (connection != null && !connection.isClosed()) {
-                System.out.println("Connexion à la base de données réussie pour MessageRepository !");
-            }
-        } catch (SQLException e) {
-            System.err.println("Erreur lors de la tentative de connexion à la base de données pour MessageRepository :");
-            e.printStackTrace();
-        }
-    }
-
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS Message (" +
                 "id BIGINT AUTO_INCREMENT PRIMARY KEY," +
                 "discussionId INTEGER," +
@@ -63,27 +43,7 @@ public class MessageRepositoryImpl implements MessageRepository {
                 "FOREIGN KEY (memberId) REFERENCES Member(id)" +
                 ");";
 
-        try (Connection con = getConnection(); Statement stmt = con.createStatement()) {
-            DatabaseMetaData metaData = con.getMetaData();
-            ResultSet tables = metaData.getTables(null, "PUBLIC", "MESSAGE", null);
-            boolean tableExists = tables.next();
-
-            if (!tableExists) {
-                stmt.execute(sql);
-                System.out.println("Table 'Message' créée avec succès");
-            } else {
-                // Vérifier et ajouter les nouvelles colonnes si elles n'existent pas
-                addColumnIfNotExists(con, "originalContent", "VARCHAR(1000)");
-                addColumnIfNotExists(con, "lastModifiedDate", "TIMESTAMP");
-                addColumnIfNotExists(con, "isModified", "BOOLEAN DEFAULT FALSE");
-                addColumnIfNotExists(con, "isDeleted", "BOOLEAN DEFAULT FALSE");
-                addColumnIfNotExists(con, "hiddenByMemberId", "INTEGER");
-                System.out.println("Table 'Message' existe déjà - colonnes vérifiées");
-            }
-        } catch (SQLException e) {
-            System.err.println("Erreur création/mise à jour table Message :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("Message", sql);
     }
 
     /**

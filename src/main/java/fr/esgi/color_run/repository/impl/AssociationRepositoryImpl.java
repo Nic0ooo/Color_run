@@ -2,52 +2,28 @@ package fr.esgi.color_run.repository.impl;
 
 import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.repository.AssociationRepository;
-import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 import fr.esgi.color_run.util.Mapper;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class AssociationRepositoryImpl implements AssociationRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
 
     public AssociationRepositoryImpl() {
-        try {
-            // Obligatoire pour que Tomcat charge le driver H2
-            Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé");
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable !");
-            e.printStackTrace();
-        }
-
-        testDatabaseConnection();
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
-
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    public void testDatabaseConnection() {
-        try (Connection connection = getConnection()) {
-            if (connection != null && !connection.isClosed()) {
-                System.out.println("✅ Connexion à la base de données réussie !");
-            } else {
-                System.out.println("❌ Échec de la connexion à la base de données.");
-            }
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la tentative de connexion à la base de données :");
-            e.printStackTrace();
-        }
-    }
-
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS association (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
                 "name VARCHAR(255) NOT NULL," +
@@ -58,26 +34,21 @@ public class AssociationRepositoryImpl implements AssociationRepository {
                 "phoneNumber VARCHAR(20)," +
                 "address VARCHAR(255)," +
                 "city VARCHAR(255)," +
-                "zipCode INT," +
+                "zipCode INT" +
                 ");";
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            System.out.println("✅ Table 'association' vérifiée/créée");
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur création table :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("association", sql);
     }
-
 
     @Override
     public List<Association> findAll() {
         List<Association> associations = new ArrayList<>();
-        System.out.println("AssociationRepositoryImpl: findAll() - Exécution de la requête pour récupérer toutes les associations.");
-        String sql = "SELECT * FROM association";
+        String sql = "SELECT * FROM association ORDER BY name";
 
-        try (Connection connection = getConnection(); Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
+        try (Connection connection = getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+
             while (resultSet.next()) {
                 associations.add(Mapper.mapRowToAssociation(resultSet));
             }
@@ -85,32 +56,207 @@ public class AssociationRepositoryImpl implements AssociationRepository {
             System.err.println("❌ Erreur lors de la récupération des associations :");
             e.printStackTrace();
         }
-        if (associations.isEmpty()) {
-            System.out.println("❌ Aucune association trouvée dans la base de données.");
-        } else {
-            System.out.println("✅ " + associations.size() + " associations trouvées.");
+
+        return associations;
+    }
+
+    @Override
+    public Optional<Association> findById(Long id) {
+        String sql = "SELECT * FROM association WHERE id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setLong(1, id);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                return Optional.of(Mapper.mapRowToAssociation(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Association save(Association association) {
+        String sql = "INSERT INTO association (name, description, websiteLink, logoPath, email, phoneNumber, address, city, zipCode) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, association.getName());
+            ps.setString(2, association.getDescription());
+            ps.setString(3, association.getWebsiteLink());
+            ps.setNull(4, Types.VARCHAR); // logoPath peut être null
+            ps.setString(5, association.getEmail());
+            ps.setString(6, association.getPhoneNumber());
+            ps.setString(7, association.getAddress());
+            ps.setString(8, association.getCity());
+
+            if (association.getZipCode() != null) {
+                ps.setInt(9, association.getZipCode());
+            } else {
+                ps.setNull(9, Types.INTEGER);
+            }
+
+            ps.executeUpdate();
+
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    association.setId(rs.getLong(1));
+                }
+            }
+
+            return association;
+
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la sauvegarde de l'association :");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public Association update(Association association) {
+        String sql = "UPDATE association SET name=?, description=?, websiteLink=?, logoPath=?, email=?, phoneNumber=?, address=?, city=?, zipCode=? " +
+                "WHERE id=?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, association.getName());
+            ps.setString(2, association.getDescription());
+            ps.setString(3, association.getWebsiteLink());
+            ps.setNull(4, Types.VARCHAR);
+            ps.setString(5, association.getEmail());
+            ps.setString(6, association.getPhoneNumber());
+            ps.setString(7, association.getAddress());
+            ps.setString(8, association.getCity());
+
+            if (association.getZipCode() != null) {
+                ps.setInt(9, association.getZipCode());
+            } else {
+                ps.setNull(9, Types.INTEGER);
+            }
+            ps.setLong(10, association.getId());
+
+            ps.executeUpdate();
+            return association;
+
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la mise à jour de l'association :");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public boolean deleteById(Long id) {
+        String sql = "DELETE FROM association WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la suppression de l'association :");
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public Optional<Association> findByName(String name) {
+        String sql = "SELECT * FROM association WHERE LOWER(name) = LOWER(?)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, name);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(Mapper.mapRowToAssociation(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public Association findByEmail(String email) {
+        String sql = "SELECT * FROM association WHERE LOWER(email) = LOWER(?)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return Mapper.mapRowToAssociation(rs);
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la récupération de l'association par email :");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public List<Association> findByCity(String city) {
+        List<Association> associations = new ArrayList<>();
+        String sql = "SELECT * FROM association WHERE LOWER(city) = LOWER(?) ORDER BY name";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, city);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                associations.add(Mapper.mapRowToAssociation(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return associations;
     }
 
     @Override
-    public Association findById(Long id) {
-        Association association = null;
-        String sql = "SELECT * FROM association WHERE id = ?";
-        try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            ResultSet resultSet = stmt.executeQuery();
-            if (resultSet.next()) {
-                association = Mapper.mapRowToAssociation(resultSet);
-                System.out.println("✅ Association trouvée : " + association.getName());
-            } else {
-                System.out.println("❌ Aucune association trouvée avec l'ID : " + id);
+    public boolean existsByName(String name) {
+        String sql = "SELECT COUNT(*) FROM association WHERE LOWER(name) = LOWER(?)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la récupération de l'association par ID :");
             e.printStackTrace();
         }
-        return association;
+        return false;
     }
 
+    @Override
+    public boolean existsByEmail(String email) {
+        String sql = "SELECT COUNT(*) FROM association WHERE LOWER(email) = LOWER(?)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la vérification de l'existence de l'email : " + email);
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

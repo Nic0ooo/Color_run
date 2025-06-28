@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Color Run | Associations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
+
+<!-- Header -->
+<div th:replace="fragments/header :: headerFragment(page='associations', member=${member})"></div>
+
+<!-- Main Content -->
+<main class="flex-1 py-8">
+  <div class="container mx-auto px-4 max-w-7xl">
+
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6 text-sm text-gray-600">
+      <a href="/color_run_war/" class="hover:text-teal-600 transition-colors flex items-center">
+        <i data-lucide="home" class="w-4 h-4 mr-1"></i>
+        Accueil
+      </a>
+      <span class="mx-2">›</span>
+      <span class="text-gray-900 flex items-center">
+                <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                Associations
+            </span>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-4xl font-bold mb-3">Associations Color Run</h1>
+            <p class="text-white/90 text-lg mb-4">
+              Découvrez les associations qui organisent des courses solidaires et participez à leurs événements !
+            </p>
+            <div class="flex items-center space-x-6 text-white/80">
+              <div class="flex items-center">
+                <i data-lucide="heart" class="w-5 h-5 mr-2"></i>
+                <span>Causes solidaires</span>
+              </div>
+              <div class="flex items-center">
+                <i data-lucide="users" class="w-5 h-5 mr-2"></i>
+                <span>Communauté engagée</span>
+              </div>
+              <div class="flex items-center">
+                <i data-lucide="calendar" class="w-5 h-5 mr-2"></i>
+                <span>Événements réguliers</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="bg-white text-purple-500 rounded-lg p-6">
+              <i data-lucide="users" class="w-12 h-12 mx-auto mb-2"></i>
+              <div class="text-sm text-purple-600 font-medium">Rejoignez l'action</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="p-6 bg-gray-50 border-t">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="text-center">
+            <div class="bg-purple-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="heart-handshake" class="w-6 h-6 text-purple-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Action Solidaire</h3>
+            <p class="text-sm text-gray-600">Chaque course peut soutenir une cause</p>
+          </div>
+          <div class="text-center">
+            <div class="bg-pink-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="globe" class="w-6 h-6 text-pink-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Impact Local</h3>
+            <p class="text-sm text-gray-600">Des associations présentes dans toute la France</p>
+          </div>
+          <div class="text-center">
+            <div class="bg-blue-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="trophy" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Excellence</h3>
+            <p class="text-sm text-gray-600">Des événements de qualité organisés par des passionnés</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table des associations -->
+    <div th:replace="fragments/associationsTable :: associationsTableFragment(${member}, ${associations})"></div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="fragments/footer :: footerFragment"></div>
+
+<!-- Script pour initialiser les icônes -->
+<script>
+  window.currentMemberId = /*[[${currentMemberId}]]*/ null;
+  window.userRole = /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE';
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide
+    lucide.createIcons();
+  });
+</script>
+
+</body>
+</html>

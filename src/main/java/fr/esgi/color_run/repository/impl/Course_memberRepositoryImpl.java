@@ -5,6 +5,7 @@ import fr.esgi.color_run.business.Course_member;
 import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.repository.Course_memberRepository;
 import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 import fr.esgi.color_run.util.Mapper;
 
 import java.util.Optional;
@@ -13,66 +14,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Course_memberRepositoryImpl implements Course_memberRepository {
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+
+    private final DatabaseManager dbManager;
+
 
     public Course_memberRepositoryImpl() {
-        try {
-            // Obligatoire pour que Tomcat charge le driver H2
-            Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé pour Course_memberRepository");
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable !");
-            e.printStackTrace();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
         }
-
-        testDatabaseConnection();
-        createTableIfNotExists();
-        updateTableForBibNumber(); // ✅ Ajouter support dossard
-    }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    public void testDatabaseConnection() {
-        try (Connection connection = getConnection()) {
-            if (connection != null && !connection.isClosed()) {
-                System.out.println("✅ Connexion à la base de données réussie pour Course_memberRepository !");
-            } else {
-                System.out.println("❌ Échec de la connexion à la base de données.");
-            }
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur lors de la tentative de connexion à la base de données :");
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Création de la table CourseMember si elle n'existe pas
-     */
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS CourseMember (" +
-                "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
-                "courseId BIGINT NOT NULL," +
-                "memberId BIGINT NOT NULL," +
-                "registrationDate VARCHAR(50)," +
-                "registrationStatus VARCHAR(20) DEFAULT 'PENDING'," +
-                "stripeSessionId VARCHAR(255)," +
-                "bibNumber VARCHAR(10)," +
-                "UNIQUE(courseId, memberId)," +
+                "id BIGINT AUTO_INCREMENT PRIMARY KEY," +
+                "courseId INTEGER," +
+                "memberId INTEGER," +
+                "registrationDate VARCHAR(255)," +
+                "registrationStatus VARCHAR(255)," +
+                "stripeSessionId VARCHAR(255) DEFAULT NULL," +
                 "FOREIGN KEY (courseId) REFERENCES Course(id)," +
                 "FOREIGN KEY (memberId) REFERENCES Member(id)" +
                 ");";
 
-        try (Connection con = getConnection(); Statement stmt = con.createStatement()) {
-            stmt.execute(sql);
-            System.out.println("✅ Table 'CourseMember' vérifiée/créée");
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur création table CourseMember :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("CourseMember", sql);
     }
 
     /**
@@ -311,6 +278,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
         return false;
     }
 
+
     @Override
     public void delete(Course_member course_member) {
         String sql = "DELETE FROM CourseMember WHERE courseId = ? AND memberId = ?";
@@ -370,6 +338,23 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
         return courses;
     }
 
+        @Override
+        public List<Course> findPastCoursesByMemberId(long memberId) {
+            String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.enddate < NOW()";
+            try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setLong(1, memberId);
+                ResultSet rs = pstmt.executeQuery();
+                List<Course> courses = new ArrayList<>();
+                while (rs.next()) {
+                    courses.add(Mapper.mapRowToCourse(rs));
+                }
+                return courses;
+            } catch (SQLException e) {
+                System.err.println("Erreur lors de la récupération des courses passées pour le membre :");
+                e.printStackTrace();
+            }
+            return null;
+        }
     @Override
     public List<Course> findPastCoursesByMemberId(long memberId) {
         String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId " +
@@ -394,6 +379,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
 
     @Override
     public List<Course> findUpcomingCoursesByMemberId(long memberId) {
+        String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.enddate > NOW()";
         String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId " +
                 "WHERE cm.memberId = ? AND cm.registrationStatus = 'ACCEPTED' AND c.startdate > NOW()";
         List<Course> courses = new ArrayList<>();
@@ -524,6 +510,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
             System.err.println("Erreur lors du comptage des inscrits: " + e.getMessage());
             e.printStackTrace();
         }
+
 
         return 0;
     }

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="'Color Run | ' + ${association.name}">Color Run | Association</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
+
+<!-- Header -->
+<div th:replace="fragments/header :: headerFragment(page='associations', member=${member})"></div>
+
+<!-- Main Content -->
+<main class="flex-1 py-8">
+  <div class="container mx-auto px-4 max-w-7xl">
+
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6 text-sm text-gray-600">
+      <a href="/color_run_war/" class="hover:text-teal-600 transition-colors flex items-center">
+        <i data-lucide="home" class="w-4 h-4 mr-1"></i>
+        Accueil
+      </a>
+      <span class="mx-2">›</span>
+      <a href="/color_run_war/associations" class="hover:text-teal-600 transition-colors flex items-center">
+        <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+        Associations
+      </a>
+      <span class="mx-2">›</span>
+      <span class="text-gray-900 flex items-center" th:text="${association.name}">
+                Association
+            </span>
+    </nav>
+
+    <!-- En-tête de l'association -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-8">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center mb-4">
+              <div class="bg-white bg-opacity-20 rounded-full p-3 mr-4">
+                <i data-lucide="users" class="w-8 h-8"></i>
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold mb-2" th:text="${association.name}">Nom de l'association</h1>
+                <p class="text-white/90 text-lg" th:text="${association.description}">Description de l'association</p>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="bg-white text-purple-600 rounded-lg p-4">
+              <i data-lucide="heart" class="w-8 h-8 mx-auto mb-1"></i>
+              <div class="text-sm font-medium">Association</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations détaillées -->
+      <div class="p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <!-- Email -->
+          <div class="flex items-center p-4 bg-blue-50 rounded-lg">
+            <div class="bg-blue-100 rounded-full p-3 mr-4">
+              <i data-lucide="mail" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-600">Email</div>
+              <div class="text-gray-900" th:text="${association.email}">email@association.com</div>
+            </div>
+          </div>
+
+          <!-- Téléphone -->
+          <div th:if="${association.phoneNumber}" class="flex items-center p-4 bg-green-50 rounded-lg">
+            <div class="bg-green-100 rounded-full p-3 mr-4">
+              <i data-lucide="phone" class="w-6 h-6 text-green-600"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-600">Téléphone</div>
+              <div class="text-gray-900" th:text="${association.phoneNumber}">01 23 45 67 89</div>
+            </div>
+          </div>
+
+          <!-- Localisation -->
+          <div class="flex items-center p-4 bg-purple-50 rounded-lg">
+            <div class="bg-purple-100 rounded-full p-3 mr-4">
+              <i data-lucide="map-pin" class="w-6 h-6 text-purple-600"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-600">Localisation</div>
+              <div class="text-gray-900">
+                <span th:text="${association.city}">Ville</span>
+                <span th:if="${association.zipCode}" th:text="' (' + ${association.zipCode} + ')'"></span>
+              </div>
+              <div th:if="${association.address}" class="text-sm text-gray-600" th:text="${association.address}">Adresse</div>
+            </div>
+          </div>
+
+          <!-- Site web -->
+          <div th:if="${association.websiteLink}" class="flex items-center p-4 bg-teal-50 rounded-lg">
+            <div class="bg-teal-100 rounded-full p-3 mr-4">
+              <i data-lucide="globe" class="w-6 h-6 text-teal-600"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-600">Site web</div>
+              <a th:href="${association.websiteLink}" target="_blank"
+                 class="text-teal-600 hover:text-teal-800 hover:underline transition-colors"
+                 th:text="${association.websiteLink}">www.association.com</a>
+            </div>
+          </div>
+
+          <!-- Nombre de courses -->
+          <div class="flex items-center p-4 bg-orange-50 rounded-lg">
+            <div class="bg-orange-100 rounded-full p-3 mr-4">
+              <i data-lucide="calendar" class="w-6 h-6 text-orange-600"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-600">Courses organisées</div>
+              <div class="text-gray-900">
+                <span th:text="${upcomingCourses.size() + pastCourses.size()}">0</span> courses
+                <span class="text-sm text-gray-600">
+                                    (<span th:text="${upcomingCourses.size()}">0</span> à venir)
+                                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Organisateurs -->
+          <div th:if="${organizers != null and !organizers.isEmpty()}" class="flex items-center p-4 bg-pink-50 rounded-lg">
+            <div class="bg-pink-100 rounded-full p-3 mr-4">
+              <i data-lucide="user-check" class="w-6 h-6 text-pink-600"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-600">Organisateurs</div>
+              <div class="text-gray-900" th:text="${organizers.size()} + ' membre(s)'">Membres</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section organisateurs détaillée -->
+        <div th:if="${organizers != null and !organizers.isEmpty()}" class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <i data-lucide="users" class="w-6 h-6 mr-2 text-purple-600"></i>
+            Équipe organisatrice
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div th:each="organizer : ${organizers}" class="bg-gray-50 rounded-lg p-4 flex items-center">
+              <div class="bg-purple-100 rounded-full p-2 mr-3">
+                <i data-lucide="user" class="w-5 h-5 text-purple-600"></i>
+              </div>
+              <div>
+                <div class="font-medium text-gray-900">
+                  <span th:text="${organizer.firstname}">Prénom</span>
+                  <span th:text="${organizer.name}">Nom</span>
+                </div>
+                <div class="text-sm text-gray-600" th:text="${organizer.email}">email@organizer.com</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section des courses -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+      <div class="bg-gray-100 px-6 py-4 border-b">
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+          <i data-lucide="calendar" class="w-6 h-6 mr-2 text-teal-600"></i>
+          Courses organisées par cette association
+        </h2>
+        <p class="text-gray-600 mt-1">Découvrez tous les événements proposés par cette association</p>
+      </div>
+
+      <div class="p-6">
+        <!-- Table des courses simplifiée -->
+        <div class="mb-8">
+          <!-- Onglets -->
+          <div class="mb-6">
+            <div class="flex border-b border-gray-200">
+              <button id="tab-upcoming" onclick="switchTab('upcoming')"
+                      class="px-6 py-3 font-medium text-teal-600 border-b-2 border-teal-500 bg-white flex items-center">
+                <i data-lucide="calendar-days" class="w-4 h-4 mr-2"></i>
+                Courses à venir
+              </button>
+              <button id="tab-past" onclick="switchTab('past')"
+                      class="px-6 py-3 font-medium text-gray-600 hover:text-gray-800 bg-gray-50 flex items-center">
+                <i data-lucide="calendar-check" class="w-4 h-4 mr-2"></i>
+                Courses passées
+              </button>
+            </div>
+          </div>
+
+          <!-- Tableau des courses à venir -->
+          <div id="courses-upcoming" class="mb-8">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-sm">
+                  <thead class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                  <tr>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
+                                                Nom
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                                                Date
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                                                Ville
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="route" class="w-4 h-4 mr-2"></i>
+                                                Distance
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="users" class="w-4 h-4 mr-2"></i>
+                                                Participants
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                                                Actions
+                                            </span>
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                  <tr th:each="course : ${upcomingCourses}" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                      <div class="font-medium text-gray-900" th:text="${course.name}"></div>
+                      <div class="text-sm text-gray-500" th:text="${course.description}"></div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center text-gray-900">
+                        <i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-teal-500"></i>
+                        <span th:text="${course.formattedStartDate}"></span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center text-gray-900">
+                        <i data-lucide="map-pin" class="w-4 h-4 mr-2 text-pink-500"></i>
+                        <span th:text="${course.city}"></span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <i data-lucide="route" class="w-3 h-3 mr-1"></i>
+                                                <span th:text="${course.distance} + ' km'"></span>
+                                            </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                          <div class="bg-teal-500 h-2 rounded-full transition-all duration-300"
+                               th:style="'width: ' + ${course.currentNumberOfRunners * 100 / course.maxOfRunners} + '%'"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">
+                                                    <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
+                                                </span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <a th:href="@{/course-detail(id=${course.id})}"
+                         class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                        <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                        Détails
+                      </a>
+                    </td>
+                  </tr>
+                  <tr th:if="${upcomingCourses.isEmpty()}">
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                      <div class="flex flex-col items-center">
+                        <i data-lucide="calendar-x" class="w-12 h-12 text-gray-300 mb-2"></i>
+                        <p>Aucune course à venir</p>
+                      </div>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tableau des courses passées (initialement caché) -->
+          <div id="courses-past" class="mb-8 hidden">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-sm">
+                  <thead class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                  <tr>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
+                                                Nom
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                                                Date
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                                                Ville
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="route" class="w-4 h-4 mr-2"></i>
+                                                Distance
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="users" class="w-4 h-4 mr-2"></i>
+                                                Participants
+                                            </span>
+                    </th>
+                    <th class="px-6 py-4">
+                                            <span class="flex items-center">
+                                                <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                                                Actions
+                                            </span>
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                  <tr th:each="course : ${pastCourses}" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                      <div class="font-medium text-gray-900" th:text="${course.name}"></div>
+                      <div class="text-sm text-gray-500" th:text="${course.description}"></div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center text-gray-900">
+                        <i data-lucide="calendar-days" class="w-4 h-4 mr-2 text-gray-400"></i>
+                        <span th:text="${course.formattedStartDate}"></span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center text-gray-900">
+                        <i data-lucide="map-pin" class="w-4 h-4 mr-2 text-pink-500"></i>
+                        <span th:text="${course.city}"></span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                <i data-lucide="route" class="w-3 h-3 mr-1"></i>
+                                                <span th:text="${course.distance} + ' km'"></span>
+                                            </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                          <div class="bg-gray-400 h-2 rounded-full transition-all duration-300"
+                               th:style="'width: ' + ${course.currentNumberOfRunners * 100 / course.maxOfRunners} + '%'"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">
+                                                    <span th:text="${course.currentNumberOfRunners}"></span>/<span th:text="${course.maxOfRunners}"></span>
+                                                </span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <a th:href="@{/course-detail(id=${course.id})}"
+                         class="inline-flex items-center bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                        <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                        Détails
+                      </a>
+                    </td>
+                  </tr>
+                  <tr th:if="${pastCourses.isEmpty()}">
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                      <div class="flex flex-col items-center">
+                        <i data-lucide="calendar-x" class="w-12 h-12 text-gray-300 mb-2"></i>
+                        <p>Aucune course passée</p>
+                      </div>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message si aucune course -->
+    <div th:if="${upcomingCourses.isEmpty() and pastCourses.isEmpty()}"
+         class="bg-white rounded-lg shadow-md p-8 text-center">
+      <i data-lucide="calendar-x" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucune course organisée</h3>
+      <p class="text-gray-600">Cette association n'a pas encore organisé de courses Color Run.</p>
+    </div>
+
+    <!-- Call to action pour rejoindre l'association (si applicable) -->
+    <div th:if="${member != null and member.role.name() == 'RUNNER'}"
+         class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6 text-white mt-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-bold mb-2 flex items-center">
+            <i data-lucide="heart-handshake" class="w-5 h-5 mr-2"></i>
+            Vous voulez rejoindre cette association ?
+          </h3>
+          <p class="text-white/90">
+            Devenez organisateur et participez à l'organisation d'événements solidaires !
+          </p>
+        </div>
+        <a href="/color_run_war/organizer-request"
+           class="bg-white text-purple-600 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center">
+          <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+          Devenir organisateur
+        </a>
+      </div>
+    </div>
+
+    <!-- Retour vers la liste -->
+    <div class="mt-8 text-center">
+      <a href="/color_run_war/associations"
+         class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+        Retour à la liste des associations
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="fragments/footer :: footerFragment"></div>
+
+<!-- Script pour initialiser les icônes -->
+<script th:inline="javascript">
+  // Variables globales pour la page de détail
+  window.currentMemberId = /*[[${currentMemberId}]]*/ null;
+  window.userRole = /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE';
+  window.isMemberOfAssociation = /*[[${isMemberOfAssociation}]]*/ false;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide
+    lucide.createIcons();
+
+    console.log('🔍 Association Detail Page:');
+    console.log('  - Association ID:', /*[[${association.id}]]*/ null);
+    console.log('  - Member ID:', window.currentMemberId);
+    console.log('  - User role:', window.userRole);
+    console.log('  - Is member of association:', window.isMemberOfAssociation);
+  });
+
+  // Fonction pour basculer entre les onglets
+  function switchTab(tab) {
+    // Masquer tous les contenus des onglets
+    const upcomingDiv = document.getElementById('courses-upcoming');
+    const pastDiv = document.getElementById('courses-past');
+    const upcomingTab = document.getElementById('tab-upcoming');
+    const pastTab = document.getElementById('tab-past');
+
+    if (!upcomingDiv || !pastDiv || !upcomingTab || !pastTab) {
+      console.error('Éléments d\'onglets non trouvés');
+      return;
+    }
+
+    upcomingDiv.classList.add('hidden');
+    pastDiv.classList.add('hidden');
+
+    // Réinitialiser le style des onglets
+    upcomingTab.classList.remove('border-b-2', 'border-teal-500', 'bg-white', 'text-teal-600');
+    upcomingTab.classList.add('bg-gray-50', 'text-gray-600');
+    pastTab.classList.remove('border-b-2', 'border-teal-500', 'bg-white', 'text-teal-600');
+    pastTab.classList.add('bg-gray-50', 'text-gray-600');
+
+    // Afficher le contenu de l'onglet sélectionné et appliquer le style actif
+    if (tab === 'upcoming') {
+      upcomingDiv.classList.remove('hidden');
+      upcomingTab.classList.add('border-b-2', 'border-teal-500', 'bg-white', 'text-teal-600');
+      upcomingTab.classList.remove('bg-gray-50', 'text-gray-600');
+    } else {
+      pastDiv.classList.remove('hidden');
+      pastTab.classList.add('border-b-2', 'border-teal-500', 'bg-white', 'text-teal-600');
+      pastTab.classList.remove('bg-gray-50', 'text-gray-600');
+    }
+
+    // Réinitialiser les icônes après changement de style
+    lucide.createIcons();
+  }
+</script>
+
+</body>
+</html>

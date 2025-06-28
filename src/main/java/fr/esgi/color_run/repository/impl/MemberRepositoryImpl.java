@@ -1,41 +1,33 @@
 package fr.esgi.color_run.repository.impl;
 
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.repository.MemberRepository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import fr.esgi.color_run.util.Config;
+import fr.esgi.color_run.util.DatabaseManager;
 import fr.esgi.color_run.util.Mapper;
 
 public class MemberRepositoryImpl implements MemberRepository {
 
-    private final String jdbcUrl = "jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE";
-    private final String jdbcUser = "sa";
-    private final String jdbcPassword = "";
+    private final DatabaseManager dbManager;
 
     public MemberRepositoryImpl() {
-        try {
-            // Obligatoire pour que Tomcat charge le driver H2
-            Class.forName("org.h2.Driver");
-            System.out.println("✅ Driver H2 chargé");
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver H2 introuvable !");
-            e.printStackTrace();
-        }
-
-        createTableIfNotExists();
+        this.dbManager = DatabaseManager.getInstance();
+        ensureTableExists();
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+        return dbManager.getConnection();
     }
 
-    private void createTableIfNotExists() {
+    private void ensureTableExists() {
         String sql = "CREATE TABLE IF NOT EXISTS member (" +
                 "id BIGINT PRIMARY KEY AUTO_INCREMENT," +
+                "role VARCHAR(20) NOT NULL DEFAULT 'RUNNER'," +
                 "name VARCHAR(255)," +
                 "firstname VARCHAR(255)," +
                 "email VARCHAR(255) UNIQUE," +
@@ -48,13 +40,7 @@ public class MemberRepositoryImpl implements MemberRepository {
                 "positionLongitude DOUBLE" +
                 ");";
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            System.out.println("✅ Table 'member' vérifiée/créée");
-        } catch (SQLException e) {
-            System.err.println("❌ Erreur création table :");
-            e.printStackTrace();
-        }
+        dbManager.ensureTableExists("member", sql);
     }
 
     @Override
@@ -155,7 +141,7 @@ public class MemberRepositoryImpl implements MemberRepository {
 
     @Override
     public Member update(Member member) {
-        String sql = "UPDATE member SET name=?, firstname=?, email=?, password=?, phoneNumber=?, address=?, city=?, zipCode=?, positionLatitude=?, positionLongitude=? " +
+        String sql = "UPDATE member SET name=?, firstname=?, email=?, password=?, phoneNumber=?, address=?, city=?, zipCode=?, positionLatitude=?, positionLongitude=?, role=? " +
                 "WHERE id=?";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -169,7 +155,8 @@ public class MemberRepositoryImpl implements MemberRepository {
             ps.setInt(8, member.getZipCode() != null ? member.getZipCode() : 0);
             ps.setDouble(9, member.getPositionLatitude());
             ps.setDouble(10, member.getPositionLongitude());
-            ps.setLong(11, member.getId());
+            ps.setString(11, member.getRole().name());
+            ps.setLong(12, member.getId());
 
             ps.executeUpdate();
             return member;
@@ -214,6 +201,71 @@ public class MemberRepositoryImpl implements MemberRepository {
             System.err.println("❌ Erreur lors de la mise à jour du mot de passe pour " + email);
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public List<Member> findByRole(Role role) {
+        List<Member> members = new ArrayList<>();
+        String sql = "SELECT * FROM member WHERE role = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, role.name());
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                members.add(Mapper.mapRowToMember(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return members;
+    }
+
+    @Override
+    public void updateMemberRole(Long memberId, Role newRole) {
+        String sql = "UPDATE member SET role = ? WHERE id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newRole.name());
+            ps.setLong(2, memberId);
+            ps.executeUpdate();
+            System.out.println("✅ Rôle mis à jour pour le membre " + memberId + " : " + newRole);
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la mise à jour du rôle :");
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<Member> findOrganizersByAssociationId(Long associationId) {
+        List<Member> organizers = new ArrayList<>();
+        String sql = "SELECT m.* FROM member m " +
+                "INNER JOIN association_member am ON m.id = am.member_id " +
+                "WHERE am.association_id = ? AND m.role = 'ORGANIZER'";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, associationId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                organizers.add(Mapper.mapRowToMember(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return organizers;
+    }
+
+    @Override
+    public int countOrganizersByAssociationId(Long associationId) {
+        String sql = "SELECT COUNT(*) FROM member m " +
+                "INNER JOIN association_member am ON m.id = am.member_id " +
+                "WHERE am.association_id = ? AND m.role = 'ORGANIZER'";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, associationId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
 }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin | Tableau de bord</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
+
+<div th:replace="fragments/header :: headerFragment(page='admin', member=${member})"></div>
+
+<main class="flex-1 py-10">
+    <div class="max-w-6xl mx-auto px-6">
+        <h1 class="text-3xl font-bold mb-8 flex items-center">
+            <i data-lucide="settings" class="w-6 h-6 mr-3 text-purple-600"></i> Tableau de bord Admin
+        </h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Bloc utilisateurs -->
+            <a href="/color_run_war/admin-users" class="bg-white border rounded-lg p-6 shadow hover:shadow-lg transition">
+                <div class="flex items-center mb-3">
+                    <i data-lucide="users" class="w-6 h-6 text-blue-600 mr-3"></i>
+                    <h2 class="text-lg font-semibold text-blue-700">Gérer les utilisateurs</h2>
+                </div>
+                <p class="text-sm text-gray-600">Promouvoir, modifier ou supprimer des comptes utilisateurs.</p>
+            </a>
+
+            <!-- Bloc courses -->
+            <a href="/color_run_war/admin-courses" class="bg-white border rounded-lg p-6 shadow hover:shadow-lg transition">
+                <div class="flex items-center mb-3">
+                    <i data-lucide="flag" class="w-6 h-6 text-green-600 mr-3"></i>
+                    <h2 class="text-lg font-semibold text-green-700">Gérer les courses</h2>
+                </div>
+                <p class="text-sm text-gray-600">Consulter, modifier ou supprimer les courses créées.</p>
+            </a>
+
+            <!-- Bloc demandes organisateur -->
+            <a href="/color_run_war/admin-organizer-requests" class="bg-white border rounded-lg p-6 shadow hover:shadow-lg transition">
+                <div class="flex items-center mb-3">
+                    <i data-lucide="user-check" class="w-6 h-6 text-purple-600 mr-3"></i>
+                    <h2 class="text-lg font-semibold text-purple-700">Demandes organisateur</h2>
+                </div>
+                <p class="text-sm text-gray-600">Valider ou refuser les demandes pour devenir organisateur.</p>
+            </a>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="fragments/footer :: footerFragment"></div>
+
+<script>
+    lucide.createIcons();
+</script>
+
+</body>
+</html>

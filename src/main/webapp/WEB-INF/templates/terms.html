@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Color Run | Conditions d'utilisation et Règlements</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    .section-card {
+      transition: all 0.3s ease;
+    }
+    .section-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .highlight-box {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-left: 4px solid #0ea5e9;
+    }
+    .warning-box {
+      background: linear-gradient(135deg, #fef3cd 0%, #fde68a 100%);
+      border-left: 4px solid #f59e0b;
+    }
+    .success-box {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-left: 4px solid #22c55e;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
+
+<!-- Header -->
+<div th:replace="fragments/header :: headerFragment(page='terms', member=${member})"></div>
+
+<!-- Main Content -->
+<main class="flex-1 py-8">
+  <div class="container mx-auto px-4 max-w-5xl">
+
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6 text-sm text-gray-600">
+      <a href="/color_run_war/" class="hover:text-teal-600 transition-colors flex items-center">
+        <i data-lucide="home" class="w-4 h-4 mr-1"></i>
+        Accueil
+      </a>
+      <span class="mx-2">›</span>
+      <span class="text-gray-900 flex items-center">
+                <i data-lucide="file-text" class="w-4 h-4 mr-1"></i>
+                Conditions d'utilisation
+            </span>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-teal-500 to-blue-600 text-white p-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-4xl font-bold mb-3">Conditions d'utilisation et Règlements</h1>
+            <p class="text-white/90 text-lg">
+              Toutes les informations importantes pour profiter pleinement de l'expérience Color Run
+            </p>
+          </div>
+          <div class="text-right">
+            <div class="bg-white text-teal-500 rounded-lg p-6">
+              <i data-lucide="shield-check" class="w-12 h-12 mx-auto mb-2"></i>
+              <div class="text-sm text-teal-600 font-medium">Règles & Sécurité</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation rapide -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+        <i data-lucide="bookmark" class="w-5 h-5 mr-2 text-teal-600"></i>
+        Navigation rapide
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <a href="#general-conditions" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-teal-50 transition-colors">
+          <i data-lucide="file-text" class="w-4 h-4 mr-2 text-teal-600"></i>
+          <span class="text-sm font-medium">Conditions générales</span>
+        </a>
+        <a href="#race-rules" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-teal-50 transition-colors">
+          <i data-lucide="flag" class="w-4 h-4 mr-2 text-pink-600"></i>
+          <span class="text-sm font-medium">Règlement des courses</span>
+        </a>
+        <a href="#association-rules" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-teal-50 transition-colors">
+          <i data-lucide="users" class="w-4 h-4 mr-2 text-yellow-600"></i>
+          <span class="text-sm font-medium">Associations</span>
+        </a>
+        <a href="#safety-rules" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-teal-50 transition-colors">
+          <i data-lucide="shield" class="w-4 h-4 mr-2 text-green-600"></i>
+          <span class="text-sm font-medium">Sécurité</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Section 1: Conditions générales d'utilisation -->
+    <section id="general-conditions" class="section-card bg-white rounded-lg shadow-md p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i data-lucide="file-text" class="w-6 h-6 mr-3 text-teal-600"></i>
+        Conditions générales d'utilisation
+      </h2>
+
+      <div class="space-y-6">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">1. Acceptation des conditions</h3>
+          <p class="text-gray-600 leading-relaxed">
+            En utilisant la plateforme Color Run, vous acceptez pleinement et sans réserve les présentes conditions d'utilisation.
+            Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser nos services.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">2. Création de compte</h3>
+          <ul class="space-y-2 text-gray-600">
+            <li class="flex items-start">
+              <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 mt-1 flex-shrink-0"></i>
+              Vous devez fournir des informations exactes et à jour lors de l'inscription
+            </li>
+            <li class="flex items-start">
+              <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 mt-1 flex-shrink-0"></i>
+              Vous êtes responsable de la confidentialité de vos identifiants
+            </li>
+            <li class="flex items-start">
+              <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 mt-1 flex-shrink-0"></i>
+              Un seul compte par personne est autorisé
+            </li>
+            <li class="flex items-start">
+              <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 mt-1 flex-shrink-0"></i>
+              L'âge minimum requis est de 16 ans (ou avec autorisation parentale)
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">3. Utilisation responsable</h3>
+          <div class="warning-box p-4 rounded-lg">
+            <p class="text-amber-800 font-medium mb-2 flex items-center">
+              <i data-lucide="alert-triangle" class="w-4 h-4 mr-2"></i>
+              Comportements interdits
+            </p>
+            <ul class="space-y-1 text-amber-700 text-sm">
+              <li>• Utilisation de fausses informations</li>
+              <li>• Harcèlement ou comportement inapproprié</li>
+              <li>• Spam ou messages publicitaires non autorisés</li>
+              <li>• Tentative de piratage ou d'accès non autorisé</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Règlement des courses -->
+    <section id="race-rules" class="section-card bg-white rounded-lg shadow-md p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i data-lucide="flag" class="w-6 h-6 mr-3 text-pink-600"></i>
+        Règlement pour participer aux courses Color Run
+      </h2>
+
+      <div class="space-y-6">
+        <div class="highlight-box p-6 rounded-lg">
+          <h3 class="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+            <i data-lucide="info" class="w-5 h-5 mr-2"></i>
+            Principe des Color Run
+          </h3>
+          <p class="text-blue-700 leading-relaxed">
+            Les Color Run sont des courses festives où les participants sont aspergés de poudres colorées naturelles et biodégradables.
+            L'objectif est de s'amuser, pas de performance sportive !
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Conditions de participation</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 class="font-medium text-gray-700 mb-2 flex items-center">
+                <i data-lucide="user-check" class="w-4 h-4 mr-2 text-teal-500"></i>
+                Inscription obligatoire
+              </h4>
+              <ul class="space-y-1 text-sm text-gray-600">
+                <li>• Inscription en ligne via la plateforme</li>
+                <li>• Paiement des frais de participation</li>
+                <li>• Dossard obligatoire le jour J</li>
+                <li>• Arrivée 30 min avant le départ</li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-700 mb-2 flex items-center">
+                <i data-lucide="heart" class="w-4 h-4 mr-2 text-pink-500"></i>
+                Condition physique
+              </h4>
+              <ul class="space-y-1 text-sm text-gray-600">
+                <li>• Aptitude physique à la marche/course</li>
+                <li>• Aucun problème cardiaque grave</li>
+                <li>• Certificat médical recommandé</li>
+                <li>• Adaptation du rythme selon ses capacités</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Équipement recommandé</h3>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="text-center">
+                <i data-lucide="shirt" class="w-8 h-8 mx-auto text-teal-500 mb-2"></i>
+                <h4 class="font-medium text-gray-700 mb-1">Vêtements</h4>
+                <p class="text-xs text-gray-600">Vêtements blancs ou clairs, vieux vêtements conseillés</p>
+              </div>
+              <div class="text-center">
+                <i data-lucide="glasses" class="w-8 h-8 mx-auto text-pink-500 mb-2"></i>
+                <h4 class="font-medium text-gray-700 mb-1">Protection</h4>
+                <p class="text-xs text-gray-600">Lunettes de soleil, bandana ou foulard</p>
+              </div>
+              <div class="text-center">
+                <i data-lucide="zap" class="w-8 h-8 mx-auto text-yellow-500 mb-2"></i>
+                <h4 class="font-medium text-gray-700 mb-1">Accessoires</h4>
+                <p class="text-xs text-gray-600">Chaussures de sport, bouteille d'eau</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Déroulement de la course</h3>
+          <div class="space-y-3">
+            <div class="flex items-start">
+              <div class="bg-teal-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">1</div>
+              <div>
+                <h4 class="font-medium text-gray-700">Échauffement collectif</h4>
+                <p class="text-sm text-gray-600">Préparation physique et présentation de la course (15 min)</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div class="bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">2</div>
+              <div>
+                <h4 class="font-medium text-gray-700">Départ par vagues</h4>
+                <p class="text-sm text-gray-600">Départ échelonné pour éviter les bouchons</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div class="bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">3</div>
+              <div>
+                <h4 class="font-medium text-gray-700">Stations couleurs</h4>
+                <p class="text-sm text-gray-600">Aspersion de poudres colorées à chaque kilomètre</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-1">4</div>
+              <div>
+                <h4 class="font-medium text-gray-700">Fête finale</h4>
+                <p class="text-sm text-gray-600">Célébration colorée avec musique et animations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Règlement des associations -->
+    <section id="association-rules" class="section-card bg-white rounded-lg shadow-md p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i data-lucide="users" class="w-6 h-6 mr-3 text-yellow-600"></i>
+        Règlement concernant les associations
+      </h2>
+
+      <div class="space-y-6">
+        <div class="success-box p-6 rounded-lg">
+          <h3 class="text-lg font-semibold text-green-800 mb-3 flex items-center">
+            <i data-lucide="heart-handshake" class="w-5 h-5 mr-2"></i>
+            Objectif solidaire
+          </h3>
+          <p class="text-green-700 leading-relaxed">
+            Les Color Run permettent de soutenir des associations caritatives. Une partie des bénéfices
+            peut être reversée aux associations partenaires pour soutenir leurs actions.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Pour rejoindre une association existante</h3>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div class="flex items-start">
+              <i data-lucide="alert-circle" class="w-5 h-5 text-blue-600 mr-3 mt-1 flex-shrink-0"></i>
+              <div>
+                <h4 class="font-medium text-blue-800 mb-2">Condition importante</h4>
+                <p class="text-blue-700 text-sm">
+                  <strong>Vous devez réellement faire partie de l'association</strong> pour pouvoir la rejoindre sur l'application.
+                  Cette mesure garantit l'authenticité des liens associatifs et évite les inscriptions frauduleuses.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-start">
+              <i data-lucide="search" class="w-5 h-5 text-teal-500 mr-3 mt-1"></i>
+              <div>
+                <h4 class="font-medium text-gray-700">Rechercher l'association</h4>
+                <p class="text-sm text-gray-600">Vérifiez que votre association est référencée sur la plateforme</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <i data-lucide="user-plus" class="w-5 h-5 text-teal-500 mr-3 mt-1"></i>
+              <div>
+                <h4 class="font-medium text-gray-700">Demander l'adhésion</h4>
+                <p class="text-sm text-gray-600">Envoyez une demande en précisant votre rôle dans l'association</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <i data-lucide="shield-check" class="w-5 h-5 text-teal-500 mr-3 mt-1"></i>
+              <div>
+                <h4 class="font-medium text-gray-700">Validation</h4>
+                <p class="text-sm text-gray-600">Les responsables de l'application valideront ou non votre demande</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Pour ajouter une nouvelle association</h3>
+
+          <div class="warning-box p-4 rounded-lg mb-4">
+            <h4 class="font-medium text-amber-800 mb-2 flex items-center">
+              <i data-lucide="alert-triangle" class="w-4 h-4 mr-2"></i>
+              Prérequis obligatoires
+            </h4>
+            <ul class="space-y-1 text-amber-700 text-sm">
+              <li>• Être officiellement membre ou dirigeant de l'association</li>
+              <li>• Avoir l'autorisation des autres membres dirigeants</li>
+              <li>• Fournir des coordonnées de contact vérifiables</li>
+            </ul>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-start">
+              <i data-lucide="eye" class="w-5 h-5 text-pink-500 mr-3 mt-1"></i>
+              <div>
+                <h4 class="font-medium text-gray-700">Vérification administrative</h4>
+                <p class="text-sm text-gray-600">Notre équipe vérifie la légitimité et l'existence de l'association</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <i data-lucide="check-circle-2" class="w-5 h-5 text-pink-500 mr-3 mt-1"></i>
+              <div>
+                <h4 class="font-medium text-gray-700">Validation et activation</h4>
+                <p class="text-sm text-gray-600">Une fois approuvée, l'association est disponible sur la plateforme</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Responsabilités des associations</h3>
+          <ul class="space-y-2 text-gray-600">
+            <li class="flex items-start">
+              <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 mt-1 flex-shrink-0"></i>
+              Maintenir des informations à jour sur leur profil
+            </li>
+            <li class="flex items-start">
+              <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 mt-1 flex-shrink-0"></i>
+              Utiliser les fonds reçus conformément à leur objet social
+            </li>
+            <li class="flex items-start">
+              <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-green-500 mt-1 flex-shrink-0"></i>
+              Respecter les valeurs de bienveillance et de solidarité de Color Run
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Sécurité -->
+    <section id="safety-rules" class="section-card bg-white rounded-lg shadow-md p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i data-lucide="shield" class="w-6 h-6 mr-3 text-green-600"></i>
+        Règles de sécurité et responsabilités
+      </h2>
+
+      <div class="space-y-6">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Sécurité des participants</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 class="font-medium text-red-800 mb-2 flex items-center">
+                <i data-lucide="x-circle" class="w-4 h-4 mr-2"></i>
+                Contre-indications
+              </h4>
+              <ul class="space-y-1 text-red-700 text-sm">
+                <li>• Problèmes respiratoires sévères (asthme)</li>
+                <li>• Allergies aux colorants alimentaires</li>
+                <li>• Blessures récentes ou non consolidées</li>
+                <li>• Grossesse (consultation médicale conseillée)</li>
+              </ul>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 class="font-medium text-green-800 mb-2 flex items-center">
+                <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i>
+                Mesures de sécurité
+              </h4>
+              <ul class="space-y-1 text-green-700 text-sm">
+                <li>• Poudres 100% naturelles et biodégradables</li>
+                <li>• Postes de secours sur le parcours</li>
+                <li>• Points d'eau pour se rincer</li>
+                <li>• Équipe médicale présente</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Responsabilité et assurances</h3>
+          <div class="space-y-4">
+            <div class="highlight-box p-4 rounded-lg">
+              <h4 class="font-medium text-blue-800 mb-2">Responsabilité de l'organisateur</h4>
+              <p class="text-blue-700 text-sm">
+                L'organisateur souscrit une assurance responsabilité civile pour couvrir l'événement.
+                Les parcours sont sécurisés et le matériel utilisé respecte les normes de sécurité.
+              </p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h4 class="font-medium text-gray-800 mb-2">Responsabilité du participant</h4>
+              <p class="text-gray-700 text-sm">
+                Chaque participant court sous sa propre responsabilité. Il est recommandé de posséder
+                une assurance individuelle accident et de consulter un médecin en cas de doute.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">Protection des données personnelles</h3>
+          <p class="text-gray-600 mb-3">
+            Conformément au RGPD, vos données personnelles sont protégées et utilisées uniquement dans le cadre de votre participation aux événements Color Run.
+          </p>
+          <ul class="space-y-2 text-gray-600 text-sm">
+            <li class="flex items-start">
+              <i data-lucide="lock" class="w-4 h-4 mr-2 text-blue-500 mt-1 flex-shrink-0"></i>
+              Stockage sécurisé de vos informations personnelles
+            </li>
+            <li class="flex items-start">
+              <i data-lucide="eye-off" class="w-4 h-4 mr-2 text-blue-500 mt-1 flex-shrink-0"></i>
+              Aucune transmission à des tiers sans votre consentement
+            </li>
+            <li class="flex items-start">
+              <i data-lucide="trash-2" class="w-4 h-4 mr-2 text-blue-500 mt-1 flex-shrink-0"></i>
+              Droit de suppression de vos données à tout moment
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Contact -->
+    <section class="bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg p-8 text-white">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold mb-4 flex items-center justify-center">
+          <i data-lucide="help-circle" class="w-6 h-6 mr-3"></i>
+          Une question ? Besoin d'aide ?
+        </h2>
+        <p class="text-white/90 mb-6 max-w-2xl mx-auto">
+          Notre équipe est là pour vous accompagner dans votre expérience Color Run.
+          N'hésitez pas à nous contacter pour toute question concernant ces règlements.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/color_run_war/contact"
+             class="inline-flex items-center bg-white text-teal-600 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors">
+            <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+            Nous contacter
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dernière mise à jour -->
+    <div class="text-center py-6">
+      <p class="text-sm text-gray-500 flex items-center justify-center">
+        <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+        Dernière mise à jour : Juin 2025
+      </p>
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="fragments/footer :: footerFragment"></div>
+
+<!-- Script pour le smooth scroll et les icônes -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide
+    lucide.createIcons();
+
+    // Smooth scroll pour la navigation rapide
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+
+          // Ajouter une animation de highlight temporaire
+          target.classList.add('bg-blue-50');
+          setTimeout(() => {
+            target.classList.remove('bg-blue-50');
+          }, 2000);
+        }
+      });
+    });
+
+    // Animation au scroll pour les sections
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    // Observer toutes les sections
+    document.querySelectorAll('.section-card').forEach(section => {
+      section.style.opacity = '0';
+      section.style.transform = 'translateY(20px)';
+      section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(section);
+    });
+  });
+</script>
+
+<!-- Styles supplémentaires pour les animations -->
+<style>
+  .section-card {
+    scroll-margin-top: 100px;
+  }
+
+  @media (max-width: 768px) {
+    .section-card {
+      scroll-margin-top: 80px;
+    }
+  }
+
+  /* Animation pour les boutons de navigation rapide */
+  .grid a {
+    transition: all 0.3s ease;
+  }
+
+  .grid a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Animation pour les listes */
+  ul li {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  ul li:nth-child(1) { animation-delay: 0.1s; }
+  ul li:nth-child(2) { animation-delay: 0.2s; }
+  ul li:nth-child(3) { animation-delay: 0.3s; }
+  ul li:nth-child(4) { animation-delay: 0.4s; }
+  ul li:nth-child(5) { animation-delay: 0.5s; }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Style pour les étapes numérotées */
+  .step-number {
+    background: linear-gradient(135deg, #14b8a6 0%, #0891b2 100%);
+    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
+  }
+
+  /* Amélioration de l'accessibilité */
+  @media (prefers-reduced-motion: reduce) {
+    .section-card,
+    ul li {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
+
+</body>
+</html>

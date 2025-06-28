@@ -2,30 +2,173 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Liste des Courses</title>
+  <title>Color Run | Liste des Courses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Ajout des fichiers Leaflet sans les attributs integrity qui causent des erreurs -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
 
-  <!-- Header -->
-  <div th:replace="fragments/header :: headerFragment('home', ${member})"></div>
+<!-- Header -->
+<div th:replace="fragments/header :: headerFragment(page='courses', member=${member})"></div>
 
-  <!-- Table des courses à venir et passées -->
-  <div th:replace="fragments/coursesTable :: coursesTableFragment('courses', 'allCourses', 'Listes de toutes les courses', ${member}, ${upcomingCourses}, ${pastCourses})"></div>
+<!-- Main Content -->
+<main class="flex-1 py-8">
+  <div class="container mx-auto px-4 max-w-7xl">
 
-<!--
-  &lt;!&ndash; Table des courses à venir et passées &ndash;&gt;
-  <div th:replace="fragments/coursesTable :: coursesTableFragment('courses', 'memberCourses', 'Mes courses', ${member}, ${upcomingCourses}, ${pastCourses})"></div>
--->
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6 text-sm text-gray-600">
+      <a href="/color_run_war/" class="hover:text-teal-600 transition-colors flex items-center">
+        <i data-lucide="home" class="w-4 h-4 mr-1"></i>
+        Accueil
+      </a>
+      <span class="mx-2">›</span>
+      <span class="text-gray-900 flex items-center">
+                    <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                    Courses
+                </span>
+    </nav>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t p-4 text-center text-sm text-gray-500">
-    &copy; 2025 Color Run. Tous droits réservés.
-  </footer>
+    <!-- Hero Section avec informations générales -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-teal-500 to-blue-600 text-white p-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-4xl font-bold mb-3">Courses Color Run</h1>
+            <p class="text-white/90 text-lg mb-4">
+              Découvrez toutes les courses colorées près de chez vous !
+              Participez à des événements uniques alliant sport et plaisir.
+            </p>
+            <div class="flex items-center space-x-6 text-white/80">
+              <div class="flex items-center">
+                <i data-lucide="calendar-days" class="w-5 h-5 mr-2"></i>
+                <span>Événements réguliers</span>
+              </div>
+              <div class="flex items-center">
+                <i data-lucide="users" class="w-5 h-5 mr-2"></i>
+                <span>Communauté active</span>
+              </div>
+              <div class="flex items-center">
+                <i data-lucide="heart" class="w-5 h-5 mr-2"></i>
+                <span>Courses solidaires</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="bg-white text-teal-500 rounded-lg p-6">
+              <i data-lucide="trophy" class="w-12 h-12 mx-auto mb-2"></i>
+              <div class="text-sm text-teal-600 font-medium">Rejoignez l'aventure</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <!-- Quick Stats ou informations complémentaires -->
+      <div class="p-6 bg-gray-50 border-t">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="text-center">
+            <div class="bg-teal-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="map-pin" class="w-6 h-6 text-teal-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Partout en France</h3>
+            <p class="text-sm text-gray-600">Des courses dans toutes les régions</p>
+          </div>
+          <div class="text-center">
+            <div class="bg-blue-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="palette" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">100% Coloré</h3>
+            <p class="text-sm text-gray-600">Vivez l'expérience unique des poudres colorées</p>
+          </div>
+          <div class="text-center">
+            <div class="bg-pink-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="users" class="w-6 h-6 text-pink-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Pour Tous</h3>
+            <p class="text-sm text-gray-600">Familles, amis, sportifs... Tout le monde est bienvenu</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appel à l'action pour les organisateurs -->
+    <div th:if="${member != null and member.role.name() == 'RUNNER'}"
+         class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-6 mb-8 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold mb-2 flex items-center">
+            <i data-lucide="star" class="w-5 h-5 mr-2"></i>
+            Vous voulez organiser votre propre course ?
+          </h2>
+          <p class="text-white/90">
+            Devenez organisateur et créez des événements Color Run dans votre région !
+          </p>
+        </div>
+        <a href="/color_run_war/organizer-request"
+           class="bg-white text-orange-600 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center">
+          <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i>
+          Devenir organisateur
+        </a>
+      </div>
+    </div>
+
+    <!-- Message pour les visiteurs non connectés -->
+    <div th:if="${member == null}"
+         class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-blue-800 mb-2 flex items-center">
+            <i data-lucide="info" class="w-5 h-5 mr-2"></i>
+            Connectez-vous pour participer
+          </h2>
+          <p class="text-blue-700">
+            Créez un compte gratuit pour vous inscrire aux courses et rejoindre la communauté Color Run !
+          </p>
+        </div>
+        <div class="flex space-x-3">
+          <a href="/color_run_war/login"
+             class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center">
+            <i data-lucide="log-in" class="w-4 h-4 mr-2"></i>
+            Se connecter
+          </a>
+          <a href="/color_run_war/register"
+             class="bg-white hover:bg-gray-50 text-blue-600 border border-blue-200 font-medium py-2 px-4 rounded-lg transition-colors flex items-center">
+            <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+            S'inscrire
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table des courses avec le fragment modernisé -->
+    <div th:replace="fragments/coursesTable :: coursesTableFragment('courses', 'allCourses', 'Toutes les courses disponibles', ${member}, ${upcomingCourses}, ${pastCourses})"></div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="fragments/footer :: footerFragment"></div>
+
+<!-- Script pour initialiser les icônes -->
+<script>
+  window.currentMemberId = /*[[${currentMemberId}]]*/ null;
+  window.userRole = /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE';
+
+  console.log('🔍 Debug initialization:');
+  console.log('  - Member ID:', window.currentMemberId);
+  console.log('  - Member role:', /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE');
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide
+    lucide.createIcons();
+  });
+</script>
 
 </body>
 </html>

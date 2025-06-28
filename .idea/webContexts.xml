@@ -3,10 +3,14 @@
   <component name="WebContextManager">
     <option name="state">
       <map>
+        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/admin-organizer-requests.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates" />
+        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/course_detail.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates" />
+        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/courses.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates" />
+        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments/admin-organizer-request.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments" />
+        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments/coursesTable.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments" />
+        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments/header.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments" />
         <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments/map.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments" />
         <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/home.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates" />
-        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/courses.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates" />
-        <entry key="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments/coursesTable.html" value="file://$PROJECT_DIR$/src/main/webapp/WEB-INF/templates/fragments" />
       </map>
     </option>
   </component>

@@ -8,9 +8,12 @@ import fr.esgi.color_run.service.GeocodingService;
 import fr.esgi.color_run.business.GeoLocation;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 public class CourseServiceImpl implements CourseService {
 
@@ -161,6 +164,10 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Course createCourse(Course course) {
+        // Si l'associationId est 0, le mettre à null
+        if (course.getAssociationId() != null && course.getAssociationId() == 0) {
+            course.setAssociationId(null);
+        }
         return courseRepository.save(course);
     }
 
@@ -213,5 +220,134 @@ public class CourseServiceImpl implements CourseService {
 
         System.out.println("Résultats trouvés: " + courses.size() + " courses");
         return courses;
+    }
+
+    @Override
+    public List<Course> searchAndSortCoursesByCreator(String searchTerm, LocalDate fromDate, LocalDate toDate,
+                                                      String sortBy, String sortDirection, boolean upcoming, Long creatorId) {
+
+        System.out.println("🔍 CourseService - Recherche courses créateur ID: " + creatorId);
+
+        // Récupérer toutes les courses
+        List<Course> allCourses = courseRepository.findAll();
+
+        // Filtrer par créateur
+        List<Course> creatorCourses = allCourses.stream()
+                .filter(course -> {
+                    boolean isCreator = course.getMemberCreatorId() != null &&
+                            course.getMemberCreatorId().equals(creatorId.intValue());
+                    if (isCreator) {
+                        System.out.println("✅ Course " + course.getId() + " créée par " + creatorId);
+                    }
+                    return isCreator;
+                })
+                .collect(Collectors.toList());
+
+        System.out.println("🔍 CourseService - Courses du créateur trouvées: " + creatorCourses.size());
+
+        // Filtrer par upcoming/past
+        LocalDateTime now = LocalDateTime.now();
+        List<Course> courses = creatorCourses.stream()
+                .filter(course -> {
+                    if (course.getStartDate() == null) return false;
+
+                    if (upcoming) {
+                        return course.getStartDate().isAfter(now);
+                    } else {
+                        return course.getStartDate().isBefore(now);
+                    }
+                })
+                .collect(Collectors.toList());
+
+        // Appliquer les filtres de recherche
+        if (searchTerm != null && !searchTerm.isEmpty()) {
+            String search = searchTerm.toLowerCase();
+            courses = courses.stream()
+                    .filter(course ->
+                            course.getName().toLowerCase().contains(search) ||
+                                    course.getCity().toLowerCase().contains(search) ||
+                                    course.getZipCode().toString().contains(search)
+                    )
+                    .collect(Collectors.toList());
+        }
+
+        // Filtrer par dates
+        if (fromDate != null) {
+            courses = courses.stream()
+                    .filter(course -> course.getStartDate() != null &&
+                            !course.getStartDate().toLocalDate().isBefore(fromDate))
+                    .collect(Collectors.toList());
+        }
+
+        if (toDate != null) {
+            courses = courses.stream()
+                    .filter(course -> course.getStartDate() != null &&
+                            !course.getStartDate().toLocalDate().isAfter(toDate))
+                    .collect(Collectors.toList());
+        }
+
+        // Appliquer le tri
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Comparator<Course> comparator = getComparator(sortBy);
+            if (comparator != null) {
+                if ("desc".equals(sortDirection)) {
+                    comparator = comparator.reversed();
+                }
+                courses.sort(comparator);
+            }
+        }
+
+        System.out.println("🔍 CourseService - Courses finales retournées: " + courses.size());
+        return courses;
+    }
+
+    /**
+     * Retourne un comparateur pour le tri des courses
+     */
+    private Comparator<Course> getComparator(String sortBy) {
+        switch (sortBy) {
+            case "name":
+                return Comparator.comparing(Course::getName, String.CASE_INSENSITIVE_ORDER);
+            case "startDate":
+                return Comparator.comparing(Course::getStartDate, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "city":
+                return Comparator.comparing(Course::getCity, String.CASE_INSENSITIVE_ORDER);
+            case "distance":
+                return Comparator.comparing(Course::getDistance);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public List<Course> getCoursesByAssociationId(Long associationId) throws Exception {
+        if (associationId == null) {
+            return new ArrayList<>();
+        }
+
+        // Récupérer toutes les courses et filtrer par associationId
+        List<Course> allCourses = courseRepository.findAll();
+        return allCourses.stream()
+                .filter(course -> course.getAssociationId() != null &&
+                        course.getAssociationId().equals(associationId.intValue()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Course> filterUpcomingCourses(List<Course> courses) {
+        LocalDateTime now = LocalDateTime.now();
+        return courses.stream()
+                .filter(course -> course.getStartDate() != null && course.getStartDate().isAfter(now))
+                .sorted(Comparator.comparing(Course::getStartDate))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Course> filterPastCourses(List<Course> courses) {
+        LocalDateTime now = LocalDateTime.now();
+        return courses.stream()
+                .filter(course -> course.getStartDate() != null && course.getStartDate().isBefore(now))
+                .sorted(Comparator.comparing(Course::getStartDate).reversed())
+                .collect(Collectors.toList());
     }
 }

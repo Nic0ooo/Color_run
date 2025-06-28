@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Lucide Icons lib-->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
   <!-- CSS Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
@@ -285,19 +288,19 @@
       </div>
     </div>
     <div class="w-full md:w-2/3">
-      <h2 class="text-2xl font-bold mb-4">Devenez un héros de la Color Run</h2>
-      <p class="mb-4">Envie de faire partie de l'envers du décor ? *Rejoignez notre équipe de bénévoles et participez à l'organisation d'un évènement inoubliable ! En tant que bénévole, vous pourrez ::</p>
+      <h2 class="text-2xl font-bold mb-4">Devenez un organisateur de la Color Run</h2>
+      <p class="mb-4">Envie de faire la différence et de soutenir des causes importantes ? Rejoignez notre équipe d'organisateurs et participez à la création d'événements mémorables. En tant qu'organisateur, vous pourrez :</p>
       <ul class="mb-4">
-        <li>- Accueillir et guider les participants</li>
-        <li>- Animer les zones colorées et assurer une ambiance de folie</li>
-        <li>- Distribuer des kits ou des rafraîchissements</li>
-        <li>- Partager des moments uniques avec l'équipe et les coureurs</li>
+        <li>- Planifier et coordonner des courses uniques</li>
+        <li>- Mobiliser des participants pour des causes qui vous tiennent à cœur</li>
+        <li>- Collaborer avec des associations locales pour un impact positif</li>
+        <li>- Vivre une expérience enrichissante et valorisante</li>
       </ul>
-      <p>En échange, vous vivrez une expérience enrichissante et recevrez un kit souvenir pour votre engagement. Merci pour votre aide précieuse !.</p>
+      <p>En échange, vous contribuerez à des projets significatifs et recevrez tout le soutien nécessaire pour réussir. Merci pour votre engagement précieux !</p>
 
       <div class="flex gap-4 mt-6">
-        <a th:href="@{/register}" class="bg-white text-teal-500 px-4 py-2 rounded font-medium">Rejoindre l'équipe bénévole</a>
-        <a href="#" class="bg-transparent border border-white text-white px-4 py-2 rounded font-medium">En savoir plus sur le bénévolat</a>
+        <a th:href="@{/organizer-request}" class="bg-white text-teal-500 px-4 py-2 rounded font-medium">Devenir organisateur</a>
+        <a th:href="@{/associations}" class="bg-transparent border border-white text-white px-4 py-2 rounded font-medium">Découvrir les associations</a>
       </div>
     </div>
 
@@ -306,11 +309,7 @@
 </section>
 
 <!-- Footer -->
-<footer class="bg-white border-t p-4 mt-auto">
-  <div class="container mx-auto px-4 text-center">
-    <p class="text-sm text-gray-500">&copy; 2025 Color Run. Tous droits réservés.</p>
-  </div>
-</footer>
+<div th:replace="fragments/footer :: footerFragment"></div>
 
 <!-- Script principal pour la carte et les interactions -->
 <script th:inline="javascript">
@@ -565,16 +564,14 @@
   // Initialisation au chargement de la page
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initialisation...');
+
     // Initialiser la carte avec les courses actuelles
     initializeMap(currentCourses);
 
     // Attacher les événements initiaux
     attachCourseItemEvents();
   });
-</script>
 
-<!-- géolocalisation -->
-<script>
   document.addEventListener('DOMContentLoaded', function() {
     const proximityButton = document.getElementById('proximity-search');
     if (proximityButton) {
@@ -653,10 +650,7 @@
       });
     }
   });
-</script>
 
-<!-- Script pour la recherche AJAX -->
-<script>
   document.addEventListener('DOMContentLoaded', function() {
     const searchForm = document.getElementById('search-form');
 
