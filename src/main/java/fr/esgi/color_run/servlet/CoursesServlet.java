@@ -100,16 +100,20 @@ public class CoursesServlet extends HttpServlet {
         String toDateStr = req.getParameter("toDate");
         String sortBy = req.getParameter("sortBy");
         String sortDirection = req.getParameter("sortDirection");
-        String courseFilter = req.getParameter("courseFilter"); // Nouveau paramètre
+        String courseFilter = req.getParameter("courseFilter");
 
-        // Récupération des paramètres de pagination
+        // Récupération des paramètres de pagination - CORRECTION: gestion sécurisée
         int upcomingPage = 1;
         int pastPage = 1;
         int pageSize = 6;
 
         try {
-            upcomingPage = Integer.parseInt(req.getParameter("upcomingPage"));
-            pastPage = Integer.parseInt(req.getParameter("pastPage"));
+            if (req.getParameter("upcomingPage") != null) {
+                upcomingPage = Integer.parseInt(req.getParameter("upcomingPage"));
+            }
+            if (req.getParameter("pastPage") != null) {
+                pastPage = Integer.parseInt(req.getParameter("pastPage"));
+            }
             if (req.getParameter("pageSize") != null) {
                 pageSize = Integer.parseInt(req.getParameter("pageSize"));
             }
@@ -157,14 +161,14 @@ public class CoursesServlet extends HttpServlet {
         List<Course> paginatedUpcomingCourses = paginateCourses(allUpcomingCourses, upcomingPage, pageSize);
         List<Course> paginatedPastCourses = paginateCourses(allPastCourses, pastPage, pageSize);
 
-        // ✅ MISE À JOUR DES COMPTEURS RÉELS
-        updateCoursesWithRealCounts(upcomingCourses);
-        updateCoursesWithRealCounts(pastCourses);
+        // ✅ CORRECTION MAJEURE : Mise à jour des compteurs sur les courses PAGINÉES
+        updateCoursesWithRealCounts(paginatedUpcomingCourses);
+        updateCoursesWithRealCounts(paginatedPastCourses);
 
-        System.out.println("AJAX - Courses à venir: " + upcomingCourses.size());
-        System.out.println("AJAX - Courses passées: " + pastCourses.size());
         System.out.println("AJAX - Filter: " + courseFilter + ", Total courses à venir: " + allUpcomingCourses.size() + ", page: " + upcomingPage);
         System.out.println("AJAX - Total courses passées: " + allPastCourses.size() + ", page: " + pastPage);
+        System.out.println("AJAX - Courses à venir paginées: " + paginatedUpcomingCourses.size());
+        System.out.println("AJAX - Courses passées paginées: " + paginatedPastCourses.size());
 
         // Créer les infos de pagination
         Map<String, Object> upcomingPagination = createPaginationInfo(upcomingPage, pageSize, allUpcomingCourses.size());
@@ -373,8 +377,6 @@ public class CoursesServlet extends HttpServlet {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
 
         for (Course course : courses) {
-            // ✅ Pas de recalcul ici puisque déjà fait par updateCoursesWithRealCounts()
-
             Map<String, Object> courseMap = new HashMap<>();
             courseMap.put("id", course.getId());
             courseMap.put("name", course.getName());
@@ -392,12 +394,12 @@ public class CoursesServlet extends HttpServlet {
             courseMap.put("endpositionLatitude", course.getEndpositionLatitude());
             courseMap.put("endpositionLongitude", course.getEndpositionLongitude());
             courseMap.put("maxOfRunners", course.getMaxOfRunners());
+
+            // ✅ UNE SEULE FOIS : currentNumberOfRunners (déjà mis à jour par updateCoursesWithRealCounts)
             courseMap.put("currentNumberOfRunners", course.getCurrentNumberOfRunners());
 
-            // Gestion sécurisée de l'associationId - peut être null
+            // ✅ UNE SEULE FOIS : associationId avec gestion null
             courseMap.put("associationId", course.getAssociationId() != null ? course.getAssociationId() : 0);
-            courseMap.put("currentNumberOfRunners", course.getCurrentNumberOfRunners()); // Déjà mis à jour
-            courseMap.put("associationId", course.getAssociationId());
             courseMap.put("memberCreatorId", course.getMemberCreatorId());
 
             // Calculs dérivés
@@ -419,7 +421,6 @@ public class CoursesServlet extends HttpServlet {
         System.out.println("CoursesServlet: doPost() called");
         req.setCharacterEncoding("UTF-8");
 
-        req.setCharacterEncoding("UTF-8");
         String action = req.getParameter("action");
 
         if ("create".equals(action)) {

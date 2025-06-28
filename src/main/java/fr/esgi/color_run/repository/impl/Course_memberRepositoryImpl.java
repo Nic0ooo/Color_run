@@ -21,7 +21,8 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
     public Course_memberRepositoryImpl() {
         this.dbManager = DatabaseManager.getInstance();
         ensureTableExists();
-        }
+        updateTableForBibNumber();
+    }
 
     private Connection getConnection() throws SQLException {
         return dbManager.getConnection();
@@ -338,23 +339,6 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
         return courses;
     }
 
-        @Override
-        public List<Course> findPastCoursesByMemberId(long memberId) {
-            String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.enddate < NOW()";
-            try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setLong(1, memberId);
-                ResultSet rs = pstmt.executeQuery();
-                List<Course> courses = new ArrayList<>();
-                while (rs.next()) {
-                    courses.add(Mapper.mapRowToCourse(rs));
-                }
-                return courses;
-            } catch (SQLException e) {
-                System.err.println("Erreur lors de la récupération des courses passées pour le membre :");
-                e.printStackTrace();
-            }
-            return null;
-        }
     @Override
     public List<Course> findPastCoursesByMemberId(long memberId) {
         String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId " +
@@ -379,7 +363,7 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
 
     @Override
     public List<Course> findUpcomingCoursesByMemberId(long memberId) {
-        String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.enddate > NOW()";
+//        String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId WHERE cm.memberId = ? AND c.enddate > NOW()";
         String sql = "SELECT c.* FROM course c JOIN CourseMember cm ON c.id = cm.courseId " +
                 "WHERE cm.memberId = ? AND cm.registrationStatus = 'ACCEPTED' AND c.startdate > NOW()";
         List<Course> courses = new ArrayList<>();
