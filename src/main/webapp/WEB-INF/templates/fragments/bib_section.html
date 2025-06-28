@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Fragment simplifié pour la prévisualisation du dossard -->
+<div th:fragment="bibPreview(course, member, isUserPaid, bibNumber)"
+     th:if="${isUserPaid and bibNumber != null and !bibNumber.isEmpty()}"
+     class="bg-white rounded-lg shadow-md overflow-hidden mt-6">
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold flex items-center">
+                <i data-lucide="award" class="w-5 h-5 mr-2"></i>
+                Aperçu de votre dossard
+            </h3>
+            <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                <i data-lucide="check-circle" class="w-4 h-4 mr-1 inline"></i>
+                Prêt
+            </span>
+        </div>
+    </div>
+
+    <div class="p-6">
+        <!-- Prévisualisation du dossard -->
+        <div class="text-center mb-6">
+            <div class="bib-card">
+                <div class="course-name-mini mb-2" th:text="${course.name}">Course Name</div>
+                <div class="bib-number-display" th:text="${bibNumber}">1234</div>
+                <div class="participant-name-mini mt-2">
+                    <span th:text="${member.firstname + ' ' + member.name}">Nom Participant</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="font-medium text-gray-800 mb-3 flex items-center">
+                <i data-lucide="info" class="w-4 h-4 mr-2 text-blue-600"></i>
+                Instructions importantes
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-center">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 text-green-600"></i>
+                    Portez ce dossard de manière visible sur le torse
+                </li>
+                <li class="flex items-center">
+                    <i data-lucide="clock" class="w-4 h-4 mr-2 text-green-600"></i>
+                    Arrivez 30 minutes avant le départ
+                </li>
+                <li class="flex items-center">
+                    <i data-lucide="shield-check" class="w-4 h-4 mr-2 text-green-600"></i>
+                    Gardez le dossard en bon état pendant la course
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Styles CSS -->
+<style th:fragment="bibPreviewStyles">
+    .bib-card {
+        display: inline-block;
+        border: 3px solid #f59e0b;
+        border-radius: 12px;
+        padding: 24px;
+        background: linear-gradient(135deg, #fef3c7, #fed7aa);
+        min-width: 280px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .bib-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+
+    .course-name-mini {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #78716c;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        line-height: 1.2;
+    }
+
+    .bib-number-display {
+        font-size: 4.5rem;
+        font-weight: 900;
+        color: #ea580c;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        line-height: 1;
+        font-family: 'Arial Black', 'Helvetica', sans-serif;
+    }
+
+    .participant-name-mini {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #57534e;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        line-height: 1.2;
+    }
+
+    /* Animation d'apparition */
+    @keyframes bibAppear {
+        0% {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .bib-card {
+        animation: bibAppear 0.6s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .bib-number-display {
+            font-size: 3.5rem;
+        }
+
+        .bib-card {
+            min-width: 240px;
+            padding: 20px;
+        }
+
+        .course-name-mini {
+            font-size: 0.8rem;
+        }
+
+        .participant-name-mini {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<!-- JavaScript minimal -->
+<script th:fragment="bibPreviewScripts">
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🎫 Prévisualisation dossard initialisée');
+
+        // Réinitialiser les icônes Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+
+</html>
