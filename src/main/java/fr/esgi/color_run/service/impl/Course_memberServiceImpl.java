@@ -135,4 +135,21 @@ public class Course_memberServiceImpl implements Course_memberService {
         System.err.println("❌ Repository ne supporte pas findByStripeSessionId");
         return Optional.empty();
     }
+
+    @Override
+    public int countRegisteredAndPaidMembers(Long courseId) {
+        if (courseId <= 0) {
+            System.out.println("Invalid course ID for counting registered members.");
+            return 0;
+        }
+
+        // Cast vers l'implémentation pour accéder aux méthodes spécifiques
+        if (course_memberRepository instanceof Course_memberRepositoryImpl) {
+            return ((Course_memberRepositoryImpl) course_memberRepository)
+                    .countRegisteredAndPaidMembers(courseId);
+        }
+
+        System.err.println("❌ Repository ne supporte pas countRegisteredAndPaidMembers");
+        return 0;
+    }
 }

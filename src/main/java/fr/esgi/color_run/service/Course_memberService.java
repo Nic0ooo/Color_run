@@ -27,4 +27,7 @@ public interface Course_memberService {
     List<Member> findMembersByCourseId(long courseId);
 
     Optional<Course_member> findByStripeSessionId(String stripeSessionId);
+
+    int countRegisteredAndPaidMembers(Long courseId);
+
 }
