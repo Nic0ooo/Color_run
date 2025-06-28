@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS CourseMember (
                                             registrationDate VARCHAR(255),
                                             registrationStatus VARCHAR(255),
                                             stripeSessionId VARCHAR(255) DEFAULT NULL,
+                                            bibNumber INTEGER DEFAULT NULL,
                                             FOREIGN KEY (courseId) REFERENCES Course(id),
                                             FOREIGN KEY (memberId) REFERENCES Member(id)
 );
