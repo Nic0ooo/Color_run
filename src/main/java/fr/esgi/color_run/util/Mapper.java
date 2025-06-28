@@ -96,6 +96,8 @@ public class Mapper {
     }
 
 
+    // Mise à jour de la méthode mapRowToCourse_member dans Mapper.java
+
     public static Course_member mapRowToCourse_member(ResultSet rs) throws SQLException {
         Course_member courseMember = new Course_member();
         courseMember.setId(rs.getLong("id"));
@@ -111,10 +113,14 @@ public class Mapper {
 
             courseMember.setStripeSessionId(rs.getString("stripeSessionId")); // Peut être null
 
+            // ✅ Nouveau : gestion du champ bibNumber
+            courseMember.setBibNumber(rs.getString("bibNumber")); // Peut être null
+
         } catch (SQLException e) {
             courseMember.setRegistrationDate(java.time.LocalDateTime.now().toString());
             courseMember.setRegistrationStatus(Status.ACCEPTED);
             courseMember.setStripeSessionId(null);
+            courseMember.setBibNumber(null); // ✅ Valeur par défaut
         }
 
         return courseMember;

@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.Random;
 
 @WebServlet(urlPatterns = {"/payment-success", "/payment-cancel"})
 public class PaymentCallbackServlet extends HttpServlet {
@@ -107,6 +108,26 @@ public class PaymentCallbackServlet extends HttpServlet {
                 System.out.println("   - Member ID: " + confirmedRegistration.getMemberId());
                 System.out.println("   - Status: " + confirmedRegistration.getRegistrationStatus());
 
+                try {
+                    if (confirmedRegistration.getBibNumber() == null || confirmedRegistration.getBibNumber().isEmpty()) {
+                        String bibNumber = generateUniqueBibNumber();
+                        confirmedRegistration.setBibNumber(bibNumber);
+
+                        // Sauvegarder avec le nouveau dossard
+                        courseMemberService.save(confirmedRegistration);
+
+                        System.out.println("🎫 Dossard auto-généré: " + bibNumber +
+                                " pour membre " + confirmedRegistration.getMemberId() +
+                                " course " + confirmedRegistration.getCourseId());
+                    } else {
+                        System.out.println("Dossard déjà existant: " + confirmedRegistration.getBibNumber());
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erreur lors de la génération automatique du dossard: " + e.getMessage());
+                    e.printStackTrace();
+                    // Ne pas faire échouer le paiement pour autant - continuer
+                }
+
                 resp.sendRedirect(req.getContextPath() + "/course-detail?id=" + courseId + "&success=payment_completed");
             } else {
                 System.err.println("Impossible de confirmer l'inscription");
@@ -131,6 +152,12 @@ public class PaymentCallbackServlet extends HttpServlet {
                 System.err.println("Impossible de rediriger après erreur, réponse déjà commitée");
             }
         }
+    }
+
+    private String generateUniqueBibNumber() {
+        Random random = new Random();
+        int number = random.nextInt(9000) + 1000; // Entre 1000 et 9999
+        return String.valueOf(number);
     }
 
     private void handlePaymentCancel(HttpServletRequest req, HttpServletResponse resp,
