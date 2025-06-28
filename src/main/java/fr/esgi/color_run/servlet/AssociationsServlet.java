@@ -3,6 +3,7 @@ package fr.esgi.color_run.servlet;
 import fr.esgi.color_run.business.Association;
 import fr.esgi.color_run.business.Course;
 import fr.esgi.color_run.business.Member;
+import fr.esgi.color_run.business.Role;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.repository.CourseRepository;
 import fr.esgi.color_run.repository.impl.CourseRepositoryImpl;
@@ -64,6 +65,7 @@ public class AssociationsServlet extends HttpServlet {
         String searchTerm = req.getParameter("search");
         String sortBy = req.getParameter("sortBy");
         String sortDirection = req.getParameter("sortDirection");
+        String associationFilter = req.getParameter("associationFilter"); // Nouveau paramètre
 
         // Récupération des paramètres de pagination
         int page = 1;
@@ -78,9 +80,21 @@ public class AssociationsServlet extends HttpServlet {
             System.err.println("Erreur de conversion des paramètres de pagination: " + e.getMessage());
         }
 
+        // Récupérer le membre connecté pour les filtres
+        HttpSession session = req.getSession(false);
+        Member member = (Member) (session != null ? session.getAttribute("member") : null);
+
         try {
-            // Récupérer toutes les associations
-            List<Association> allAssociations = associationService.getAllAssociations();
+            // Récupérer les associations selon le filtre
+            List<Association> allAssociations;
+
+            if (member != null && "my-associations".equals(associationFilter)) {
+                // Filtrer par associations du membre
+                allAssociations = associationMemberService.getAssociationsByOrganizer(member.getId());
+            } else {
+                // Toutes les associations (comportement par défaut)
+                allAssociations = associationService.getAllAssociations();
+            }
 
             // Enrichir avec le nombre de courses et filtrer/trier
             List<AssociationWithCourseCount> enrichedAssociations = allAssociations.stream()
@@ -97,7 +111,7 @@ public class AssociationsServlet extends HttpServlet {
 
             // Créer la réponse JSON
             Map<String, Object> response = new HashMap<>();
-            response.put("associations", convertAssociationsToJson(paginatedAssociations));
+            response.put("associations", convertAssociationsToJson(paginatedAssociations, member));
             response.put("pagination", pagination);
 
             // Configurer la réponse
@@ -137,6 +151,12 @@ public class AssociationsServlet extends HttpServlet {
                     // Récupérer les associations du membre pour les permissions
                     List<Association> memberAssociations = associationMemberService.getAssociationsByOrganizer(member.getId());
                     context.setVariable("memberAssociations", memberAssociations);
+
+                    // Créer une map des IDs d'associations du membre pour faciliter les vérifications
+                    Set<Long> memberAssociationIds = memberAssociations.stream()
+                            .map(Association::getId)
+                            .collect(Collectors.toSet());
+                    context.setVariable("memberAssociationIds", memberAssociationIds);
                 }
 
                 // Configuration de la réponse
@@ -261,6 +281,25 @@ public class AssociationsServlet extends HttpServlet {
 
     // Méthodes utilitaires
 
+    private boolean canMemberEditAssociation(Member member, Association association) {
+        if (member == null) return false;
+
+        if (member.getRole() == Role.ADMIN) {
+            return true;
+        }
+
+        if (member.getRole() == Role.ORGANIZER) {
+            try {
+                return associationMemberService.isOrganizerInAssociation(member.getId(), association.getId());
+            } catch (Exception e) {
+                System.err.println("Erreur lors de la vérification des permissions pour l'association " + association.getId());
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     private AssociationWithCourseCount enrichAssociationWithCourseCount(Association association) {
         try {
             List<Course> courses = courseService.getCoursesByAssociationId(association.getId());
@@ -340,7 +379,7 @@ public class AssociationsServlet extends HttpServlet {
         return pagination;
     }
 
-    private List<Map<String, Object>> convertAssociationsToJson(List<AssociationWithCourseCount> associations) {
+    private List<Map<String, Object>> convertAssociationsToJson(List<AssociationWithCourseCount> associations, Member member) {
         List<Map<String, Object>> result = new ArrayList<>();
 
         for (AssociationWithCourseCount assocWithCount : associations) {
@@ -357,6 +396,11 @@ public class AssociationsServlet extends HttpServlet {
             associationMap.put("zipCode", association.getZipCode());
             associationMap.put("websiteLink", association.getWebsiteLink());
             associationMap.put("courseCount", assocWithCount.getCourseCount());
+
+            // Déterminer les permissions
+            boolean canEdit = canMemberEditAssociation(member, association);
+
+            associationMap.put("canEdit", canEdit);
 
             result.add(associationMap);
         }
