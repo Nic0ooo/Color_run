@@ -11,7 +11,10 @@
 <div th:replace="fragments/header :: headerFragment(page='admin', member=${member})"></div>
 
 <main class="flex-1 py-10">
+
     <div class="max-w-6xl mx-auto px-6">
+        <div th:replace="fragments/admin-breadcrumb :: adminBreadcrumb(title='Gestion des membres')"></div>
+
         <!-- Title block -->
         <div class="bg-gradient-to-r from-blue-500 to-teal-400 text-white p-6 rounded-lg shadow mb-8">
             <h1 class="text-3xl font-bold mb-2">Gestion des utilisateurs</h1>
