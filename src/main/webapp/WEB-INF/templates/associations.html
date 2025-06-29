@@ -2,138 +2,116 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Admin | Associations</title>
+  <title>Color Run | Associations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="bg-gray-50 text-gray-900 font-poppins">
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col font-poppins">
 
-<div th:replace="fragments/header :: headerFragment(page='admin', member=${member})"></div>
+<!-- Header -->
+<div th:replace="fragments/header :: headerFragment(page='associations', member=${member})"></div>
 
-<main class="max-w-6xl mx-auto px-6 py-10">
+<!-- Main Content -->
+<main class="flex-1 py-8">
+  <div class="container mx-auto px-4 max-w-7xl">
 
-  <!-- Message d'erreur -->
-  <div th:if="${errorMessage}" class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-    <p th:text="${errorMessage}">Une erreur s’est produite.</p>
-  </div>
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6 text-sm text-gray-600">
+      <a href="/color_run_war/" class="hover:text-teal-600 transition-colors flex items-center">
+        <i data-lucide="home" class="w-4 h-4 mr-1"></i>
+        Accueil
+      </a>
+      <span class="mx-2">›</span>
+      <span class="text-gray-900 flex items-center">
+                <i data-lucide="users" class="w-4 h-4 mr-1"></i>
+                Associations
+            </span>
+    </nav>
 
-  <h1 class="text-3xl font-bold mb-6 flex items-center">
-    <i data-lucide="users" class="w-6 h-6 mr-3 text-purple-600"></i> Gestion des associations
-  </h1>
+    <!-- Hero Section -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-4xl font-bold mb-3">Associations Color Run</h1>
+            <p class="text-white/90 text-lg mb-4">
+              Découvrez les associations qui organisent des courses solidaires et participez à leurs événements !
+            </p>
+            <div class="flex items-center space-x-6 text-white/80">
+              <div class="flex items-center">
+                <i data-lucide="heart" class="w-5 h-5 mr-2"></i>
+                <span>Causes solidaires</span>
+              </div>
+              <div class="flex items-center">
+                <i data-lucide="users" class="w-5 h-5 mr-2"></i>
+                <span>Communauté engagée</span>
+              </div>
+              <div class="flex items-center">
+                <i data-lucide="calendar" class="w-5 h-5 mr-2"></i>
+                <span>Événements réguliers</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="bg-white text-purple-500 rounded-lg p-6">
+              <i data-lucide="users" class="w-12 h-12 mx-auto mb-2"></i>
+              <div class="text-sm text-purple-600 font-medium">Rejoignez l'action</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <div class="bg-white rounded-lg shadow overflow-x-auto">
-    <table class="min-w-full table-auto text-sm">
-      <thead class="bg-gray-100">
-      <tr>
-        <th class="px-4 py-2 text-left">Nom</th>
-        <th class="px-4 py-2 text-left">Email</th>
-        <th class="px-4 py-2 text-left">Ville</th>
-        <th class="px-4 py-2 text-center">Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr th:each="assoc : ${associations}" class="border-b hover:bg-gray-50">
-        <td class="px-4 py-3" th:text="${assoc.name}">Nom</td>
-        <td class="px-4 py-3" th:text="${assoc.email}">Email</td>
-        <td class="px-4 py-3" th:text="${assoc.city}">Ville</td>
-        <td class="px-4 py-3 text-center space-x-1">
-          <!-- Voir membres -->
-          <button type="button"
-                  class="bg-gray-700 text-white px-2 py-1 rounded text-sm"
-                  th:onclick="|openModal('membersModal__${assoc.id}')|">
-          Membres
-          </button>
-
-          <!-- Modifier -->
-          <button type="button"
-                  class="bg-yellow-500 text-white px-2 py-1 rounded text-sm"
-                  th:onclick="|openModal('editModal__${assoc.id}')|">
-          Modifier
-          </button>
-
-          <!-- Supprimer -->
-          <form th:action="@{/admin-associations}" method="post" class="inline-block"
-                onsubmit="return confirm('Supprimer cette association ?')">
-            <input type="hidden" name="action" value="delete"/>
-            <input type="hidden" name="id" th:value="${assoc.id}"/>
-            <button type="submit" class="bg-red-600 text-white px-2 py-1 rounded text-sm">Supprimer</button>
-          </form>
-        </td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Modals -->
-  <div th:each="assoc : ${associations}">
-    <!-- Modal Membres -->
-    <div class="fixed inset-0 hidden z-50 bg-black bg-opacity-50 items-center justify-center"
-         th:id="'membersModal__' + ${assoc.id}">
-      <div class="bg-white p-6 rounded-lg max-w-xl w-full shadow-xl relative flex flex-col">
-        <h2 class="text-xl font-semibold mb-4" th:text="'Membres de ' + ${assoc.name}">Membres</h2>
-        <ul class="list-disc pl-5 mb-4">
-          <li th:each="m : ${assoc.members}" th:text="${m.firstName + ' ' + m.name}">Nom Prénom</li>
-        </ul>
-        <button class="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
-                onclick="closeModal(this)">
-          <i data-lucide="x"></i>
-        </button>
+      <!-- Quick Stats -->
+      <div class="p-6 bg-gray-50 border-t">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="text-center">
+            <div class="bg-purple-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="heart-handshake" class="w-6 h-6 text-purple-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Action Solidaire</h3>
+            <p class="text-sm text-gray-600">Chaque course soutient une cause</p>
+          </div>
+          <div class="text-center">
+            <div class="bg-pink-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="globe" class="w-6 h-6 text-pink-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Impact Local</h3>
+            <p class="text-sm text-gray-600">Des associations présentes dans toute la France</p>
+          </div>
+          <div class="text-center">
+            <div class="bg-blue-100 rounded-full p-3 w-fit mx-auto mb-3">
+              <i data-lucide="trophy" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1">Excellence</h3>
+            <p class="text-sm text-gray-600">Des événements de qualité organisés par des passionnés</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Modal Modifier -->
-    <div class="fixed inset-0 hidden z-50 bg-black bg-opacity-50 items-center justify-center"
-         th:id="'editModal__' + ${assoc.id}">
-      <div class="bg-white p-6 rounded-lg max-w-xl w-full shadow-xl relative flex flex-col">
-        <h2 class="text-xl font-semibold mb-4">Modifier l'association</h2>
-        <form th:action="@{/admin-associations}" method="post" class="space-y-4">
-          <input type="hidden" name="action" value="edit"/>
-          <input type="hidden" name="id" th:value="${assoc.id}"/>
-          <div>
-            <label class="block text-sm text-gray-700">Nom</label>
-            <input type="text" name="name" th:value="${assoc.name}" class="w-full border px-3 py-2 rounded">
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700">Email</label>
-            <input type="email" name="email" th:value="${assoc.email}" class="w-full border px-3 py-2 rounded">
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700">Ville</label>
-            <input type="text" name="city" th:value="${assoc.city}" class="w-full border px-3 py-2 rounded">
-          </div>
-          <div class="flex justify-end space-x-2">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enregistrer</button>
-            <button type="button" class="text-gray-600 hover:text-gray-800"
-                    onclick="closeModal(this)">Annuler</button>
-          </div>
-        </form>
-        <button class="absolute top-2 right-2 text-gray-500 hover:text-gray-800" onclick="closeModal(this)">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-    </div>
-  </div>
+    <!-- Table des associations -->
+    <div th:replace="fragments/associationsTable :: associationsTableFragment(${member}, ${associations})"></div>
 
+  </div>
 </main>
 
+<!-- Footer -->
 <div th:replace="fragments/footer :: footerFragment"></div>
 
+<!-- Script pour initialiser les icônes -->
 <script>
-  lucide.createIcons();
-  function openModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-  }
-  function closeModal(button) {
-    const modal = button.closest('.fixed');
-    if (modal) {
-      modal.classList.remove('flex');
-      modal.classList.add('hidden');
-    }
-  }
+  window.currentMemberId = /*[[${currentMemberId}]]*/ null;
+  window.userRole = /*[[${member != null ? member.role.name() : 'NONE'}]]*/ 'NONE';
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide
+    lucide.createIcons();
+  });
 </script>
 
 </body>
