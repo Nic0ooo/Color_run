@@ -47,4 +47,6 @@ public interface CourseRepository {
     List<Course> findPastCoursesByAssociationId(Long associationId);
 
     List<Course> findUpcomingCoursesByAssociationId(Long associationId);
+    void deleteCourse(Long id);
+
 }

@@ -1,6 +1,6 @@
 #FileLock
-#Sat Jun 28 13:56:46 CEST 2025
-hostName=mac.home
-id=197b665ad1cd7532c9ba2ea1df24a42e135a27533bc
+#Sun Jun 29 18:03:17 CEST 2025
+server=192.168.1.96\:51301
+hostName=remi
 method=file
-server=192.168.1.25\:54408
+id=197bc6db9ada8da6299fe7859db9c88215be85ee328

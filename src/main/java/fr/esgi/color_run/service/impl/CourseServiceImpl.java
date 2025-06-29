@@ -350,4 +350,13 @@ public class CourseServiceImpl implements CourseService {
                 .sorted(Comparator.comparing(Course::getStartDate).reversed())
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void deleteCourse(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID de course nul.");
+        }
+        courseRepository.deleteCourse(id);
+        System.out.println("✅ Course supprimée avec succès: ID=" + id);
+    }
 }

@@ -1,6 +1,7 @@
 package fr.esgi.color_run.business;
 
 import lombok.Data;
+import java.util.List;
 
 /**
  * Représente une association sur l'app
@@ -18,7 +19,10 @@ public class Association {
     private String city;
     private Integer zipCode;
 
+    private transient List<Member> members;
+
     private static Long compteur = 0L;
+
     /**
      * Constructeur par défaut de la classe Association.
      * Initialise l'identifiant et les coordonnées à celle de Paris.

@@ -439,4 +439,25 @@ public class CourseRepositoryImpl implements CourseRepository {
         }
         return upcomingAssoCourses;
     }
+
+    @Override
+    public void deleteCourse(Long id) {
+        String sql = "DELETE FROM course WHERE id = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, id);
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Aucune course supprimée. ID inexistant ?");
+            }
+
+            System.out.println("✅ Course supprimée avec succès. ID = " + id);
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors de la suppression de la course : " + e.getMessage());
+            throw new RuntimeException("Impossible de supprimer la course", e);
+        }
+    }
+
 }
