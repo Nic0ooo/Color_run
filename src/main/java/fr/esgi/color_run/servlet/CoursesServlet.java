@@ -102,7 +102,7 @@ public class CoursesServlet extends HttpServlet {
         String sortDirection = req.getParameter("sortDirection");
         String courseFilter = req.getParameter("courseFilter");
 
-        // Récupération des paramètres de pagination - CORRECTION: gestion sécurisée
+        // Récupération des paramètres de pagination
         int upcomingPage = 1;
         int pastPage = 1;
         int pageSize = 6;
@@ -161,7 +161,7 @@ public class CoursesServlet extends HttpServlet {
         List<Course> paginatedUpcomingCourses = paginateCourses(allUpcomingCourses, upcomingPage, pageSize);
         List<Course> paginatedPastCourses = paginateCourses(allPastCourses, pastPage, pageSize);
 
-        // ✅ CORRECTION MAJEURE : Mise à jour des compteurs sur les courses PAGINÉES
+        // Mise à jour des compteurs sur les courses PAGINÉES
         updateCoursesWithRealCounts(paginatedUpcomingCourses);
         updateCoursesWithRealCounts(paginatedPastCourses);
 
