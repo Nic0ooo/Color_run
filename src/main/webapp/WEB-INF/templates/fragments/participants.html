@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="participantsFragment(courseId, member)">
+
+<!-- Fragment Participants - Avec dropdown et pagination -->
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+
+    <!-- En-tête avec bouton de réduction -->
+    <div class="bg-green-600 text-white p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i data-lucide="users" class="w-5 h-5 mr-2"></i>
+                <h2 class="text-xl font-semibold">Participants</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-white/90 text-sm" th:text="'Total : ' + ${totalParticipants != null ? totalParticipants : 0}">Total : 0</span>
+                <button onclick="toggleParticipants()" id="toggle-participants-btn"
+                        class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg transition-colors text-sm flex items-center">
+                    <i data-lucide="chevron-up" class="w-4 h-4 mr-1"></i>
+                    <span id="participants-toggle-text">Réduire</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu (avec possibilité de réduction) -->
+    <div id="participants-content" class="p-4">
+
+        <!-- Message si aucun participant -->
+        <div th:if="${hasParticipants == null or !hasParticipants}" class="text-center py-8 text-gray-500">
+            <i data-lucide="user-x" class="w-12 h-12 mx-auto mb-3 text-gray-400"></i>
+            <p class="text-lg">Aucun participant inscrit</p>
+        </div>
+
+        <!-- Liste des participants -->
+        <div th:if="${hasParticipants != null and hasParticipants}">
+
+            <!-- Statistiques rapides -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="bg-blue-50 p-3 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-blue-600" th:text="${totalParticipants != null ? totalParticipants : 0}">0</div>
+                    <div class="text-sm text-blue-800">Total inscrits</div>
+                </div>
+                <div class="bg-green-50 p-3 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-green-600" th:text="${participants != null ? participants.size() : 0}">0</div>
+                    <div class="text-sm text-green-800">Page actuelle</div>
+                </div>
+                <div class="bg-yellow-50 p-3 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-yellow-600" th:text="${currentPage != null ? currentPage : 1}">1</div>
+                    <div class="text-sm text-yellow-800">Page</div>
+                </div>
+            </div>
+
+            <!-- Tableau des participants -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-2 text-left font-medium text-gray-700">Nom</th>
+                        <th class="px-3 py-2 text-left font-medium text-gray-700">Email</th>
+                        <th class="px-3 py-2 text-center font-medium text-gray-700">Statut</th>
+                        <th class="px-3 py-2 text-center font-medium text-gray-700">Dossard</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                    <tr th:each="entry : ${participants}" class="hover:bg-gray-50">
+                        <td class="px-3 py-2">
+                            <span th:text="${entry.value.firstname != null ? entry.value.firstname : ''}">Prénom</span>
+                            <span th:text="${entry.value.name != null ? entry.value.name : ''}">Nom</span>
+                        </td>
+                        <td class="px-3 py-2 text-gray-600" th:text="${entry.value.email != null ? entry.value.email : 'Non renseigné'}">email</td>
+                        <td class="px-3 py-2 text-center">
+                                <span th:if="${entry.key.registrationStatus != null and entry.key.registrationStatus.name() == 'ACCEPTED'}"
+                                      class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Confirmé</span>
+                            <span th:if="${entry.key.registrationStatus != null and entry.key.registrationStatus.name() == 'PENDING'}"
+                                  class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">En attente</span>
+                            <span th:unless="${entry.key.registrationStatus != null and (entry.key.registrationStatus.name() == 'ACCEPTED' or entry.key.registrationStatus.name() == 'PENDING')}"
+                                  class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">Autre</span>
+                        </td>
+                        <td class="px-3 py-2 text-center">
+                                <span th:if="${entry.key.bibNumber != null and entry.key.bibNumber != ''}"
+                                      th:text="${entry.key.bibNumber}"
+                                      class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">123</span>
+                            <span th:unless="${entry.key.bibNumber != null and entry.key.bibNumber != ''}"
+                                  class="text-gray-400 text-xs">-</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination corrigée avec les bonnes URLs -->
+            <div th:if="${totalPages != null and totalPages > 1}" class="flex justify-center items-center mt-6 space-x-2">
+                <!-- Bouton Précédent -->
+                <a th:if="${currentPage != null and currentPage > 1}"
+                   th:href="@{/course-detail(id=${courseId}, page=${currentPage - 1})}"
+                   class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
+                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i>
+                    Précédent
+                </a>
+
+                <!-- Numéros de pages -->
+                <div class="flex space-x-1">
+                    <!-- Pages autour de la page actuelle -->
+                    <th:block th:each="pageNum : ${#numbers.sequence(1, totalPages)}">
+                        <a th:if="${pageNum != currentPage}"
+                           th:href="@{/course-detail(id=${courseId}, page=${pageNum})}"
+                           th:text="${pageNum}"
+                           class="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">1</a>
+                        <span th:if="${pageNum == currentPage}"
+                              th:text="${pageNum}"
+                              class="px-3 py-2 bg-green-600 text-white rounded">1</span>
+                    </th:block>
+                </div>
+
+                <!-- Bouton Suivant -->
+                <a th:if="${currentPage != null and totalPages != null and currentPage < totalPages}"
+                   th:href="@{/course-detail(id=${courseId}, page=${currentPage + 1})}"
+                   class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
+                    Suivant
+                    <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                </a>
+            </div>
+
+            <!-- Informations de pagination -->
+            <div class="text-center mt-4 text-sm text-gray-600">
+                <span th:if="${currentPage != null and totalParticipants != null}"
+                      th:text="'Page ' + ${currentPage} + ' sur ' + ${totalPages} + ' - ' + ${totalParticipants} + ' participants au total'">
+                    Page 1 sur 1 - 0 participants au total
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleParticipants() {
+        const content = document.getElementById('participants-content');
+        const btn = document.getElementById('toggle-participants-btn');
+        const toggleText = document.getElementById('participants-toggle-text');
+        const chevronIcon = btn.querySelector('i[data-lucide]');
+
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            toggleText.textContent = 'Réduire';
+            chevronIcon.setAttribute('data-lucide', 'chevron-up');
+        } else {
+            content.style.display = 'none';
+            toggleText.textContent = 'Afficher';
+            chevronIcon.setAttribute('data-lucide', 'chevron-down');
+        }
+
+        // Réinitialiser les icônes Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+</script>

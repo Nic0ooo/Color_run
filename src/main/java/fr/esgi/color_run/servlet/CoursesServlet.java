@@ -651,8 +651,6 @@ public class CoursesServlet extends HttpServlet {
         }
     }
 
-    // ✅ MÉTHODE MISE À JOUR pour showCourseDetail avec calcul des participants
-
     private void showCourseDetail(String courseId, WebContext context, TemplateEngine engine,
                                   HttpServletResponse resp, HttpServletRequest req, Member member) throws IOException {
         System.out.println("🔍 DEBUG: showCourseDetail appelé avec courseId = " + courseId);
@@ -699,39 +697,101 @@ public class CoursesServlet extends HttpServlet {
             System.out.println("   - Places max: " + course.getMaxOfRunners());
             System.out.println("   - Places restantes: " + placesRestantes);
 
-            // Vérifier si la course est expirée
-            boolean courseExpired = false;
-            if (course.getEndDate() != null) {
-                courseExpired = course.getEndDate().isBefore(LocalDateTime.now());
-            } else if (course.getStartDate() != null) {
-                courseExpired = course.getStartDate().isBefore(LocalDateTime.now());
+            // ✅ NOUVEAU : RÉCUPÉRATION DES PARTICIPANTS pour les modérateurs avec PAGINATION
+            if (member != null && (member.getRole() == Role.ADMIN || member.getRole() == Role.ORGANIZER)) {
+                try {
+                    System.out.println("🔍 Chargement participants pour course " + courseId);
+
+                    // Récupérer TOUS les participants
+                    List<Member> members = courseMemberService.findMembersByCourseId(courseIdLong);
+                    Map<Course_member, Member> allParticipantsWithDetails = new LinkedHashMap<>();
+
+                    for (Member m : members) {
+                        Optional<Course_member> registrationOpt =
+                                courseMemberService.getRegistrationDetails(courseIdLong, m.getId());
+                        if (registrationOpt.isPresent()) {
+                            allParticipantsWithDetails.put(registrationOpt.get(), m);
+                        }
+                    }
+
+                    // Pagination
+                    List<Map.Entry<Course_member, Member>> allParticipantsList = new ArrayList<>(allParticipantsWithDetails.entrySet());
+                    int totalParticipants = allParticipantsList.size();
+
+                    // Récupération du numéro de page depuis l'URL
+                    int page = 1;
+                    String pageParam = req.getParameter("page");
+                    if (pageParam != null && !pageParam.isEmpty()) {
+                        try {
+                            page = Integer.parseInt(pageParam);
+                            if (page < 1) page = 1;
+                        } catch (NumberFormatException e) {
+                            page = 1;
+                        }
+                    }
+
+                    // Calculs de pagination (10 par page)
+                    int participantsPerPage = 10;
+                    int totalPages = (int) Math.ceil((double) totalParticipants / participantsPerPage);
+                    int startIndex = (page - 1) * participantsPerPage;
+                    int endIndex = Math.min(startIndex + participantsPerPage, totalParticipants);
+
+                    // S'assurer que la page demandée existe
+                    if (page > totalPages && totalPages > 0) {
+                        page = totalPages;
+                        startIndex = (page - 1) * participantsPerPage;
+                        endIndex = Math.min(startIndex + participantsPerPage, totalParticipants);
+                    }
+
+                    // Participants pour la page actuelle
+                    List<Map.Entry<Course_member, Member>> currentPageParticipants =
+                            startIndex < totalParticipants ? allParticipantsList.subList(startIndex, endIndex) : new ArrayList<>();
+
+                    // Variables pour le fragment
+                    context.setVariable("participants", currentPageParticipants);
+                    context.setVariable("totalParticipants", totalParticipants);
+                    context.setVariable("hasParticipants", totalParticipants > 0);
+                    context.setVariable("currentPage", page);
+                    context.setVariable("totalPages", totalPages);
+
+                    System.out.println("✅ " + totalParticipants + " participants total, page " + page + "/" + totalPages +
+                            " (" + currentPageParticipants.size() + " affichés)");
+
+                } catch (Exception e) {
+                    System.err.println("❌ Erreur participants : " + e.getMessage());
+                    // Variables par défaut
+                    context.setVariable("participants", new ArrayList<>());
+                    context.setVariable("totalParticipants", 0);
+                    context.setVariable("hasParticipants", false);
+                    context.setVariable("currentPage", 1);
+                    context.setVariable("totalPages", 1);
+                }
+            } else {
+                // Variables par défaut pour non-modérateurs
+                context.setVariable("participants", new ArrayList<>());
+                context.setVariable("totalParticipants", 0);
+                context.setVariable("hasParticipants", false);
+                context.setVariable("currentPage", 1);
+                context.setVariable("totalPages", 1);
             }
 
-            // Si tentative d'inscription sur course expirée via URL
-            if (courseExpired && req.getParameter("error") == null) {
-                resp.sendRedirect(req.getContextPath() + "/course-detail?id=" + courseId + "&error=course_expired");
-                return;
-            }
-
-            // Vérifier l'état d'inscription via le SERVICE
+            // Vérification des permissions et statuts d'inscription
             boolean isUserRegistered = false;
             boolean isUserPaid = false;
             String bibNumber = null;
 
             if (member != null) {
-                Role memberRole = member.getRole();
-                boolean isModerator = (memberRole == Role.ADMIN || memberRole == Role.ORGANIZER);
-
-                if (isModerator) {
-                    // Les modérateurs ont accès direct au chat
+                // Vérifier si le membre est un modérateur
+                if (member.getRole() == Role.ADMIN || member.getRole() == Role.ORGANIZER) {
+                    System.out.println("🔑 Accès modérateur accordé à " + member.getId() + " (" + member.getRole() + ") pour course " + courseId);
                     isUserRegistered = true;
                     isUserPaid = true;
-                    System.out.println("✅ Accès modérateur accordé à " + member.getId() + " (" + memberRole + ") pour course " + courseId);
                 } else {
-                    // Pour les RUNNER : vérification classique
+                    // Pour les membres normaux, vérifier l'inscription et le paiement
                     isUserRegistered = courseMemberService.isMemberInCourse(courseIdLong, member.getId());
                     isUserPaid = courseMemberService.isMemberRegisteredAndPaid(courseIdLong, member.getId());
 
+                    // Récupérer le numéro de dossard si disponible
                     if (isUserPaid) {
                         Optional<Course_member> registrationOpt = courseMemberService.getRegistrationDetails(courseIdLong, member.getId());
                         if (registrationOpt.isPresent()) {
