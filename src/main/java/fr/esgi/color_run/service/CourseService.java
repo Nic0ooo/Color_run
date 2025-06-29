@@ -77,4 +77,7 @@ public interface CourseService {
      * Filtrer les courses passées d'une liste existante
      */
     List<Course> filterPastCourses(List<Course> courses);
+
+    void deleteCourse(Long id);
+
 }
