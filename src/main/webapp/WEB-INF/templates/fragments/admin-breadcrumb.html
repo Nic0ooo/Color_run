@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragment : Fil d’Ariane admin -->
+<nav class="flex mb-6 text-sm text-gray-600" th:fragment="adminBreadcrumb(title)">
+  <a href="/color_run_war/admin-dashboard" class="hover:text-teal-600 transition-colors">Espace admin</a>
+  <span class="mx-2">›</span>
+  <span class="text-gray-900" th:text="${title}">[Titre de la page]</span>
+</nav>
+</body>
+</html>

@@ -50,7 +50,7 @@ public class Mapper {
         m.setPositionLatitude(rs.getDouble("positionLatitude"));
         m.setPositionLongitude(rs.getDouble("positionLongitude"));
 
-        // CORRECTION IMPORTANTE : Ajouter le mapping du rôle
+        // mapping du rôle
         try {
             String roleStr = rs.getString("role");
             System.out.println("🔍 Mapper: Role lu depuis BDD pour " + m.getEmail() + ": '" + roleStr + "'");

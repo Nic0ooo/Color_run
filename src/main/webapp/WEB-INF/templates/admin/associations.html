@@ -11,7 +11,7 @@
 <div th:replace="fragments/header :: headerFragment(page='admin', member=${member})"></div>
 
 <main class="max-w-6xl mx-auto px-6 py-10">
-
+  <div th:replace="fragments/admin-breadcrumb :: adminBreadcrumb(title='Gestion des associations')"></div>
   <!-- Message d'erreur -->
   <div th:if="${errorMessage}" class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
     <p th:text="${errorMessage}">Une erreur s’est produite.</p>
