@@ -332,6 +332,12 @@
             </div>
         </div>
 
+        <div th:if="${member != null and (member.role.name() == 'ADMIN' or member.role.name() == 'ORGANIZER')}"
+             id="participants-section" class="mb-8">
+
+            <div th:replace="fragments/participants :: participantsFragment(${course.id}, ${member})"></div>
+        </div>
+
         <!-- Section Chat - Toujours visible mais peut être réduite -->
         <div th:if="${member != null and isUserPaid}" id="chat-section" class="">
             <div th:if="${member.role.name() == 'ADMIN' or member.role.name() == 'ORGANIZER'}"
