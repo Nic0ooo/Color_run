@@ -15,9 +15,14 @@ public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
 
+    // ✅ Constructeur pour utilisation normale (prod)
     public MemberServiceImpl() {
-        RepositoryFactory factory = RepositoryFactory.getInstance();
-        this.memberRepository = factory.getMemberRepository();
+        this(RepositoryFactory.getInstance().getMemberRepository());
+    }
+
+    // ✅ Constructeur pour les tests (injection d’un mock)
+    public MemberServiceImpl(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
     }
 
     @Override
