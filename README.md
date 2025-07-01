@@ -294,11 +294,3 @@ Pour changer le chemin de la base de données :
 - Vérifier les logs Tomcat pour les erreurs
 - Monitorer l'utilisation mémoire (pool de connexions)
 
-## Support et contribution
-
-Pour signaler des bugs ou contribuer au projet :
-1. Créer une issue dans le gestionnaire de tickets
-2. Suivre les conventions de codage existantes
-3. Ajouter des tests pour les nouvelles fonctionnalités
-4. Documenter les changements majeurs
-
