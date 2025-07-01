@@ -60,8 +60,7 @@ CREATE TABLE IF NOT EXISTS CourseMember (
                                             stripeSessionId VARCHAR(255) DEFAULT NULL,
                                             bibNumber INTEGER DEFAULT NULL,
                                             FOREIGN KEY (courseId) REFERENCES Course(id),
-                                            FOREIGN KEY (memberId) REFERENCES Member(id),
-                                            UNIQUE(courseId, memberId)
+                                            FOREIGN KEY (memberId) REFERENCES Member(id)
 );
 
 CREATE TABLE IF NOT EXISTS AssociationMember (
