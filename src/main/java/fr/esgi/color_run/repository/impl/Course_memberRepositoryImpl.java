@@ -157,21 +157,54 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
     /**
      * Sauvegarde avec support Stripe (INSERT ou UPDATE automatique)
      */
+    /**
+     * Sauvegarde avec support Stripe - TOUJOURS INSERT pour nouvelles sessions Stripe
+     */
     public void saveWithStripe(Course_member course_member) {
-        if (course_member.getId() != null && course_member.getId() > 0) {
-            updateWithStripe(course_member);
-        } else {
+        // IMPORTANT: Pour Stripe, on force TOUJOURS un INSERT
+        // car chaque paiement Stripe = nouvelle session = nouveau record
+        // même si l'utilisateur a déjà une inscription pour cette course
+
+        System.out.println("🔧 saveWithStripe appelé - Course: " + course_member.getCourseId() +
+                ", Member: " + course_member.getMemberId() +
+                ", Session: " + course_member.getStripeSessionId() +
+                ", ID actuel: " + course_member.getId());
+
+        if (course_member.getStripeSessionId() != null && !course_member.getStripeSessionId().trim().isEmpty()) {
+            // Nouvelle session Stripe → FORCER INSERT
+            course_member.setId(null); // Reset ID pour forcer INSERT
+            System.out.println("🔄 ID reset pour forcer INSERT Stripe");
             insertWithStripe(course_member);
+        } else {
+            // Cas normal (pas Stripe) : logique habituelle
+            if (course_member.getId() != null && course_member.getId() > 0) {
+                updateWithStripe(course_member);
+            } else {
+                insertWithStripe(course_member);
+            }
         }
     }
 
     /**
      * INSERT pour Stripe avec bibNumber
      */
+    /**
+     * INSERT pour Stripe avec commit forcé
+     */
     private void insertWithStripe(Course_member course_member) {
         String sql = "INSERT INTO CourseMember (courseId, memberId, registrationDate, registrationStatus, stripeSessionId, bibNumber) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            conn = getConnection();
+
+            // Désactiver l'auto-commit pour contrôler la transaction
+            boolean originalAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+
+            pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             pstmt.setLong(1, course_member.getCourseId());
             pstmt.setLong(2, course_member.getMemberId());
@@ -181,20 +214,56 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
             pstmt.setString(5, course_member.getStripeSessionId());
             pstmt.setString(6, course_member.getBibNumber());
 
-            pstmt.executeUpdate();
+            int rowsAffected = pstmt.executeUpdate();
 
-            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    course_member.setId(generatedKeys.getLong(1));
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        course_member.setId(generatedKeys.getLong(1));
+                    }
                 }
+
+                // FORCER LE COMMIT IMMÉDIATEMENT
+                conn.commit();
+
+                System.out.println("✅ Inscription Stripe insérée et commitée - ID: " + course_member.getId() +
+                        ", Session: " + course_member.getStripeSessionId() + ", Dossard: " + course_member.getBibNumber());
+            } else {
+                conn.rollback();
+                System.err.println("❌ Aucune ligne insérée pour l'inscription Stripe");
             }
 
-            System.out.println("✅ Inscription Stripe insérée - ID: " + course_member.getId() +
-                    ", Session: " + course_member.getStripeSessionId() + ", Dossard: " + course_member.getBibNumber());
+            // Remettre l'auto-commit à sa valeur originale
+            conn.setAutoCommit(originalAutoCommit);
 
         } catch (SQLException e) {
             System.err.println("❌ Erreur lors de l'insertion Stripe: " + e.getMessage());
             e.printStackTrace();
+
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    conn.setAutoCommit(true); // Remettre l'auto-commit par défaut
+                } catch (SQLException rollbackEx) {
+                    System.err.println("❌ Erreur lors du rollback: " + rollbackEx.getMessage());
+                }
+            }
+        } finally {
+            // Fermer les ressources
+            if (pstmt != null) {
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                    System.err.println("❌ Erreur fermeture PreparedStatement: " + e.getMessage());
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    System.err.println("❌ Erreur fermeture Connection: " + e.getMessage());
+                }
+            }
         }
     }
 
@@ -230,8 +299,15 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
     /**
      * Trouve une inscription par session Stripe
      */
+    /**
+     * Trouve une inscription par session Stripe avec debug
+     */
     public Optional<Course_member> findByStripeSessionId(String stripeSessionId) {
         String sql = "SELECT * FROM CourseMember WHERE stripeSessionId = ?";
+
+        // Debug: Afficher toutes les sessions en base
+        debugStripeSessionIds(stripeSessionId);
+
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -242,6 +318,8 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
                 Course_member courseMember = Mapper.mapRowToCourse_member(rs);
                 System.out.println("✅ Inscription trouvée par Stripe session: " + stripeSessionId);
                 return Optional.of(courseMember);
+            } else {
+                System.out.println("❌ Aucune inscription trouvée pour session: " + stripeSessionId);
             }
 
         } catch (SQLException e) {
@@ -250,6 +328,47 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Debug pour voir toutes les sessions Stripe en base
+     */
+    private void debugStripeSessionIds(String searchedSessionId) {
+        String sql = "SELECT id, courseId, memberId, stripeSessionId, registrationStatus FROM CourseMember WHERE stripeSessionId IS NOT NULL ORDER BY id DESC LIMIT 10";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            ResultSet rs = pstmt.executeQuery();
+
+            System.out.println("🔍 DEBUG: Dernières sessions Stripe en base:");
+            boolean found = false;
+            int count = 0;
+
+            while (rs.next()) {
+                count++;
+                String sessionId = rs.getString("stripeSessionId");
+                System.out.println("  " + count + ". ID: " + rs.getLong("id") +
+                        ", Course: " + rs.getLong("courseId") +
+                        ", Member: " + rs.getLong("memberId") +
+                        ", Session: " + sessionId +
+                        ", Status: " + rs.getString("registrationStatus"));
+
+                if (searchedSessionId.equals(sessionId)) {
+                    found = true;
+                    System.out.println("      ✅ SESSION RECHERCHÉE TROUVÉE!");
+                }
+            }
+
+            if (count == 0) {
+                System.out.println("  ❌ Aucune session Stripe trouvée en base");
+            } else if (!found) {
+                System.out.println("  ❌ Session recherchée '" + searchedSessionId + "' NON TROUVÉE parmi les " + count + " dernières");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Erreur lors du debug des sessions: " + e.getMessage());
+        }
     }
 
     /**
