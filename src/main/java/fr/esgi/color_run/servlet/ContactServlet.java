@@ -1,5 +1,6 @@
 package fr.esgi.color_run.servlet;
 
+import fr.esgi.color_run.business.Member;
 import fr.esgi.color_run.configuration.ThymeleafConfiguration;
 import fr.esgi.color_run.service.EmailService;
 import jakarta.servlet.ServletException;
@@ -28,6 +29,10 @@ public class ContactServlet extends HttpServlet {
 
         WebContext context = new WebContext(
                 ThymeleafConfiguration.getApplication().buildExchange(request, response));
+
+        // Récupérer le membre de la session
+        Member member = (Member) request.getSession().getAttribute("member");
+        context.setVariable("member", member);
 
         try (StringWriter stringWriter = new StringWriter();
              PrintWriter out = response.getWriter()) {

@@ -86,7 +86,10 @@ CREATE TABLE OrganizerRequest (
                                   processedByAdminId BIGINT,
                                   processedDate TIMESTAMP,
                                   requestType VARCHAR(50) DEFAULT 'BECOME_ORGANIZER',
-                                  existingAssociationName VARCHAR(255)
+                                  existingAssociationName VARCHAR(255),
+                                  FOREIGN KEY (memberId) REFERENCES Member(id),
+                                  FOREIGN KEY (existingAssociationId) REFERENCES Association(id),
+                                  FOREIGN KEY (processedByAdminId) REFERENCES Member(id)
 );
 
 CREATE TABLE IF NOT EXISTS Discussion (
@@ -94,19 +97,25 @@ CREATE TABLE IF NOT EXISTS Discussion (
                                           courseId INTEGER,
                                           isActive BOOLEAN DEFAULT TRUE,
                                           FOREIGN KEY (courseId) REFERENCES Course(id),
-                                            UNIQUE(courseId)
+                                          UNIQUE(courseId)
 );
 
 CREATE TABLE IF NOT EXISTS Message (
                                        id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                        discussionId INTEGER,
                                        memberId INTEGER,
-                                       content VARCHAR(255),
+                                       content VARCHAR(1000),
+                                       originalContent VARCHAR(1000),
                                        date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                       lastModifiedDate TIMESTAMP,
                                        isPin BOOLEAN DEFAULT FALSE,
                                        isHidden BOOLEAN DEFAULT FALSE,
+                                       isModified BOOLEAN DEFAULT FALSE,
+                                       isDeleted BOOLEAN DEFAULT FALSE,
+                                       hiddenByMemberId INTEGER,
                                        FOREIGN KEY (discussionId) REFERENCES Discussion(id),
-                                       FOREIGN KEY (memberId) REFERENCES Member(id)
+                                       FOREIGN KEY (memberId) REFERENCES Member(id),
+                                       FOREIGN KEY (hiddenByMemberId) REFERENCES Member(id)
 );
 
 CREATE TABLE IF NOT EXISTS Paiement (
@@ -751,88 +760,88 @@ FROM course c
 WHERE NOT EXISTS (SELECT 1 FROM Discussion WHERE courseId = c.id);
 
 -- Messages dans les discussions
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Bienvenue sur la discussion du Marathon de Paris ! Qui est prêt pour cette aventure incroyable ?', '2025-03-01 10:00:00', TRUE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Bienvenue sur la discussion du Marathon de Paris ! Qui est prêt pour cette aventure incroyable ?', 'Bienvenue sur la discussion du Marathon de Paris ! Qui est prêt pour cette aventure incroyable ?', '2025-03-01 10:00:00', TRUE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'jean.dupont@email.com'
 WHERE c.name = 'Marathon de Paris'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Bienvenue sur la discussion du Marathon%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Quelqu''un connaît le parcours exacte ? J''aimerais m''entraîner sur le trajet !', '2025-03-02 14:30:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Quelqu''un connaît le parcours exacte ? J''aimerais m''entraîner sur le trajet !', 'Quelqu''un connaît le parcours exacte ? J''aimerais m''entraîner sur le trajet !', '2025-03-02 14:30:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'sophie.martin@email.com'
 WHERE c.name = 'Marathon de Paris'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Quelqu''un connaît le parcours%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Le parcours est disponible sur le site officiel. Très beau parcours dans Paris !', '2025-03-02 15:45:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Le parcours est disponible sur le site officiel. Très beau parcours dans Paris !', 'Le parcours est disponible sur le site officiel. Très beau parcours dans Paris !', '2025-03-02 15:45:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'paul.bernard@email.com'
 WHERE c.name = 'Marathon de Paris'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Le parcours est disponible%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin)
-SELECT d.id, m.id, 'Bienvenue sur l''Eco-Trail Nantais! N''oubliez pas votre gourde réutilisable et vos chaussures de trail.', '2025-04-20 09:00:00', TRUE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin)
+SELECT d.id, m.id, 'Bienvenue sur l''Eco-Trail Nantais! N''oubliez pas votre gourde réutilisable et vos chaussures de trail.', 'Bienvenue sur l''Eco-Trail Nantais! N''oubliez pas votre gourde réutilisable et vos chaussures de trail.', '2025-04-20 09:00:00', TRUE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'thomas.dubois@email.com'
 WHERE c.name = 'Eco-Trail Nantais'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Bienvenue sur l''Eco-Trail%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Super initiative ! Y aura-t-il des points de ravitaillement zéro déchet ?', '2025-04-21 16:20:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Super initiative ! Y aura-t-il des points de ravitaillement zéro déchet ?', 'Super initiative ! Y aura-t-il des points de ravitaillement zéro déchet ?', '2025-04-21 16:20:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'julie.moreau@email.com'
 WHERE c.name = 'Eco-Trail Nantais'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Super initiative%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Absolument ! Gobelets consignés et fruits locaux uniquement. 🌱', '2025-04-21 17:15:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Absolument ! Gobelets consignés et fruits locaux uniquement. 🌱', 'Absolument ! Gobelets consignés et fruits locaux uniquement. 🌱', '2025-04-21 17:15:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'thomas.dubois@email.com'
 WHERE c.name = 'Eco-Trail Nantais'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Absolument%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Qui participe à la Course des Héros ? On peut faire une équipe !', '2025-04-05 11:30:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Qui participe à la Course des Héros ? On peut faire une équipe !', 'Qui participe à la Course des Héros ? On peut faire une équipe !', '2025-04-05 11:30:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'marc.petit@email.com'
 WHERE c.name = 'Course des Héros'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Qui participe à la Course%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Moi je suis partante ! Pour quelle association on court ?', '2025-04-05 12:45:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Moi je suis partante ! Pour quelle association on court ?', 'Moi je suis partante ! Pour quelle association on court ?', '2025-04-05 12:45:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'sophie.roux@email.com'
 WHERE c.name = 'Course des Héros'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Moi je suis partante%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Préparez-vous pour une explosion de couleurs ! 🌈 Course familiale et festive garantie !', '2025-05-10 10:00:00', TRUE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Préparez-vous pour une explosion de couleurs ! 🌈 Course familiale et festive garantie !', 'Préparez-vous pour une explosion de couleurs ! 🌈 Course familiale et festive garantie !', '2025-05-10 10:00:00', TRUE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'elisevarin@email.com'
 WHERE c.name = 'Bocuse Color Run'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Préparez-vous pour une explosion%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Les enfants peuvent participer à partir de quel âge ?', '2025-05-11 14:20:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Les enfants peuvent participer à partir de quel âge ?', 'Les enfants peuvent participer à partir de quel âge ?', '2025-05-11 14:20:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'pierre.blanc@gmail.com'
 WHERE c.name = 'Bocuse Color Run'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Les enfants peuvent%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'À partir de 6 ans accompagnés, 12 ans seuls. Parcours adapté pour tous !', '2025-05-11 15:30:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'À partir de 6 ans accompagnés, 12 ans seuls. Parcours adapté pour tous !', 'À partir de 6 ans accompagnés, 12 ans seuls. Parcours adapté pour tous !', '2025-05-11 15:30:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'elisevarin@email.com'
