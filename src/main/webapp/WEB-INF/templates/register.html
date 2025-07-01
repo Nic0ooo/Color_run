@@ -3,12 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${pageTitle}">Inscription</title>
+
+    <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Lucide Icons -->
+    <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Personnalisation de la liste des suggestions */
+        #address-suggestions li {
+            transition: background 0.2s;
+        }
+
+        #address-suggestions li:hover {
+            background-color: #FEF3C7; /* jaune clair */
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col items-center">
 
@@ -19,53 +34,42 @@
         <h2 class="text-center text-2xl font-bold mb-6">Créer un compte</h2>
 
         <form method="post" th:action="@{/register}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
             <!-- Nom / Prénom -->
-            <input name="name"       type="text" placeholder="Nom" required
+            <input name="name" type="text" placeholder="Nom" required
                    class="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
-            <input name="firstname"  type="text" placeholder="Prénom" required
+            <input name="firstname" type="text" placeholder="Prénom" required
                    class="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
 
             <!-- Email -->
             <input name="email" type="email" placeholder="Email" required
                    class="md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
 
-            <!-- Mot de passe / Confirmation -->
-            <input name="password"         type="password" placeholder="Mot de passe" required
-                   class="md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
-            <input name="passwordConfirm"  type="password" placeholder="Répétez le mot de passe" required
+            <!-- Téléphone -->
+            <input name="phoneNumber" type="tel" placeholder="+33"
                    class="md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
 
-            <!-- Date de naissance -->
-            <div class="grid grid-cols-3 gap-2 md:col-span-2">
-                <!-- Jour -->
-                <select name="birthDay" required
-                        class="border border-gray-300 px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                    <option value="">Jour</option>
-                    <th:block th:each="d : ${#numbers.sequence(1,31)}">
-                        <option th:value="${d}" th:text="${d}"></option>
-                    </th:block>
-                </select>
-                <!-- Mois -->
-                <select name="birthMonth" required
-                        class="border border-gray-300 px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                    <option value="">Mois</option>
-                    <th:block th:each="m : ${#numbers.sequence(1,12)}">
-                        <option th:value="${m}"
-                                th:text="${#dates.format(#dates.create(2000,m,1),'MMMM')}">
-                        </option>
-                    </th:block>
-                </select>
-                <!-- Année -->
-                <th:block th:with="currentYear=${#dates.createNow().year}">
-                    <select name="birthYear" required
-                            class="border border-gray-300 px-2 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                        <option value="">Année</option>
-                        <th:block th:each="age : ${#numbers.sequence(18,80)}">
-                            <option th:value="${currentYear - age}" th:text="${currentYear - age}"></option>
-                        </th:block>
-                    </select>
-                </th:block>
+            <!-- Mot de passe -->
+            <div class="relative md:col-span-2">
+                <input id="password" name="password" type="password" placeholder="Mot de passe" required
+                       class="w-full border border-gray-300 px-4 py-2 rounded pr-10 focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
+                <button type="button" onclick="togglePassword('password', this)" class="absolute right-3 top-1/2 -translate-y-1/2">
+                    <i data-lucide="eye" class="w-5 h-5 text-gray-500"></i>
+                </button>
             </div>
+
+            <!-- Confirmation -->
+            <div class="relative md:col-span-2">
+                <input id="passwordConfirm" name="passwordConfirm" type="password" placeholder="Répétez le mot de passe" required
+                       class="w-full border border-gray-300 px-4 py-2 rounded pr-10 focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
+                <button type="button" onclick="togglePassword('passwordConfirm', this)" class="absolute right-3 top-1/2 -translate-y-1/2">
+                    <i data-lucide="eye" class="w-5 h-5 text-gray-500"></i>
+                </button>
+            </div>
+
+            <!-- Date de naissance -->
+            <input name="birthDate" type="date" required
+                   class="md:col-span-2 border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
 
             <!-- Genre -->
             <select name="gender" required
@@ -76,7 +80,7 @@
                 <option value="O">Autre</option>
             </select>
 
-            <!-- Niveau sportif -->
+            <!-- Sport -->
             <select name="sportLevel" required
                     class="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400">
                 <option value="">Niveau sportif</option>
@@ -86,17 +90,23 @@
                 <option value="expert">Expert</option>
             </select>
 
-            <!-- Code postal -->
-            <input id="zipCode" name="zipCode" type="text" placeholder="Code postal" readonly required
-                   class="border border-gray-300 px-4 py-2 rounded bg-gray-100"/>
 
-            <!-- Adresse avec autocomplete -->
+
+            <!-- Adresse avec suggestions -->
             <div class="md:col-span-2 relative">
-                <input id="address" name="address" type="text" list="address-list"
-                       placeholder="Adresse" autocomplete="off" required
+                <input id="address" name="address" type="text" autocomplete="off"
+                       placeholder="Adresse" required
                        class="w-full border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"/>
-                <datalist id="address-list"></datalist>
+                <ul id="address-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded mt-1 shadow max-h-48 overflow-y-auto hidden"></ul>
             </div>
+
+            <!-- Ville (auto-remplie) -->
+            <input id="city" name="city" type="text" placeholder="Ville"
+                   class="md:col-span-2 border border-gray-300 px-4 py-2 rounded bg-gray-100" />
+
+            <!-- Code postal -->
+            <input id="zipCode" name="zipCode" type="text" placeholder="Code postal"
+                   class="md:col-span-2 border border-gray-300 px-4 py-2 rounded bg-gray-100" required/>
 
             <!-- Submit -->
             <button type="submit"
@@ -111,43 +121,69 @@
     </div>
 </main>
 
-<!-- Autocomplete API Gouv -->
+<!-- JS pour l’autocomplétion -->
 <script>
-    (function() {
-        const input = document.getElementById('address');
-        const list  = document.getElementById('address-list');
-        const zipIn = document.getElementById('zipCode');
-        let suggs   = {};
+    function togglePassword(id, btn) {
+        const input = document.getElementById(id);
+        const icon = btn.querySelector("i");
+        input.type = input.type === "password" ? "text" : "password";
+        icon.setAttribute("data-lucide", input.type === "password" ? "eye" : "eye-off");
+        lucide.createIcons();
+    }
 
-        input.addEventListener('input', async () => {
-            const q = input.value.trim();
-            if (q.length < 3) return;
+    window.addEventListener("DOMContentLoaded", () => {
+        lucide.createIcons();
+
+        const addressInput = document.getElementById('address');
+        const suggestionsList = document.getElementById('address-suggestions');
+        const zipInput = document.getElementById('zipCode');
+        const cityInput = document.getElementById('city');
+
+        let currentSuggestions = [];
+
+        addressInput.addEventListener('input', async () => {
+            const query = addressInput.value.trim();
+            if (query.length < 3) {
+                suggestionsList.innerHTML = '';
+                suggestionsList.classList.add('hidden');
+                return;
+            }
 
             try {
-                const res  = await fetch('https://api-adresse.data.gouv.fr/search/?' +
-                    new URLSearchParams({ q, limit: 5 }));
+                const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=4`);
                 const data = await res.json();
-                list.innerHTML = '';
-                suggs = {};
 
-                data.features.forEach(f => {
-                    const p   = f.properties;
-                    const lab = p.label;
-                    suggs[lab] = p.postcode;
-                    const opt = document.createElement('option');
-                    opt.value = lab;
-                    list.append(opt);
+                currentSuggestions = data.features;
+
+                suggestionsList.innerHTML = '';
+                currentSuggestions.forEach(feature => {
+                    const li = document.createElement('li');
+                    li.textContent = feature.properties.label;
+                    li.className = 'px-4 py-2 hover:bg-yellow-100 cursor-pointer';
+                    li.addEventListener('click', () => {
+                        addressInput.value = feature.properties.label;
+                        zipInput.value = feature.properties.postcode || '';
+                        cityInput.value = feature.properties.city || '';
+                        suggestionsList.innerHTML = '';
+                        suggestionsList.classList.add('hidden');
+                    });
+                    suggestionsList.appendChild(li);
                 });
+
+                suggestionsList.classList.remove('hidden');
+
             } catch (e) {
-                console.error('Autocomplete adresse :', e);
+                console.error('Erreur autocomplétion adresse :', e);
             }
         });
 
-        input.addEventListener('change', () => {
-            const v = input.value;
-            if (suggs[v]) zipIn.value = suggs[v];
+        document.addEventListener('click', (e) => {
+            if (!suggestionsList.contains(e.target) && e.target !== addressInput) {
+                suggestionsList.classList.add('hidden');
+            }
         });
-    })();
+    });
 </script>
+
 </body>
 </html>
