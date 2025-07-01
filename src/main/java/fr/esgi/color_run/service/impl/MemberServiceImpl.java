@@ -7,6 +7,7 @@ import fr.esgi.color_run.repository.impl.MemberRepositoryImpl;
 import fr.esgi.color_run.service.MemberService;
 import fr.esgi.color_run.utils.VerificationCodeStorage;
 import fr.esgi.color_run.util.RepositoryFactory;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.*;
 
@@ -21,17 +22,30 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public Member createMember(Member member) {
+        String rawPassword = member.getPassword();
+        String hashedPassword = BCrypt.hashpw(rawPassword, BCrypt.gensalt());
+        member.setPassword(hashedPassword);
+
         return memberRepository.save(member);
     }
+
 
 
 
     @Override
     public Optional<Member> connectMember(String mail, String password) {
         Optional<Member> memberOpt = memberRepository.findByEmail(mail);
-        if (memberOpt.isPresent() && memberOpt.get().getPassword().equals(password)) {
-            return memberOpt;
+
+        if (memberOpt.isPresent()) {
+            Member member = memberOpt.get();
+            String hashedPassword = member.getPassword();
+
+            // Vérification du mot de passe avec BCrypt
+            if (BCrypt.checkpw(password, hashedPassword)) {
+                return Optional.of(member);
+            }
         }
+
         return Optional.empty();
     }
 
@@ -74,7 +88,8 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void updatePasswordByEmail(String email, String password) {
-            memberRepository.updatePasswordByEmail(email, password);
+        String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+        memberRepository.updatePasswordByEmail(email, hashed);
     }
 
 
