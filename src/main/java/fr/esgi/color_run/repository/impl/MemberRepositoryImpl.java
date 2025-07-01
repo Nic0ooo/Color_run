@@ -132,11 +132,43 @@ public class MemberRepositoryImpl implements MemberRepository {
         String sql = "DELETE FROM member WHERE id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            return ps.executeUpdate() > 0;
+            int affected = ps.executeUpdate();
+            return affected > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (e.getErrorCode() == 23503) {
+                System.out.println(" Suppression échouée pour membre ID=" + id + " (liens existants). Passage à l'anonymisation.");
+                anonymizeMember(id);
+                return true;
+            } else {
+                System.err.println(" Erreur lors de la suppression du membre ID=" + id);
+                e.printStackTrace();
+            }
         }
         return false;
+    }
+
+    private void anonymizeMember(Long id) {
+        String sql = "UPDATE member SET " +
+                "name = 'deleted', " +
+                "firstname = 'user', " +
+                "email = CONCAT('deleted_', id, '@example.com'), " +
+                "password = '', " +
+                "phoneNumber = '', " +
+                "address = '', " +
+                "city = '', " +
+                "zipCode = 0, " +
+                "positionLatitude = 0.0, " +
+                "positionLongitude = 0.0 " +
+                "WHERE id = ?";
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.executeUpdate();
+            System.out.println(" Membre anonymisé avec succès (ID=" + id + ")");
+        } catch (SQLException e) {
+            System.err.println(" Échec anonymisation du membre ID=" + id);
+            e.printStackTrace();
+        }
     }
 
     @Override
