@@ -808,6 +808,33 @@ public class CoursesServlet extends HttpServlet {
                 System.out.println("🔍 DEBUG: Aucun member connecté");
             }
 
+            // ✅ NOUVEAU : Récupérer les adresses de départ et d'arrivée
+            GeocodingService geocodingService = new GeocodingServiceImpl();
+            String startAddress = null;
+            String endAddress = null;
+
+            try {
+                // Récupérer l'adresse de départ
+                if (course.getStartpositionLatitude() != 0 && course.getStartpositionLongitude() != 0) {
+                    startAddress = geocodingService.getAddressFromCoordinates(
+                            course.getStartpositionLatitude(),
+                            course.getStartpositionLongitude()
+                    );
+                    System.out.println("🏁 Adresse de départ: " + startAddress);
+                }
+
+                // Récupérer l'adresse d'arrivée
+                if (course.getEndpositionLatitude() != 0 && course.getEndpositionLongitude() != 0) {
+                    endAddress = geocodingService.getAddressFromCoordinates(
+                            course.getEndpositionLatitude(),
+                            course.getEndpositionLongitude()
+                    );
+                    System.out.println("🏁 Adresse d'arrivée: " + endAddress);
+                }
+            } catch (Exception e) {
+                System.err.println("Erreur lors de la récupération des adresses: " + e.getMessage());
+            }
+
             System.out.println("🔍 DEBUG: Avant configuration context...");
 
             context.setVariable("course", course);
@@ -821,6 +848,10 @@ public class CoursesServlet extends HttpServlet {
             // ✅ NOUVEAU : Ajouter les statistiques pour l'affichage
             context.setVariable("placesRestantes", placesRestantes);
             context.setVariable("realRegisteredCount", realRegisteredCount);
+
+            // ✅ NOUVEAU : Ajouter les adresses au contexte
+            context.setVariable("startAddress", startAddress);
+            context.setVariable("endAddress", endAddress);
 
             System.out.println("🔍 DEBUG: Avant process template...");
             resp.setContentType("text/html;charset=UTF-8");
