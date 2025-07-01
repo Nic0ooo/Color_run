@@ -25,11 +25,4 @@ public class Course_member {
     public boolean hasBibNumber() {
         return bibNumber != null && !bibNumber.trim().isEmpty();
     }
-
-    /**
-     * Vérifie si le membre peut générer un dossard
-     */
-    public boolean canGenerateBib() {
-        return registrationStatus == Status.ACCEPTED && !hasBibNumber();
-    }
 }
