@@ -155,26 +155,65 @@ public class Course_memberRepositoryImpl implements Course_memberRepository {
     }
 
     /**
-     * Sauvegarde avec support Stripe (INSERT ou UPDATE automatique)
-     */
-    /**
      * Sauvegarde avec support Stripe - TOUJOURS INSERT pour nouvelles sessions Stripe
      */
     public void saveWithStripe(Course_member course_member) {
-        // IMPORTANT: Pour Stripe, on force TOUJOURS un INSERT
-        // car chaque paiement Stripe = nouvelle session = nouveau record
-        // même si l'utilisateur a déjà une inscription pour cette course
-
         System.out.println("🔧 saveWithStripe appelé - Course: " + course_member.getCourseId() +
                 ", Member: " + course_member.getMemberId() +
                 ", Session: " + course_member.getStripeSessionId() +
                 ", ID actuel: " + course_member.getId());
 
+        // CORRECTION: Vérifier d'abord si une inscription existe déjà
         if (course_member.getStripeSessionId() != null && !course_member.getStripeSessionId().trim().isEmpty()) {
-            // Nouvelle session Stripe → FORCER INSERT
+
+            // 1. Chercher une inscription existante par session Stripe
+            Optional<Course_member> existingBySession = findByStripeSessionId(course_member.getStripeSessionId());
+            if (existingBySession.isPresent()) {
+                System.out.println("✅ Inscription trouvée par session Stripe, mise à jour...");
+                Course_member existing = existingBySession.get();
+
+                // Mettre à jour uniquement les champs nécessaires
+                existing.setRegistrationStatus(course_member.getRegistrationStatus());
+                if (course_member.getBibNumber() != null) {
+                    existing.setBibNumber(course_member.getBibNumber());
+                }
+
+                updateWithStripe(existing);
+
+                // Copier l'ID vers l'objet original pour cohérence
+                course_member.setId(existing.getId());
+                return;
+            }
+
+            // 2. Chercher une inscription existante par course/member (cas PENDING → ACCEPTED)
+            Optional<Course_member> existingByCourseMember = getRegistrationDetails(
+                    course_member.getCourseId(),
+                    course_member.getMemberId()
+            );
+
+            if (existingByCourseMember.isPresent()) {
+                System.out.println("✅ Inscription course/member existante, mise à jour avec session Stripe...");
+                Course_member existing = existingByCourseMember.get();
+
+                // Mettre à jour avec les nouvelles informations Stripe
+                existing.setRegistrationStatus(course_member.getRegistrationStatus());
+                existing.setStripeSessionId(course_member.getStripeSessionId());
+                if (course_member.getBibNumber() != null) {
+                    existing.setBibNumber(course_member.getBibNumber());
+                }
+
+                updateWithStripe(existing);
+
+                // Copier l'ID vers l'objet original
+                course_member.setId(existing.getId());
+                return;
+            }
+
+            // 3. Aucune inscription existante → Créer une nouvelle
+            System.out.println("🆕 Aucune inscription existante, création...");
             course_member.setId(null); // Reset ID pour forcer INSERT
-            System.out.println("🔄 ID reset pour forcer INSERT Stripe");
             insertWithStripe(course_member);
+
         } else {
             // Cas normal (pas Stripe) : logique habituelle
             if (course_member.getId() != null && course_member.getId() > 0) {
