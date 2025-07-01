@@ -9,4 +9,9 @@ public interface GeocodingService {
     GeoLocation getCoordinatesFromPostalCode(String postalCode);
 
     double calculateDistance(double lat1, double lon1, double lat2, double lon2);
+
+    /**
+     * Convertir les coordonnées en adresse (reverse geocoding)
+     */
+    String getAddressFromCoordinates(double latitude, double longitude);
 }

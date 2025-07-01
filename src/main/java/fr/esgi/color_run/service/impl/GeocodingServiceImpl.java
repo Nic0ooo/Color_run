@@ -112,4 +112,57 @@ public class GeocodingServiceImpl implements GeocodingService {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return EARTH_RADIUS_KM * c;
     }
+
+    @Override
+    public String getAddressFromCoordinates(double latitude, double longitude) {
+        try {
+            // Utiliser la même API française mais en reverse
+            String urlStr = "https://api-adresse.data.gouv.fr/reverse/?lon=" + longitude + "&lat=" + latitude + "&limit=1";
+
+            URL url = new URL(urlStr);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(3000);
+
+            int responseCode = connection.getResponseCode();
+
+            if (responseCode == 200) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+
+                // Parser la réponse JSON
+                JSONObject jsonObject = new JSONObject(response.toString());
+                JSONArray features = jsonObject.getJSONArray("features");
+
+                if (features.length() > 0) {
+                    JSONObject feature = features.getJSONObject(0);
+                    JSONObject properties = feature.getJSONObject("properties");
+
+                    // Récupérer les éléments d'adresse
+                    String name = properties.optString("name", "");
+                    String postcode = properties.optString("postcode", "");
+                    String city = properties.optString("city", "");
+
+                    // Construire l'adresse complète
+                    if (!name.isEmpty()) {
+                        return name + ", " + postcode + " " + city;
+                    } else {
+                        return postcode + " " + city;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors du reverse geocoding: " + e.getMessage());
+        }
+
+        // Retourner null si pas trouvé
+        return null;
+    }
 }
