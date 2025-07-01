@@ -1,6 +1,6 @@
 #FileLock
-#Mon Jun 30 14:10:38 CEST 2025
-hostName=localhost
-id=197c0bf172c054aff001fa27266b91f7384b5ee550f
+#Tue Jul 01 13:06:26 CEST 2025
+server=192.168.1.96\:64030
+hostName=remi
 method=file
-server=localhost\:55430
+id=197c5aaab484cd985f51a928a4af087986c6dcc0bb8

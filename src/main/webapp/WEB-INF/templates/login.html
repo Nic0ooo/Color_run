@@ -4,40 +4,59 @@
   <meta charset="UTF-8">
   <title>Connexion</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col items-center justify-start">
 
 <div th:replace="fragments/header :: headerFragment('login', ${member})"></div>
 
-<!-- Form -->
 <main class="w-full max-w-md mt-16 px-4">
   <h2 class="text-center text-lg font-semibold mb-6">Connexion</h2>
   <form method="post" th:action="@{/login}" class="space-y-4">
 
-    <!-- Champ caché pour conserver l'URL de redirection -->
     <input type="hidden" name="redirect" th:value="${param.redirect}" />
-
 
     <label class="block">
       <span class="text-sm">Email</span>
-      <input type="email" name="email" required class="w-full mt-1 border rounded px-3 py-2">
+      <input type="email" name="email" placeholder="email" required class="w-full mt-1 border rounded px-3 py-2">
     </label>
-    <label class="block">
+
+    <label class="block relative">
       <span class="text-sm">Mot de passe</span>
-      <input type="password" name="password" required class="w-full mt-1 border rounded px-3 py-2">
+      <input id="loginPassword" type="password" placeholder="*********" name="password" required
+             class="w-full mt-1 border rounded px-3 py-2 pr-10">
+      <button type="button" onclick="togglePassword('loginPassword', this)" class="absolute right-3 bottom-2">
+        <i data-lucide="eye" class="w-5 h-5 text-gray-500"></i>
+      </button>
     </label>
+
     <button type="submit" class="bg-pink-500 text-white w-full py-2 rounded">Se connecter</button>
   </form>
 
   <p th:if="${error}" th:text="${error}" class="text-red-500 mt-2 text-center"></p>
 
   <div class="text-center mt-6 text-sm">
-    <p class="mt-2">Mot de passe oublié ? <a href="forgot-password" class="text-blue-600">Cliquez ici</a>
+    <p>Mot de passe oublié ? <a href="forgot-password" class="text-blue-600">Cliquez ici</a></p>
   </div>
-
 </main>
+
+<script>
+  function togglePassword(id, btn) {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector("i");
+    if (input.type === "password") {
+      input.type = "text";
+      icon.setAttribute("data-lucide", "eye-off");
+    } else {
+      input.type = "password";
+      icon.setAttribute("data-lucide", "eye");
+    }
+    lucide.createIcons();
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    lucide.createIcons();
+  });
+</script>
 </body>
 </html>
