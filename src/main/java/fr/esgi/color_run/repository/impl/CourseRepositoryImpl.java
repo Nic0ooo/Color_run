@@ -11,7 +11,10 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import fr.esgi.color_run.util.PostalCodeMapper;
+
 
 public class CourseRepositoryImpl implements CourseRepository {
 
@@ -253,17 +256,62 @@ public class CourseRepositoryImpl implements CourseRepository {
                     .collect(Collectors.toList());
     }
 
+    // REMPLACER la méthode findByPostalCode() dans CourseRepositoryImpl.java
+
     @Override
     public List<Course> findByPostalCode(String postalCode) {
-        // Vérifier si le code postal est vide ou null
+        System.out.println("=== CourseRepositoryImpl.findByPostalCode ===");
+        System.out.println("Code postal recherché: '" + postalCode + "'");
+
         if (postalCode == null || postalCode.trim().isEmpty()) {
+            System.out.println("Code postal vide, retour de toutes les courses");
             return findAll();
         }
 
         List<Course> allCourses = findAll();
-        return allCourses.stream()
-                .filter(course -> course.getZipCode() == Integer.parseInt(postalCode))
+        System.out.println("Total des courses dans la base: " + allCourses.size());
+
+        // *** NOUVELLE LOGIQUE : Utiliser la liste complète des codes postaux ***
+        List<Integer> searchCodes = PostalCodeMapper.getAllValidPostalCodes(postalCode);
+
+        if (searchCodes.isEmpty()) {
+            System.err.println("❌ Impossible de parser le code postal: '" + postalCode + "'");
+            return new ArrayList<>();
+        }
+
+        // Rechercher les courses pour TOUS les codes postaux de la liste
+        List<Course> matchingCourses = allCourses.stream()
+                .filter(course -> searchCodes.contains(course.getZipCode()))
                 .collect(Collectors.toList());
+
+        // Affichage des résultats par arrondissement
+        if (PostalCodeMapper.shouldExpand(postalCode)) {
+            String cityName = PostalCodeMapper.getCityName(postalCode);
+            System.out.println("🏙️ Recherche étendue pour " + cityName + " dans " + searchCodes.size() + " arrondissements");
+
+            // Debug : afficher le détail par arrondissement
+            Map<Integer, Long> coursesByArrondissement = matchingCourses.stream()
+                    .collect(Collectors.groupingBy(Course::getZipCode, Collectors.counting()));
+
+            coursesByArrondissement.forEach((zipCode, count) ->
+                    System.out.println("  ✅ " + zipCode + ": " + count + " course(s)"));
+
+            if (coursesByArrondissement.isEmpty()) {
+                System.out.println("  ❌ Aucune course trouvée dans les arrondissements de " + cityName);
+            }
+        } else {
+            // Recherche normale
+            System.out.println("🔍 Recherche normale pour le code postal: " + searchCodes.get(0));
+            if (!matchingCourses.isEmpty()) {
+                matchingCourses.forEach(course ->
+                        System.out.println("  ✅ Course trouvée: " + course.getName() + " (CP: " + course.getZipCode() + ")"));
+            }
+        }
+
+        System.out.println("🎯 Total courses trouvées: " + matchingCourses.size());
+        System.out.println("=== FIN CourseRepositoryImpl.findByPostalCode ===");
+
+        return matchingCourses;
     }
 
     @Override
