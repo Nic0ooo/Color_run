@@ -416,11 +416,22 @@
         const marker = L.marker([course.startpositionLatitude, course.startpositionLongitude])
                 .addTo(map);
 
+        const startDate = new Date(course.startDate);
+        const formattedDate = startDate.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        const formattedTime = startDate.toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
         // Créer le popup avec les infos de l'événement
         marker.bindPopup(`
           <div style="font-family: 'Poppins', sans-serif; padding: 10px; max-width: 250px;">
             <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${course.name}</h3>
-            <p style="font-size: 14px; margin-bottom: 5px;"><strong>Date:</strong> ${course.startDate}</p>
+            <p style="font-size: 14px; margin-bottom: 5px;"><strong>Date:</strong> ${formattedDate} à ${formattedTime}</p>
             <p style="font-size: 12px; margin-bottom: 10px;">${course.description}</p>
             <a href="course-detail?id=${course.id}"
                 style="background-color: #14b8a6; color: white; padding: 6px 12px;
