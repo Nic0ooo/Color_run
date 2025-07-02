@@ -237,21 +237,30 @@ public class OrganizerRequestServiceImpl implements OrganizerRequestService {
             throw new IllegalStateException("Cette demande a déjà été traitée");
         }
 
+        // Vérifier si c'est une promotion de RUNNER à ORGANIZER
+        boolean isRunnerPromotion = false;
+        Optional<Member> memberOpt = memberService.getMember(request.getMemberId());
+        if (memberOpt.isPresent()) {
+            Member member = memberOpt.get();
+            if (member.getRole() == Role.RUNNER) {
+                isRunnerPromotion = true;
+                // Ajouter un marqueur dans le commentaire admin
+                comment = (comment != null ? comment + " " : "") + "[RUNNER_TO_ORGANIZER]";
+            }
+        }
+
         // Mettre à jour le statut de la demande
         request.setStatus(RequestStatus.APPROVED);
         request.setAdminComment(comment);
         request.setProcessedByAdminId(adminId);
         request.setProcessedDate(LocalDateTime.now());
 
-        // Actions spécifiques selon le type de demande
-        if (request.getRequestType() == RequestType.BECOME_ORGANIZER) {
-            // Promouvoir le membre en organisateur
-            Optional<Member> memberOpt = memberService.getMember(request.getMemberId());
-            if (memberOpt.isPresent()) {
-                Member member = memberOpt.get();
+        // Promouvoir le membre en organisateur si nécessaire
+        if (isRunnerPromotion) {
+            memberOpt.ifPresent(member -> {
                 member.setRole(Role.ORGANIZER);
                 memberService.updateMember(member.getId(), member);
-            }
+            });
         }
 
         organizerRequestRepository.update(request);

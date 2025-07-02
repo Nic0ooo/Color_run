@@ -58,9 +58,9 @@ CREATE TABLE IF NOT EXISTS CourseMember (
                                             registrationDate VARCHAR(255),
                                             registrationStatus VARCHAR(255),
                                             stripeSessionId VARCHAR(255) DEFAULT NULL,
+                                            bibNumber INTEGER DEFAULT NULL,
                                             FOREIGN KEY (courseId) REFERENCES Course(id),
-                                            FOREIGN KEY (memberId) REFERENCES Member(id),
-                                            UNIQUE(courseId, memberId)
+                                            FOREIGN KEY (memberId) REFERENCES Member(id)
 );
 
 CREATE TABLE IF NOT EXISTS AssociationMember (
@@ -85,7 +85,10 @@ CREATE TABLE OrganizerRequest (
                                   processedByAdminId BIGINT,
                                   processedDate TIMESTAMP,
                                   requestType VARCHAR(50) DEFAULT 'BECOME_ORGANIZER',
-                                  existingAssociationName VARCHAR(255)
+                                  existingAssociationName VARCHAR(255),
+                                  FOREIGN KEY (memberId) REFERENCES Member(id),
+                                  FOREIGN KEY (existingAssociationId) REFERENCES Association(id),
+                                  FOREIGN KEY (processedByAdminId) REFERENCES Member(id)
 );
 
 CREATE TABLE IF NOT EXISTS Discussion (
@@ -100,12 +103,18 @@ CREATE TABLE IF NOT EXISTS Message (
                                        id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                        discussionId INTEGER,
                                        memberId INTEGER,
-                                       content VARCHAR(255),
+                                       content VARCHAR(1000),
+                                       originalContent VARCHAR(1000),
                                        date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                       lastModifiedDate TIMESTAMP,
                                        isPin BOOLEAN DEFAULT FALSE,
                                        isHidden BOOLEAN DEFAULT FALSE,
+                                       isModified BOOLEAN DEFAULT FALSE,
+                                       isDeleted BOOLEAN DEFAULT FALSE,
+                                       hiddenByMemberId INTEGER,
                                        FOREIGN KEY (discussionId) REFERENCES Discussion(id),
-                                       FOREIGN KEY (memberId) REFERENCES Member(id)
+                                       FOREIGN KEY (memberId) REFERENCES Member(id),
+                                       FOREIGN KEY (hiddenByMemberId) REFERENCES Member(id)
 );
 
 CREATE TABLE IF NOT EXISTS Paiement (
@@ -119,160 +128,160 @@ CREATE TABLE IF NOT EXISTS Paiement (
 -- Insertion conditionnelle des données (si la table est vide)
 -- ADMINISTRATEURS
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ADMIN', 'Dupont', 'Jean', 'jean.dupont@email.com', 'password123', '0601020304', '12 rue de Paris', 'Paris', 75001, 48.8566, 2.3522
+SELECT 'ADMIN', 'Dupont', 'Jean', 'jean.dupont@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0601020304', '12 rue de Paris', 'Paris', 75001, 48.8566, 2.3522
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'jean.dupont@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ADMIN', 'Rousseau', 'Marie', 'marie.rousseau@admin.com', 'admin2024', '0612345600', '45 avenue de la République', 'Lyon', 69002, 45.764, 4.8357
+SELECT 'ADMIN', 'Rousseau', 'Marie', 'marie.rousseau@admin.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0612345600', '45 avenue de la République', 'Lyon', 69002, 45.764, 4.8357
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'marie.rousseau@admin.com');
 
 -- ORGANISATEURS CONFIRMÉS
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Durand', 'Alice', 'alice.durand@email.com', 'password123', '0612345678', '45 rue des Lilas', 'Nantes', 44000, 47.218371, -1.553621
+SELECT 'ORGANIZER', 'Durand', 'Alice', 'alice.durand@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0612345678', '45 rue des Lilas', 'Nantes', 44000, 47.218371, -1.553621
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'alice.durand@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Monet', 'Léa', 'lea.monet@outlook.com', 'password123', '0612425690', '16 Rue Perrière', 'Annecy', 74000, 45.89812149200697, 6.127460404462661
+SELECT 'ORGANIZER', 'Monet', 'Léa', 'lea.monet@outlook.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0612425690', '16 Rue Perrière', 'Annecy', 74000, 45.89812149200697, 6.127460404462661
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'lea.monet@outlook.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Dubois', 'Thomas', 'thomas.dubois@email.com', 'secure456', '0689012345', '12 avenue de la République', 'Bordeaux', 33000, 44.8378, -0.5792
+SELECT 'ORGANIZER', 'Dubois', 'Thomas', 'thomas.dubois@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0689012345', '12 avenue de la République', 'Bordeaux', 33000, 44.8378, -0.5792
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'thomas.dubois@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Lefebvre', 'Antoine', 'antoine.lefebvre@email.com', 'antoine123', '0701234567', '23 boulevard Jean Jaurès', 'Grenoble', 38000, 45.1885, 5.7245
+SELECT 'ORGANIZER', 'Lefebvre', 'Antoine', 'antoine.lefebvre@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0701234567', '23 boulevard Jean Jaurès', 'Grenoble', 38000, 45.1885, 5.7245
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'antoine.lefebvre@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Varin', 'Elise', 'elisevarin@email.com', 'elise123', '0781235537', '19 Pl. des Célestins','Lyon', 69002, 45.75989913978603, 4.831608799811371
+SELECT 'ORGANIZER', 'Varin', 'Elise', 'elisevarin@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0781235537', '19 Pl. des Célestins','Lyon', 69002, 45.75989913978603, 4.831608799811371
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'elisevarin@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Lambert', 'Nicolas', 'nicolas.lambert@sport.fr', 'nico2024', '0756789012', '78 rue des Sports', 'Toulouse', 31000, 43.604652, 1.444209
+SELECT 'ORGANIZER', 'Lambert', 'Nicolas', 'nicolas.lambert@sport.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0756789012', '78 rue des Sports', 'Toulouse', 31000, 43.604652, 1.444209
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'nicolas.lambert@sport.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Garcia', 'Carmen', 'carmen.garcia@run.es', 'carmen123', '0634567891', '12 place de l''Espagne', 'Perpignan', 66000, 42.6886, 2.8946
+SELECT 'ORGANIZER', 'Garcia', 'Carmen', 'carmen.garcia@run.es', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0634567891', '12 place de l''Espagne', 'Perpignan', 66000, 42.6886, 2.8946
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'carmen.garcia@run.es');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'ORGANIZER', 'Fischer', 'Klaus', 'klaus.fischer@alsace.fr', 'klaus2024', '0387654321', '45 rue de Strasbourg', 'Mulhouse', 68100, 47.7508, 7.3359
+SELECT 'ORGANIZER', 'Fischer', 'Klaus', 'klaus.fischer@alsace.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0387654321', '45 rue de Strasbourg', 'Mulhouse', 68100, 47.7508, 7.3359
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'klaus.fischer@alsace.fr');
 
 -- PARTICIPANTS RÉGULIERS
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Martin', 'Sophie', 'sophie.martin@email.com', 'pass456', '0612345678', '25 avenue des Champs', 'Lyon', 69000, 45.764, 4.8357
+SELECT 'RUNNER', 'Martin', 'Sophie', 'sophie.martin@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0612345678', '25 avenue des Champs', 'Lyon', 69000, 45.764, 4.8357
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'sophie.martin@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Pollet', 'Theo', 'theop@mail.com', 'password123', '0765467809', '356 rue Victor Hugo', 'Dijon', 21000, 47.32136825551213, 5.041485596025622
+SELECT 'RUNNER', 'Pollet', 'Theo', 'theop@mail.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0765467809', '356 rue Victor Hugo', 'Dijon', 21000, 47.32136825551213, 5.041485596025622
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email =  'theop@mail.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Bernard', 'Paul', 'paul.bernard@email.com', 'password123', '0623456789', '12 avenue des Fleurs', 'Nice', 06000, 43.710173, 7.262003
+SELECT 'RUNNER', 'Bernard', 'Paul', 'paul.bernard@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0623456789', '12 avenue des Fleurs', 'Nice', 06000, 43.710173, 7.262003
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'paul.bernard@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Lemoine', 'Claire', 'claire.lemoine@email.com', 'password123', '0634567890', '78 boulevard des Roses', 'Lille', 59000, 50.62925, 3.057256
+SELECT 'RUNNER', 'Lemoine', 'Claire', 'claire.lemoine@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0634567890', '78 boulevard des Roses', 'Lille', 59000, 50.62925, 3.057256
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'claire.lemoine@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Petit', 'Marc', 'marc.petit@email.com', 'password123', '0645678901', '23 rue des Champs', 'Strasbourg', 67000, 48.573405, 7.752111
+SELECT 'RUNNER', 'Petit', 'Marc', 'marc.petit@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0645678901', '23 rue des Champs', 'Strasbourg', 67000, 48.573405, 7.752111
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'marc.petit@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Roux', 'Sophie', 'sophie.roux@email.com', 'password123', '0656789012', '56 place des Arbres', 'Montpellier', 34000, 43.610769, 3.876716
+SELECT 'RUNNER', 'Roux', 'Sophie', 'sophie.roux@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0656789012', '56 place des Arbres', 'Montpellier', 34000, 43.610769, 3.876716
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'sophie.roux@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Leroy', 'Camille', 'camille.leroy@email.com', 'password123', '0678901234', '45 rue des Oliviers', 'Marseille', 13008, 43.2715, 5.4018
+SELECT 'RUNNER', 'Leroy', 'Camille', 'camille.leroy@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0678901234', '45 rue des Oliviers', 'Marseille', 13008, 43.2715, 5.4018
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'camille.leroy@email.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Moreau', 'Julie', 'julie.moreau@email.com', 'julie2023', '0690123456', '8 place du Marché', 'Rennes', 35000, 48.1173, -1.6778
+SELECT 'RUNNER', 'Moreau', 'Julie', 'julie.moreau@email.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0690123456', '8 place du Marché', 'Rennes', 35000, 48.1173, -1.6778
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'julie.moreau@email.com');
 
 -- NOUVEAUX PARTICIPANTS (25 participants supplémentaires)
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Blanc', 'Pierre', 'pierre.blanc@gmail.com', 'pierre123', '0612345601', '23 rue de la Paix', 'Paris', 75001, 48.8566, 2.3522
+SELECT 'RUNNER', 'Blanc', 'Pierre', 'pierre.blanc@gmail.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0612345601', '23 rue de la Paix', 'Paris', 75001, 48.8566, 2.3522
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'pierre.blanc@gmail.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Noir', 'Emma', 'emma.noir@hotmail.fr', 'emma2024', '0623456702', '67 avenue Victor Hugo', 'Lyon', 69003, 45.7640, 4.8400
+SELECT 'RUNNER', 'Noir', 'Emma', 'emma.noir@hotmail.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0623456702', '67 avenue Victor Hugo', 'Lyon', 69003, 45.7640, 4.8400
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'emma.noir@hotmail.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Vert', 'Lucas', 'lucas.vert@yahoo.fr', 'lucas456', '0634567803', '89 boulevard Gambetta', 'Marseille', 13001, 43.2965, 5.3698
+SELECT 'RUNNER', 'Vert', 'Lucas', 'lucas.vert@yahoo.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0634567803', '89 boulevard Gambetta', 'Marseille', 13001, 43.2965, 5.3698
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'lucas.vert@yahoo.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Rouge', 'Manon', 'manon.rouge@orange.fr', 'manon789', '0645678904', '12 place Stanislas', 'Nancy', 54000, 48.6937, 6.1834
+SELECT 'RUNNER', 'Rouge', 'Manon', 'manon.rouge@orange.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0645678904', '12 place Stanislas', 'Nancy', 54000, 48.6937, 6.1834
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'manon.rouge@orange.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Bleu', 'Hugo', 'hugo.bleu@free.fr', 'hugo012', '0656789005', '34 rue Nationale', 'Tours', 37000, 47.3941, 0.6848
+SELECT 'RUNNER', 'Bleu', 'Hugo', 'hugo.bleu@free.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0656789005', '34 rue Nationale', 'Tours', 37000, 47.3941, 0.6848
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'hugo.bleu@free.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Jaune', 'Léa', 'lea.jaune@sfr.fr', 'lea345', '0667890106', '56 cours Lafayette', 'Lyon', 69003, 45.7640, 4.8400
+SELECT 'RUNNER', 'Jaune', 'Léa', 'lea.jaune@sfr.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0667890106', '56 cours Lafayette', 'Lyon', 69003, 45.7640, 4.8400
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'lea.jaune@sfr.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Rose', 'Nathan', 'nathan.rose@bbox.fr', 'nathan678', '0678901207', '78 rue de la République', 'Strasbourg', 67000, 48.5734, 7.7521
+SELECT 'RUNNER', 'Rose', 'Nathan', 'nathan.rose@bbox.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0678901207', '78 rue de la République', 'Strasbourg', 67000, 48.5734, 7.7521
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'nathan.rose@bbox.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Violet', 'Chloé', 'chloe.violet@live.fr', 'chloe901', '0689012308', '90 avenue Jean Médecin', 'Nice', 06000, 43.7102, 7.2620
+SELECT 'RUNNER', 'Violet', 'Chloé', 'chloe.violet@live.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0689012308', '90 avenue Jean Médecin', 'Nice', 06000, 43.7102, 7.2620
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'chloe.violet@live.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Orange', 'Tom', 'tom.orange@gmail.com', 'tom234', '0690123409', '45 place Bellecour', 'Lyon', 69002, 45.7578, 4.8320
+SELECT 'RUNNER', 'Orange', 'Tom', 'tom.orange@gmail.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0690123409', '45 place Bellecour', 'Lyon', 69002, 45.7578, 4.8320
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'tom.orange@gmail.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Marron', 'Inès', 'ines.marron@wanadoo.fr', 'ines567', '0701234510', '23 rue Sainte-Catherine', 'Bordeaux', 33000, 44.8378, -0.5792
+SELECT 'RUNNER', 'Marron', 'Inès', 'ines.marron@wanadoo.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0701234510', '23 rue Sainte-Catherine', 'Bordeaux', 33000, 44.8378, -0.5792
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'ines.marron@wanadoo.fr');
 
 -- CANDIDATS ORGANISATEURS (qui vont faire des demandes)
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Duval', 'Maxime', 'maxime.duval@student.fr', 'maxime123', '0712345611', '15 rue des Étudiants', 'Montpellier', 34000, 43.6108, 3.8767
+SELECT 'RUNNER', 'Duval', 'Maxime', 'maxime.duval@student.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0712345611', '15 rue des Étudiants', 'Montpellier', 34000, 43.6108, 3.8767
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'maxime.duval@student.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Chevalier', 'Sarah', 'sarah.chevalier@pro.fr', 'sarah456', '0723456712', '89 boulevard des Belges', 'Rouen', 76000, 49.4431, 1.0993
+SELECT 'RUNNER', 'Chevalier', 'Sarah', 'sarah.chevalier@pro.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0723456712', '89 boulevard des Belges', 'Rouen', 76000, 49.4431, 1.0993
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'sarah.chevalier@pro.fr');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Lecomte', 'Benjamin', 'benjamin.lecomte@sport.com', 'benjamin789', '0734567813', '56 rue du Sport', 'Clermont-Ferrand', 63000, 45.7797, 3.0863
+SELECT 'RUNNER', 'Lecomte', 'Benjamin', 'benjamin.lecomte@sport.com', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0734567813', '56 rue du Sport', 'Clermont-Ferrand', 63000, 45.7797, 3.0863
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'benjamin.lecomte@sport.com');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Roussel', 'Amélie', 'amelie.roussel@asso.org', 'amelie012', '0745678914', '34 place de la Comédie', 'Montpellier', 34000, 43.6081, 3.8790
+SELECT 'RUNNER', 'Roussel', 'Amélie', 'amelie.roussel@asso.org', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0745678914', '34 place de la Comédie', 'Montpellier', 34000, 43.6081, 3.8790
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'amelie.roussel@asso.org');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Girard', 'Julien', 'julien.girard@nature.fr', 'julien345', '0756789015', '78 chemin des Bois', 'Besançon', 25000, 47.2378, 6.0241
+SELECT 'RUNNER', 'Girard', 'Julien', 'julien.girard@nature.fr', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0756789015', '78 chemin des Bois', 'Besançon', 25000, 47.2378, 6.0241
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'julien.girard@nature.fr');
 
 -- Ajout de 15 participants supplémentaires pour avoir plus de variété
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Silva', 'Diego', 'diego.silva@runner.es', 'diego123', '0767890116', '12 calle Mayor', 'Perpignan', 66000, 42.6886, 2.8946
+SELECT 'RUNNER', 'Silva', 'Diego', 'diego.silva@runner.es', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0767890116', '12 calle Mayor', 'Perpignan', 66000, 42.6886, 2.8946
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'diego.silva@runner.es');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Müller', 'Anna', 'anna.muller@lauf.de', 'anna456', '0778901217', '45 rue de l''Allemagne', 'Strasbourg', 67000, 48.5734, 7.7521
+SELECT 'RUNNER', 'Müller', 'Anna', 'anna.muller@lauf.de', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0778901217', '45 rue de l''Allemagne', 'Strasbourg', 67000, 48.5734, 7.7521
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'anna.muller@lauf.de');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Johnson', 'Emily', 'emily.johnson@run.uk', 'emily789', '0789012318', '23 English Street', 'Calais', 62100, 50.9581, 1.8514
+SELECT 'RUNNER', 'Johnson', 'Emily', 'emily.johnson@run.uk', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0789012318', '23 English Street', 'Calais', 62100, 50.9581, 1.8514
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'emily.johnson@run.uk');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Rossi', 'Marco', 'marco.rossi@corsa.it', 'marco012', '0790123419', '67 via Italia', 'Nice', 06000, 43.7102, 7.2620
+SELECT 'RUNNER', 'Rossi', 'Marco', 'marco.rossi@corsa.it', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0790123419', '67 via Italia', 'Nice', 06000, 43.7102, 7.2620
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'marco.rossi@corsa.it');
 
 INSERT INTO member (role, name, firstname, email, password, phoneNumber, address, city, zipCode, positionLatitude, positionLongitude)
-SELECT 'RUNNER', 'Van Der Berg', 'Lisa', 'lisa.vandenberg@loop.nl', 'lisa345', '0601234520', '89 Nederlands Plein', 'Lille', 59000, 50.6292, 3.0573
+SELECT 'RUNNER', 'Van Der Berg', 'Lisa', 'lisa.vandenberg@loop.nl', '$2a$10$3.hhsPxlPXRNOvCjDv0wveG6aoTXoeGdBautHnnmXj9lLebprXa4C', '0601234520', '89 Nederlands Plein', 'Lille', 59000, 50.6292, 3.0573
 WHERE NOT EXISTS (SELECT 1 FROM member WHERE email = 'lisa.vandenberg@loop.nl');
 
 -- ========================================
@@ -501,9 +510,9 @@ WHERE m.email = 'maxime.duval@student.fr' AND a.name = 'Runners du Sud'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'En tant que professionnelle du sport, je souhaite contribuer à l''organisation d''événements sportifs de qualité. Mon expertise en communication et marketing pourrait bénéficier à votre association.', 'PENDING', '2025-06-22 11:20:00', a.id
+SELECT m.id, 'JOIN_ASSOCIATION', 'En tant que professionnelle du sport, je souhaite contribuer à l''organisation d''événements sportifs de qualité. Mon expertise en communication et marketing pourrait bénéficier à votre association.', 'PENDING', '2025-06-22 11:20:00', a.id
 FROM member m, association a
-WHERE m.email = 'sarah.chevalier@pro.fr' AND a.name = 'Association Sportive Paris'
+WHERE m.email = 'elisevarin@email.com' AND a.name = 'Association Sportive Paris'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 INSERT INTO OrganizerRequest (memberId, motivation, requestDate, status, requestType, newAssociationData)
@@ -520,32 +529,32 @@ WHERE m.email = 'amelie.roussel@asso.org' AND a.name = 'Sport & Solidarité'
 
 -- Demandes ACCEPTÉES (avec mise à jour du rôle)
 INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Organisateur expérimenté souhaitant rejoindre votre association pour développer des événements trail en montagne.', 'ACCEPTED', '2025-05-10 10:00:00', '2025-05-15 16:30:00', admin.id, 'Profil parfait pour nos événements montagne. Accepté à l''unanimité.', a.id
+SELECT m.id, 'BECOME_ORGANIZER', 'Organisateur expérimenté souhaitant rejoindre votre association pour développer des événements trail en montagne.', 'APPROVED', '2025-05-10 10:00:00', '2025-05-15 16:30:00', admin.id, 'RUNNER_TO_ORGANIZER', a.id
 FROM member m, member admin, association a
 WHERE m.email = 'antoine.lefebvre@email.com' AND admin.email = 'jean.dupont@email.com' AND a.name = 'Montagne & Running'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Passionnée de courses colorées, je veux organiser des événements fun et festifs pour toute la famille.', 'ACCEPTED', '2025-05-08 14:20:00', '2025-05-12 11:45:00', admin.id, 'Excellente motivation et expérience pertinente. Bienvenue dans l''équipe !', a.id
+SELECT m.id, 'BECOME_ORGANIZER', 'Passionnée de courses colorées, je veux organiser des événements fun et festifs pour toute la famille.', 'APPROVED', '2025-05-08 14:20:00', '2025-05-12 11:45:00', admin.id, 'RUNNER_TO_ORGANIZER', a.id
 FROM member m, member admin, association a
 WHERE m.email = 'alice.durand@email.com' AND admin.email = 'marie.rousseau@admin.com' AND a.name = 'Run For Fun Association'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
-INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Engagé pour l''écologie, je souhaite organiser des courses respectueuses de l''environnement.', 'ACCEPTED', '2025-04-25 09:30:00', '2025-04-30 15:20:00', admin.id, 'Valeurs parfaitement alignées avec notre mission. Accepté avec enthousiasme.', a.id
+INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, existingAssociationId)
+SELECT m.id, 'JOIN_ASSOCIATION', 'Engagé pour l''écologie, je souhaite organiser des courses respectueuses de l''environnement.', 'APPROVED', '2025-04-25 09:30:00', '2025-04-30 15:20:00', admin.id, a.id
 FROM member m, member admin, association a
 WHERE m.email = 'thomas.dubois@email.com' AND admin.email = 'jean.dupont@email.com' AND a.name = 'Courir pour la Planète'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 -- Demandes REFUSÉES
-INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Je veux organiser des courses pour gagner de l''argent rapidement.', 'REJECTED', '2025-06-01 13:15:00', '2025-06-03 10:30:00', admin.id, 'Motivation commerciale non alignée avec nos valeurs associatives. Demande refusée.', a.id
+INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, existingAssociationId)
+SELECT m.id, 'BECOME_ORGANIZER', 'Je veux organiser des courses pour gagner de l''argent rapidement.', 'REJECTED', '2025-06-01 13:15:00', '2025-06-03 10:30:00', admin.id, a.id
 FROM member m, member admin, association a
 WHERE m.email = 'julien.girard@nature.fr' AND admin.email = 'marie.rousseau@admin.com' AND a.name = 'Courir Ensemble'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
-INSERT INTO OrganizerRequest (memberId, motivation, requestDate, status, processedDate, processedByAdminId, adminComment, requestType, newAssociationData)
-SELECT m.id, 'Je veux créer une association pour concurrencer toutes les autres et dominer le marché des courses.', '2025-05-28 16:00:00', 'REJECTED', '2025-05-30 09:45:00', admin.id, 'Esprit non collaboratif et motivations commerciales inadéquates. Refusé.', 'CREATE_ASSOCIATION', '{"name":"Running Empire","email":"empire@run.com","description":"Domination du marché des courses","websiteLink":"","phone":"","address":"","zipCode":"","city":""}'
+INSERT INTO OrganizerRequest (memberId, motivation, requestDate, status, processedDate, processedByAdminId, requestType, newAssociationData)
+SELECT m.id, 'Je veux créer une association pour concurrencer toutes les autres et dominer le marché des courses.', '2025-05-28 16:00:00', 'REJECTED', '2025-05-30 09:45:00', admin.id, 'CREATE_ASSOCIATION', '{"name":"Running Empire","email":"empire@run.com","description":"Domination du marché des courses","websiteLink":"","phone":"","address":"","zipCode":"","city":""}'
 FROM member m, member admin
 WHERE m.email = 'diego.silva@runner.es' AND admin.email = 'jean.dupont@email.com'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
@@ -750,88 +759,88 @@ FROM course c
 WHERE NOT EXISTS (SELECT 1 FROM Discussion WHERE courseId = c.id);
 
 -- Messages dans les discussions
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Bienvenue sur la discussion du Marathon de Paris ! Qui est prêt pour cette aventure incroyable ?', '2025-03-01 10:00:00', TRUE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Bienvenue sur la discussion du Marathon de Paris ! Qui est prêt pour cette aventure incroyable ?', 'Bienvenue sur la discussion du Marathon de Paris ! Qui est prêt pour cette aventure incroyable ?', '2025-03-01 10:00:00', TRUE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'jean.dupont@email.com'
 WHERE c.name = 'Marathon de Paris'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Bienvenue sur la discussion du Marathon%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Quelqu''un connaît le parcours exacte ? J''aimerais m''entraîner sur le trajet !', '2025-03-02 14:30:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Quelqu''un connaît le parcours exacte ? J''aimerais m''entraîner sur le trajet !', 'Quelqu''un connaît le parcours exacte ? J''aimerais m''entraîner sur le trajet !', '2025-03-02 14:30:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'sophie.martin@email.com'
 WHERE c.name = 'Marathon de Paris'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Quelqu''un connaît le parcours%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Le parcours est disponible sur le site officiel. Très beau parcours dans Paris !', '2025-03-02 15:45:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Le parcours est disponible sur le site officiel. Très beau parcours dans Paris !', 'Le parcours est disponible sur le site officiel. Très beau parcours dans Paris !', '2025-03-02 15:45:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'paul.bernard@email.com'
 WHERE c.name = 'Marathon de Paris'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Le parcours est disponible%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin)
-SELECT d.id, m.id, 'Bienvenue sur l''Eco-Trail Nantais! N''oubliez pas votre gourde réutilisable et vos chaussures de trail.', '2025-04-20 09:00:00', TRUE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin)
+SELECT d.id, m.id, 'Bienvenue sur l''Eco-Trail Nantais! N''oubliez pas votre gourde réutilisable et vos chaussures de trail.', 'Bienvenue sur l''Eco-Trail Nantais! N''oubliez pas votre gourde réutilisable et vos chaussures de trail.', '2025-04-20 09:00:00', TRUE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'thomas.dubois@email.com'
 WHERE c.name = 'Eco-Trail Nantais'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Bienvenue sur l''Eco-Trail%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Super initiative ! Y aura-t-il des points de ravitaillement zéro déchet ?', '2025-04-21 16:20:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Super initiative ! Y aura-t-il des points de ravitaillement zéro déchet ?', 'Super initiative ! Y aura-t-il des points de ravitaillement zéro déchet ?', '2025-04-21 16:20:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'julie.moreau@email.com'
 WHERE c.name = 'Eco-Trail Nantais'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Super initiative%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Absolument ! Gobelets consignés et fruits locaux uniquement. 🌱', '2025-04-21 17:15:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Absolument ! Gobelets consignés et fruits locaux uniquement. 🌱', 'Absolument ! Gobelets consignés et fruits locaux uniquement. 🌱', '2025-04-21 17:15:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'thomas.dubois@email.com'
 WHERE c.name = 'Eco-Trail Nantais'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Absolument%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Qui participe à la Course des Héros ? On peut faire une équipe !', '2025-04-05 11:30:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Qui participe à la Course des Héros ? On peut faire une équipe !', 'Qui participe à la Course des Héros ? On peut faire une équipe !', '2025-04-05 11:30:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'marc.petit@email.com'
 WHERE c.name = 'Course des Héros'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Qui participe à la Course%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Moi je suis partante ! Pour quelle association on court ?', '2025-04-05 12:45:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Moi je suis partante ! Pour quelle association on court ?', 'Moi je suis partante ! Pour quelle association on court ?', '2025-04-05 12:45:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'sophie.roux@email.com'
 WHERE c.name = 'Course des Héros'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Moi je suis partante%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Préparez-vous pour une explosion de couleurs ! 🌈 Course familiale et festive garantie !', '2025-05-10 10:00:00', TRUE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Préparez-vous pour une explosion de couleurs ! 🌈 Course familiale et festive garantie !', 'Préparez-vous pour une explosion de couleurs ! 🌈 Course familiale et festive garantie !', '2025-05-10 10:00:00', TRUE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'elisevarin@email.com'
 WHERE c.name = 'Bocuse Color Run'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Préparez-vous pour une explosion%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'Les enfants peuvent participer à partir de quel âge ?', '2025-05-11 14:20:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'Les enfants peuvent participer à partir de quel âge ?', 'Les enfants peuvent participer à partir de quel âge ?', '2025-05-11 14:20:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'pierre.blanc@gmail.com'
 WHERE c.name = 'Bocuse Color Run'
   AND NOT EXISTS (SELECT 1 FROM Message WHERE discussionId = d.id AND content LIKE 'Les enfants peuvent%');
 
-INSERT INTO Message (discussionId, memberId, content, date, isPin, isHidden)
-SELECT d.id, m.id, 'À partir de 6 ans accompagnés, 12 ans seuls. Parcours adapté pour tous !', '2025-05-11 15:30:00', FALSE, FALSE
+INSERT INTO Message (discussionId, memberId, content, originalContent, date, isPin, isHidden)
+SELECT d.id, m.id, 'À partir de 6 ans accompagnés, 12 ans seuls. Parcours adapté pour tous !', 'À partir de 6 ans accompagnés, 12 ans seuls. Parcours adapté pour tous !', '2025-05-11 15:30:00', FALSE, FALSE
 FROM Discussion d
          JOIN course c ON d.courseId = c.id
          JOIN member m ON m.email = 'elisevarin@email.com'
