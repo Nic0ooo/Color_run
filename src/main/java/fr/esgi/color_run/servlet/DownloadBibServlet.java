@@ -49,6 +49,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import fr.esgi.color_run.business.Association;
+import fr.esgi.color_run.service.AssociationService;
+import fr.esgi.color_run.service.impl.AssociationServiceImpl;
+import java.util.Optional;
+import java.time.format.DateTimeFormatter;
 
 @WebServlet(urlPatterns = {"/generate-bib", "/download-bib"})
 public class DownloadBibServlet extends HttpServlet {
@@ -264,7 +269,10 @@ public class DownloadBibServlet extends HttpServlet {
     }
 
     /**
-     * ✅ NOUVEAU : Génère un dossard simple avec QR code
+     * ✅ AMÉLIORÉ : Génère un dossard avec nom du participant et QR code enrichi
+     */
+    /**
+     * ✅ AMÉLIORÉ : Génère un dossard avec nom du participant et QR code enrichi
      */
     private byte[] generateSimpleStandardBib(Member member, Course course, String runnerNumber) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -273,7 +281,7 @@ public class DownloadBibServlet extends HttpServlet {
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc, PageSize.A4);
-            document.setMargins(50, 50, 50, 50); // Marges normales
+            document.setMargins(50, 50, 50, 50);
 
             // Polices
             PdfFont titleFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
@@ -283,7 +291,23 @@ public class DownloadBibServlet extends HttpServlet {
             DeviceRgb primaryColor = new DeviceRgb(20, 184, 166);    // Teal
             DeviceRgb darkColor = new DeviceRgb(31, 41, 55);        // Gris foncé
 
-            // === ENCART COLORÉ HEADER ===
+            // === RÉCUPÉRER LE NOM DE L'ASSOCIATION D'ABORD ===
+            String organizerName = "ColorRun"; // Valeur par défaut
+            if (course.getAssociationId() != null) {
+                try {
+                    AssociationService associationService = new AssociationServiceImpl();
+                    Optional<Association> associationOpt = associationService.findById(Long.valueOf(course.getAssociationId()));
+                    if (associationOpt.isPresent()) {
+                        organizerName = associationOpt.get().getName();
+                        System.out.println("✅ Association trouvée: " + organizerName);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erreur récupération association: " + e.getMessage());
+                    // Garde la valeur par défaut
+                }
+            }
+
+            // === HEADER COLORÉ AVEC ASSOCIATION ===
             Table headerTable = new Table(1);
             headerTable.setWidth(UnitValue.createPercentValue(100));
 
@@ -298,6 +322,12 @@ public class DownloadBibServlet extends HttpServlet {
                             .setFont(regularFont)
                             .setFontSize(14)
                             .setFontColor(ColorConstants.WHITE)
+                            .setTextAlignment(TextAlignment.CENTER)
+                            .setMarginBottom(8))
+                    .add(new Paragraph(organizerName.toUpperCase())
+                            .setFont(regularFont)
+                            .setFontSize(12)
+                            .setFontColor(new DeviceRgb(255, 255, 255))  // Blanc
                             .setTextAlignment(TextAlignment.CENTER))
                     .setBackgroundColor(primaryColor)
                     .setBorder(Border.NO_BORDER)
@@ -305,11 +335,9 @@ public class DownloadBibServlet extends HttpServlet {
 
             headerTable.addCell(headerCell);
             document.add(headerTable);
+            document.add(new Paragraph("\n"));
 
-            // Espacement modéré
-            document.add(new Paragraph("\n\n"));
-
-            // === NUMÉRO DE COUREUR CENTRÉ ===
+            // === NUMÉRO DE COUREUR ===
             Table numberTable = new Table(1);
             numberTable.setWidth(UnitValue.createPercentValue(100));
 
@@ -319,41 +347,90 @@ public class DownloadBibServlet extends HttpServlet {
                             .setFontSize(18)
                             .setFontColor(new DeviceRgb(120, 120, 120))
                             .setTextAlignment(TextAlignment.CENTER)
-                            .setMarginBottom(12))
+                            .setMarginBottom(8))
                     .add(new Paragraph(runnerNumber)
                             .setFont(titleFont)
-                            .setFontSize(130)  // Taille intermédiaire
+                            .setFontSize(100)
                             .setFontColor(darkColor)
                             .setTextAlignment(TextAlignment.CENTER)
-                            .setMarginBottom(12))
-                    .setBorder(new SolidBorder(primaryColor, 4))
+                            .setMarginBottom(8))
+                    .setBorder(new SolidBorder(primaryColor, 3))
                     .setBackgroundColor(new DeviceRgb(248, 250, 252))
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setPadding(35); // Padding modéré
+                    .setPadding(20);
 
             numberTable.addCell(numberCell);
             document.add(numberTable);
-
-            // Espacement modéré
-            document.add(new Paragraph("\n\n"));
-
-            // === QR CODE ===
             document.add(new Paragraph("\n"));
 
-            // Générer le QR code
-            String qrData = "RUNNER:" + runnerNumber + "|COURSE:" + course.getId() + "|MEMBER:" + member.getId();
+            // === NOM DU PARTICIPANT ===
+            Table participantTable = new Table(1);
+            participantTable.setWidth(UnitValue.createPercentValue(100));
+
+            // Construire le nom complet avec gestion des valeurs nulles
+            String firstName = (member.getFirstname() != null) ? member.getFirstname().trim() : "";
+            String lastName = (member.getName() != null) ? member.getName().trim() : "";
+            String fullName = (firstName + " " + lastName).trim().toUpperCase();
+
+            // Si le nom est vide, utiliser l'email
+            if (fullName.isEmpty()) {
+                fullName = (member.getEmail() != null) ? member.getEmail().toUpperCase() : "PARTICIPANT";
+            }
+
+            Cell participantCell = new Cell()
+                    .add(new Paragraph("PARTICIPANT")
+                            .setFont(regularFont)
+                            .setFontSize(12)
+                            .setFontColor(new DeviceRgb(120, 120, 120))
+                            .setTextAlignment(TextAlignment.CENTER)
+                            .setMarginBottom(5))
+                    .add(new Paragraph(fullName)
+                            .setFont(titleFont)
+                            .setFontSize(20)
+                            .setFontColor(darkColor)
+                            .setTextAlignment(TextAlignment.CENTER))
+                    .setBorder(new SolidBorder(new DeviceRgb(200, 200, 200), 2))
+                    .setBackgroundColor(ColorConstants.WHITE)
+                    .setPadding(12);
+
+            participantTable.addCell(participantCell);
+            document.add(participantTable);
+            document.add(new Paragraph("\n"));
+
+            // === QR CODE ENRICHI (AUTONOME) ===
+            // Formater la date/heure élégamment
+            String formattedDateTime = "N/A";
+            if (course.getStartDate() != null) {
+                try {
+                    // Format : "15 juin 2025 à 09h30"
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy 'à' HH'h'mm", java.util.Locale.FRENCH);
+                    formattedDateTime = course.getStartDate().format(formatter);
+                } catch (Exception e) {
+                    // Fallback sur format simple si erreur
+                    formattedDateTime = course.getStartDate().toString();
+                }
+            }
+
+            // Format lisible par toutes les apps (même l'appareil photo)
+            String qrData = String.format(
+                    "Dossard: %s\nParticipant: %s\nCourse: %s\nDate: %s\nOrganisateur: %s",
+                    runnerNumber,
+                    fullName,
+                    course.getName(),
+                    formattedDateTime,  // ✅ Date formatée élégamment
+                    organizerName
+            );
+
             com.itextpdf.barcodes.BarcodeQRCode qrcode = new com.itextpdf.barcodes.BarcodeQRCode(qrData);
             com.itextpdf.layout.element.Image qrCodeImage = new com.itextpdf.layout.element.Image(qrcode.createFormXObject(pdfDoc));
 
-            // Taille et position du QR code
-            qrCodeImage.setWidth(80);
-            qrCodeImage.setHeight(80);
+            qrCodeImage.setWidth(100);
+            qrCodeImage.setHeight(100);
             qrCodeImage.setHorizontalAlignment(HorizontalAlignment.CENTER);
 
             document.add(qrCodeImage);
 
-            // Espace en bas modéré
-            document.add(new Paragraph("\n\n"));
+            // Espace final
+            document.add(new Paragraph("\n"));
 
             document.close();
 
@@ -365,7 +442,6 @@ public class DownloadBibServlet extends HttpServlet {
 
         return baos.toByteArray();
     }
-
     /**
      * Génère un numéro de dossard unique simple
      */
