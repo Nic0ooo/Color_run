@@ -91,13 +91,33 @@ public class AdminAssociationsServlet extends HttpServlet {
         String name = req.getParameter("name");
         String email = req.getParameter("email");
         String city = req.getParameter("city");
+        String description = req.getParameter("description");
+        String phoneNumber = req.getParameter("phoneNumber");
+        String address = req.getParameter("address");
+        String websiteLink = req.getParameter("websiteLink");
+
+        Integer zipCode = null;
+        String zipCodeParam = req.getParameter("zipCode");
+        if (zipCodeParam != null && !zipCodeParam.trim().isEmpty()) {
+            try {
+                zipCode = Integer.parseInt(zipCodeParam.trim());
+            } catch (NumberFormatException e) {
+                System.err.println("Code postal invalide: " + zipCodeParam);
+            }
+        }
 
         Association assoc = new Association();
         assoc.setId(id);
         assoc.setName(name);
         assoc.setEmail(email);
         assoc.setCity(city);
+        assoc.setDescription(description);
+        assoc.setPhoneNumber(phoneNumber);
+        assoc.setAddress(address);
+        assoc.setZipCode(zipCode);
+        assoc.setWebsiteLink(websiteLink);
 
         associationService.updateAssociation(assoc);
     }
+
 }

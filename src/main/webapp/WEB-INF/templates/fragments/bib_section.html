@@ -23,11 +23,30 @@
     <div class="p-6">
         <!-- Prévisualisation du dossard -->
         <div class="text-center mb-6">
-            <div class="bib-card">
-                <div class="course-name-mini mb-2" th:text="${course.name}">Course Name</div>
-                <div class="bib-number-display" th:text="${bibNumber}">1234</div>
-                <div class="participant-name-mini mt-2">
-                    <span th:text="${member.firstname + ' ' + member.name}">Nom Participant</span>
+            <div class="bib-card border-2 border-teal-500 rounded-lg p-6 bg-gray-50 inline-block min-w-80">
+                <!-- Nom de la course -->
+                <div class="course-name-mini mb-3 text-teal-600 font-bold text-lg" th:text="${course.name}">Course Name</div>
+
+                <!-- Numéro de dossard -->
+                <div class="bib-number-display text-6xl font-black text-gray-800 my-4" th:text="${bibNumber}">1234</div>
+
+                <!-- Nom du participant - Version robuste -->
+                <div class="participant-name-section mt-4 p-3 border-2 border-gray-300 rounded bg-white">
+                    <div class="text-sm text-gray-500 font-medium mb-1">PARTICIPANT</div>
+                    <div class="participant-name text-xl font-bold text-gray-800">
+                        <!-- Gestion robuste du nom -->
+                        <span th:if="${member?.firstname != null and member?.name != null}"
+                              th:text="${(member.firstname + ' ' + member.name).toUpperCase()}">NOM PARTICIPANT</span>
+                        <span th:if="${member?.firstname == null or member?.name == null}"
+                              th:text="${member?.email != null ? member.email.toUpperCase() : 'PARTICIPANT'}">PARTICIPANT</span>
+                    </div>
+                </div>
+
+                <!-- QR Code placeholder -->
+                <div class="mt-4 flex justify-center">
+                    <div class="w-16 h-16 bg-gray-300 border-2 border-gray-400 flex items-center justify-center text-xs text-gray-600">
+                        QR CODE
+                    </div>
                 </div>
             </div>
         </div>
@@ -35,23 +54,37 @@
         <!-- Instructions -->
         <div class="bg-gray-50 rounded-lg p-4">
             <h4 class="font-medium text-gray-800 mb-3 flex items-center">
-                <i data-lucide="info" class="w-4 h-4 mr-2 text-blue-600"></i>
-                Instructions importantes
+                <i data-lucide="info" class="w-4 h-4 mr-2 text-blue-500"></i>
+                Instructions
             </h4>
-            <ul class="space-y-2 text-sm text-gray-700">
-                <li class="flex items-center">
-                    <i data-lucide="check" class="w-4 h-4 mr-2 text-green-600"></i>
-                    Portez ce dossard de manière visible sur le torse
+            <ul class="text-sm text-gray-600 space-y-2">
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 text-green-500 mt-0.5 flex-shrink-0"></i>
+                    <span><strong>Imprimez</strong> votre dossard avant la course</span>
                 </li>
-                <li class="flex items-center">
-                    <i data-lucide="clock" class="w-4 h-4 mr-2 text-green-600"></i>
-                    Arrivez 30 minutes avant le départ
+                <li class="flex items-start">
+                    <i data-lucide="user" class="w-4 h-4 mr-2 text-blue-500 mt-0.5 flex-shrink-0"></i>
+                    <span>Votre <strong>nom</strong> est visible pour identification</span>
                 </li>
-                <li class="flex items-center">
-                    <i data-lucide="shield-check" class="w-4 h-4 mr-2 text-green-600"></i>
-                    Gardez le dossard en bon état pendant la course
+                <li class="flex items-start">
+                    <i data-lucide="qr-code" class="w-4 h-4 mr-2 text-purple-500 mt-0.5 flex-shrink-0"></i>
+                    <span>Le <strong>QR code</strong> contient toutes vos infos (fonctionne sans internet)</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="pin" class="w-4 h-4 mr-2 text-orange-500 mt-0.5 flex-shrink-0"></i>
+                    <span>Fixez le dossard <strong>bien visible</strong> sur votre torse</span>
                 </li>
             </ul>
+        </div>
+
+        <!-- Action -->
+        <div class="flex justify-center mt-6">
+            <a th:href="@{/download-bib(courseId=${course.id})}"
+               target="_blank"
+               class="inline-flex items-center bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                <i data-lucide="download" class="w-5 h-5 mr-2"></i>
+                Télécharger le dossard PDF
+            </a>
         </div>
     </div>
 </div>
