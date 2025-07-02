@@ -23,11 +23,29 @@ public class DatabaseManager {
     private final DataSource dataSource;
     private final Set<String> verifiedTables = new HashSet<>();
     private static boolean driverLoaded = false;
+    private static boolean isTestMode = false;
+
+    // Méthode pour activer le mode test et réinitialiser l'instance
+    public static void enableTestMode() {
+        synchronized (lock) {
+            isTestMode = true;
+            instance = null; // Force réinitialisation lors du prochain appel à getInstance()
+        }
+    }
+
+    // Méthode pour désactiver le mode test et réinitialiser l'instance
+    public static void disableTestMode() {
+        synchronized (lock) {
+            isTestMode = false;
+            instance = null; // Force réinitialisation lors du prochain appel à getInstance()
+        }
+    }
 
     private DatabaseManager() {
         loadDriver();
         this.dataSource = createDataSource();
-        System.out.println("✅ DatabaseManager initialisé avec pool de connexions");
+        System.out.println("✅ DatabaseManager initialisé avec pool de connexions" +
+                           (isTestMode ? " (MODE TEST)" : ""));
     }
 
     public static DatabaseManager getInstance() {
@@ -56,7 +74,18 @@ public class DatabaseManager {
 
     private DataSource createDataSource() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:h2:" + Config.get("db.path") + ";AUTO_SERVER=TRUE");
+        String dbPath;
+
+        if (isTestMode) {
+            // Utiliser le chemin de la base de données de test
+            dbPath = Config.get("db.path") + "_test";
+            System.out.println("🔍 Utilisation de la base de données de test : " + dbPath);
+        } else {
+            // Utiliser le chemin de la base de données normale
+            dbPath = Config.get("db.path");
+        }
+
+        config.setJdbcUrl("jdbc:h2:" + dbPath + ";AUTO_SERVER=TRUE");
         config.setUsername("sa");
         config.setPassword("");
 
