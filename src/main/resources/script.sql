@@ -510,9 +510,9 @@ WHERE m.email = 'maxime.duval@student.fr' AND a.name = 'Runners du Sud'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'En tant que professionnelle du sport, je souhaite contribuer à l''organisation d''événements sportifs de qualité. Mon expertise en communication et marketing pourrait bénéficier à votre association.', 'PENDING', '2025-06-22 11:20:00', a.id
+SELECT m.id, 'JOIN_ASSOCIATION', 'En tant que professionnelle du sport, je souhaite contribuer à l''organisation d''événements sportifs de qualité. Mon expertise en communication et marketing pourrait bénéficier à votre association.', 'PENDING', '2025-06-22 11:20:00', a.id
 FROM member m, association a
-WHERE m.email = 'sarah.chevalier@pro.fr' AND a.name = 'Association Sportive Paris'
+WHERE m.email = 'elisevarin@email.com' AND a.name = 'Association Sportive Paris'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 INSERT INTO OrganizerRequest (memberId, motivation, requestDate, status, requestType, newAssociationData)
@@ -529,32 +529,32 @@ WHERE m.email = 'amelie.roussel@asso.org' AND a.name = 'Sport & Solidarité'
 
 -- Demandes ACCEPTÉES (avec mise à jour du rôle)
 INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Organisateur expérimenté souhaitant rejoindre votre association pour développer des événements trail en montagne.', 'ACCEPTED', '2025-05-10 10:00:00', '2025-05-15 16:30:00', admin.id, 'Profil parfait pour nos événements montagne. Accepté à l''unanimité.', a.id
+SELECT m.id, 'BECOME_ORGANIZER', 'Organisateur expérimenté souhaitant rejoindre votre association pour développer des événements trail en montagne.', 'APPROVED', '2025-05-10 10:00:00', '2025-05-15 16:30:00', admin.id, 'RUNNER_TO_ORGANIZER', a.id
 FROM member m, member admin, association a
 WHERE m.email = 'antoine.lefebvre@email.com' AND admin.email = 'jean.dupont@email.com' AND a.name = 'Montagne & Running'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Passionnée de courses colorées, je veux organiser des événements fun et festifs pour toute la famille.', 'ACCEPTED', '2025-05-08 14:20:00', '2025-05-12 11:45:00', admin.id, 'Excellente motivation et expérience pertinente. Bienvenue dans l''équipe !', a.id
+SELECT m.id, 'BECOME_ORGANIZER', 'Passionnée de courses colorées, je veux organiser des événements fun et festifs pour toute la famille.', 'APPROVED', '2025-05-08 14:20:00', '2025-05-12 11:45:00', admin.id, 'RUNNER_TO_ORGANIZER', a.id
 FROM member m, member admin, association a
 WHERE m.email = 'alice.durand@email.com' AND admin.email = 'marie.rousseau@admin.com' AND a.name = 'Run For Fun Association'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
-INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Engagé pour l''écologie, je souhaite organiser des courses respectueuses de l''environnement.', 'ACCEPTED', '2025-04-25 09:30:00', '2025-04-30 15:20:00', admin.id, 'Valeurs parfaitement alignées avec notre mission. Accepté avec enthousiasme.', a.id
+INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, existingAssociationId)
+SELECT m.id, 'JOIN_ASSOCIATION', 'Engagé pour l''écologie, je souhaite organiser des courses respectueuses de l''environnement.', 'APPROVED', '2025-04-25 09:30:00', '2025-04-30 15:20:00', admin.id, a.id
 FROM member m, member admin, association a
 WHERE m.email = 'thomas.dubois@email.com' AND admin.email = 'jean.dupont@email.com' AND a.name = 'Courir pour la Planète'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
 -- Demandes REFUSÉES
-INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, adminComment, existingAssociationId)
-SELECT m.id, 'BECOME_ORGANIZER', 'Je veux organiser des courses pour gagner de l''argent rapidement.', 'REJECTED', '2025-06-01 13:15:00', '2025-06-03 10:30:00', admin.id, 'Motivation commerciale non alignée avec nos valeurs associatives. Demande refusée.', a.id
+INSERT INTO OrganizerRequest (memberId, requestType, motivation, status, requestDate, processedDate, processedByAdminId, existingAssociationId)
+SELECT m.id, 'BECOME_ORGANIZER', 'Je veux organiser des courses pour gagner de l''argent rapidement.', 'REJECTED', '2025-06-01 13:15:00', '2025-06-03 10:30:00', admin.id, a.id
 FROM member m, member admin, association a
 WHERE m.email = 'julien.girard@nature.fr' AND admin.email = 'marie.rousseau@admin.com' AND a.name = 'Courir Ensemble'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);
 
-INSERT INTO OrganizerRequest (memberId, motivation, requestDate, status, processedDate, processedByAdminId, adminComment, requestType, newAssociationData)
-SELECT m.id, 'Je veux créer une association pour concurrencer toutes les autres et dominer le marché des courses.', '2025-05-28 16:00:00', 'REJECTED', '2025-05-30 09:45:00', admin.id, 'Esprit non collaboratif et motivations commerciales inadéquates. Refusé.', 'CREATE_ASSOCIATION', '{"name":"Running Empire","email":"empire@run.com","description":"Domination du marché des courses","websiteLink":"","phone":"","address":"","zipCode":"","city":""}'
+INSERT INTO OrganizerRequest (memberId, motivation, requestDate, status, processedDate, processedByAdminId, requestType, newAssociationData)
+SELECT m.id, 'Je veux créer une association pour concurrencer toutes les autres et dominer le marché des courses.', '2025-05-28 16:00:00', 'REJECTED', '2025-05-30 09:45:00', admin.id, 'CREATE_ASSOCIATION', '{"name":"Running Empire","email":"empire@run.com","description":"Domination du marché des courses","websiteLink":"","phone":"","address":"","zipCode":"","city":""}'
 FROM member m, member admin
 WHERE m.email = 'diego.silva@runner.es' AND admin.email = 'jean.dupont@email.com'
   AND NOT EXISTS (SELECT 1 FROM OrganizerRequest WHERE memberId = m.id);

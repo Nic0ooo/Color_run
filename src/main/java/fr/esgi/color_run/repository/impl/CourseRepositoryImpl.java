@@ -312,7 +312,11 @@ public class CourseRepositoryImpl implements CourseRepository {
             stmt.setDouble(8, course.getStartpositionLongitude());
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setDouble(11, course.getDistance());
+            if (course.getDistance() != null) {
+                stmt.setDouble(11, course.getDistance());
+            } else {
+                stmt.setNull(11, java.sql.Types.DOUBLE);
+            }
             stmt.setString(12, course.getAddress());
             stmt.setString(13, course.getCity());
             stmt.setInt(14, course.getZipCode());
@@ -363,7 +367,11 @@ public class CourseRepositoryImpl implements CourseRepository {
             stmt.setDouble(8, course.getStartpositionLongitude());
             stmt.setDouble(9, course.getEndpositionLatitude());
             stmt.setDouble(10, course.getEndpositionLongitude());
-            stmt.setDouble(11, course.getDistance());
+            if (course.getDistance() != null) {
+                stmt.setDouble(11, course.getDistance());
+            } else {
+                stmt.setNull(11, java.sql.Types.DOUBLE);
+            }
             stmt.setString(12, course.getAddress());
             stmt.setString(13, course.getCity());
             stmt.setInt(14, course.getZipCode());

@@ -235,7 +235,9 @@ Après initialisation, plusieurs comptes sont créés :
 - Email : `sophie.martin@email.com`
 - Et plusieurs autres...
 
-**Mot de passe par défaut** : Tous les comptes utilisent le même mot de passe hashé.
+**Mot de passe par défaut** : azerty123 
+
+Pour la démonstration, tous les comptes utilisent le même mot de passe hashé.
 
 ## Développement
 
