@@ -123,8 +123,8 @@ Configuration des clés API Stripe dans `config.properties` :
 ```properties
 stripe.public.key=pk_test_votre_cle_publique
 stripe.secret.key=sk_test_votre_cle_secrete
-stripe.success.url=http://localhost:8180/color_run_war/payment-success
-stripe.cancel.url=http://localhost:8180/color_run_war/payment-cancel
+stripe.success.url=http://localhost:8080/color_run_war/payment-success
+stripe.cancel.url=http://localhost:8080/color_run_war/payment-cancel
 ```
 
 ### Configuration Email
@@ -193,22 +193,11 @@ mvn clean package
 
 L'application sera accessible à l'adresse :
 ```
-http://localhost:8180/color_run_war/
+http://localhost:8080/color_run_war/
 ```
 
-**Note** : Le port 8180 est configuré dans l'application. Assurez-vous que Tomcat utilise ce port ou modifiez les URLs dans `config.properties`.
+**Note** : Le port 8080 est configuré dans l'application. Assurez-vous que Tomcat utilise ce port ou modifiez les URLs dans `config.properties`.
 
-## Tests
-
-### Exécution des tests
-
-```bash
-# Tests unitaires
-mvn test
-
-# Tests avec couverture
-mvn clean test jacoco:report
-```
 
 ### Base de données de test
 
