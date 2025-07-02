@@ -129,6 +129,8 @@ public class HomeServlet extends HttpServlet {
         System.out.println("=== END POST REQUEST ===");
     }
 
+    // REMPLACER la méthode handleAjaxRequest() dans HomeServlet.java
+
     private void handleAjaxRequest(HttpServletRequest req, HttpServletResponse resp,
                                    List<Course> courses, CourseSearchStrategy searchStrategy)
             throws IOException {
@@ -138,7 +140,7 @@ public class HomeServlet extends HttpServlet {
         StringBuilder jsonResponse = new StringBuilder();
         jsonResponse.append("{");
 
-        // Ajouter les courses
+        // Ajouter les courses avec TOUS les champs nécessaires
         jsonResponse.append("\"courses\":[");
         for (int i = 0; i < courses.size(); i++) {
             Course course = courses.get(i);
@@ -152,38 +154,37 @@ public class HomeServlet extends HttpServlet {
             jsonResponse.append("\"zipCode\":").append(course.getZipCode()).append(",");
             jsonResponse.append("\"startDate\":\"").append(escapeJson(String.valueOf(course.getStartDate()))).append("\",");
             jsonResponse.append("\"price\":").append(course.getPrice()).append(",");
+
+            // *** AJOUTS MANQUANTS ***
+            jsonResponse.append("\"distance\":").append(course.getDistance() != null ? course.getDistance() : 5).append(",");
+            jsonResponse.append("\"currentNumberOfRunners\":").append(course.getCurrentNumberOfRunners() != null ? course.getCurrentNumberOfRunners() : 0).append(",");
+            jsonResponse.append("\"maxOfRunners\":").append(course.getMaxOfRunners() != null ? course.getMaxOfRunners() : 100).append(",");
+
             jsonResponse.append("\"startpositionLatitude\":").append(course.getStartpositionLatitude()).append(",");
             jsonResponse.append("\"startpositionLongitude\":").append(course.getStartpositionLongitude());
             jsonResponse.append("}");
         }
-        jsonResponse.append("]");
+        jsonResponse.append("],");
 
         // Ajouter les paramètres de contexte
         Map<String, Object> contextParams = searchStrategy.getContextParameters(req);
+        boolean first = true;
         for (Map.Entry<String, Object> entry : contextParams.entrySet()) {
-            jsonResponse.append(",");
+            if (!first) jsonResponse.append(",");
             jsonResponse.append("\"").append(entry.getKey()).append("\":");
-
-            Object value = entry.getValue();
-            if (value instanceof String) {
-                jsonResponse.append("\"").append(escapeJson((String) value)).append("\"");
-            } else if (value instanceof Number) {
-                jsonResponse.append(value);
-            } else if (value instanceof Boolean) {
-                jsonResponse.append(value);
+            if (entry.getValue() instanceof String) {
+                jsonResponse.append("\"").append(escapeJson((String) entry.getValue())).append("\"");
             } else {
-                jsonResponse.append("null");
+                jsonResponse.append(entry.getValue());
             }
+            first = false;
         }
 
         jsonResponse.append("}");
 
-        // Envoyer la réponse
-        PrintWriter out = resp.getWriter();
-        out.print(jsonResponse.toString());
-        out.flush();
-
-        System.out.println("JSON response sent: " + jsonResponse.toString());
+        String response = jsonResponse.toString();
+        System.out.println("JSON response sent: " + response);
+        resp.getWriter().write(response);
     }
 
     private String escapeJson(String str) {
