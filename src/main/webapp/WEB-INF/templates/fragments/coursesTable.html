@@ -80,7 +80,7 @@
                         </button>
 
                         <!-- Filtre pour les participants (runners et organisateurs peuvent s'inscrire) -->
-                        <button th:if="${member.role.name() == 'RUNNER' or member.role.name() == 'ORGANIZER'}"
+                        <button th:if="${member.role.name() == 'RUNNER'}"
                                 th:id="${tableMode + '-filter-my-registered'}"
                                 th:attr="onclick=|toggleCourseFilter('${tableMode}', 'my-registered')|"
                                 class="filter-btn inline-flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-2 px-4 rounded-lg transition-colors">
