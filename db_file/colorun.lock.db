@@ -1,0 +1,6 @@
+#FileLock
+#Wed Jul 02 13:53:21 CEST 2025
+server=192.168.1.96\:55950
+hostName=remi
+method=file
+id=197cafbfdf4dd16e647531b0848dab2b73052461bdb
