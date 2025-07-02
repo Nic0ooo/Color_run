@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import fr.esgi.color_run.util.PostalCodeMapper;
 
 public class GeocodingServiceImpl implements GeocodingService {
     private final Map<String, GeoLocation> coordinatesCache = new HashMap<>();
@@ -20,17 +21,27 @@ public class GeocodingServiceImpl implements GeocodingService {
         System.out.println("=== GEOCODING SERVICE ===");
         System.out.println("Recherche coordonnées pour le code postal: '" + postalCode + "'");
 
-        // Vérifier si le code postal est déjà en cache
+        // *** NOUVELLE FONCTIONNALITÉ: Correction automatique ***
+        String originalPostalCode = postalCode;
+        String correctedPostalCode = PostalCodeMapper.correctPostalCode(postalCode);
+        boolean wasCorrected = !originalPostalCode.equals(correctedPostalCode);
+
+        if (wasCorrected) {
+            System.out.println("🔄 Code postal corrigé: " + originalPostalCode + " → " + correctedPostalCode);
+            postalCode = correctedPostalCode;
+        }
+
+        // Vérifier si le code postal (corrigé) est déjà en cache
         if (coordinatesCache.containsKey(postalCode)) {
             GeoLocation cachedLocation = coordinatesCache.get(postalCode);
-            System.out.println("Coordonnées trouvées en cache: " + cachedLocation.getLatitude() + ", " + cachedLocation.getLongitude());
+            System.out.println("📍 Coordonnées trouvées en cache: " + cachedLocation.getLatitude() + ", " + cachedLocation.getLongitude());
             return cachedLocation;
         }
 
         try {
-            // URL de l'API de géocodage avec plus de précision
+            // URL de l'API de géocodage
             String urlStr = "https://api-adresse.data.gouv.fr/search/?q=" + postalCode + "&type=municipality&limit=1";
-            System.out.println("URL de l'API: " + urlStr);
+            System.out.println("🌐 URL de l'API: " + urlStr);
 
             URL url = new URL(urlStr);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -39,7 +50,7 @@ public class GeocodingServiceImpl implements GeocodingService {
             connection.setReadTimeout(5000);
 
             int responseCode = connection.getResponseCode();
-            System.out.println("Code de réponse API: " + responseCode);
+            System.out.println("📡 Code de réponse API: " + responseCode);
 
             if (responseCode == 200) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -52,7 +63,7 @@ public class GeocodingServiceImpl implements GeocodingService {
                 in.close();
 
                 String jsonResponse = response.toString();
-                System.out.println("Réponse JSON de l'API: " + jsonResponse.substring(0, Math.min(200, jsonResponse.length())) + "...");
+                System.out.println("📄 Réponse JSON de l'API: " + jsonResponse.substring(0, Math.min(200, jsonResponse.length())) + "...");
 
                 // Parser la réponse JSON
                 JSONObject jsonObject = new JSONObject(jsonResponse);
@@ -66,40 +77,42 @@ public class GeocodingServiceImpl implements GeocodingService {
                     double longitude = coordinates.getDouble(0);
                     double latitude = coordinates.getDouble(1);
 
-                    System.out.println("Coordonnées reçues de l'API: longitude=" + longitude + ", latitude=" + latitude);
+                    System.out.println("🎯 Coordonnées reçues de l'API: longitude=" + longitude + ", latitude=" + latitude);
 
                     // Vérification de cohérence pour la France métropolitaine
                     if (latitude >= 41.0 && latitude <= 51.5 && longitude >= -5.0 && longitude <= 10.0) {
                         GeoLocation location = new GeoLocation(latitude, longitude);
 
-                        // Stocker en cache pour les futures demandes
+                        // Stocker en cache AVEC le code postal corrigé
                         coordinatesCache.put(postalCode, location);
-                        System.out.println("Coordonnées stockées en cache pour " + postalCode + ": " + latitude + ", " + longitude);
+
+                        // Si le code a été corrigé, on peut aussi mettre en cache l'original
+                        if (wasCorrected) {
+                            coordinatesCache.put(originalPostalCode, location);
+                            System.out.println("💾 Coordonnées mises en cache pour les codes: " + originalPostalCode + " et " + postalCode);
+                        } else {
+                            System.out.println("💾 Coordonnées mises en cache pour: " + postalCode);
+                        }
 
                         return location;
                     } else {
-                        System.err.println("Coordonnées hors limites France: lat=" + latitude + ", lon=" + longitude);
+                        System.err.println("❌ Coordonnées hors limites France: lat=" + latitude + ", lon=" + longitude);
                     }
                 } else {
-                    System.err.println("Aucun résultat trouvé dans la réponse API");
+                    System.err.println("❌ Aucun résultat trouvé dans la réponse API pour le code postal: " + postalCode);
                 }
             } else {
-                System.err.println("Erreur HTTP: " + responseCode);
+                System.err.println("❌ Erreur HTTP: " + responseCode);
             }
 
         } catch (Exception e) {
-            System.err.println("Erreur lors de la conversion du code postal en coordonnées: " + e.getMessage());
+            System.err.println("❌ Erreur lors de la conversion du code postal en coordonnées: " + e.getMessage());
             e.printStackTrace();
         }
 
-        // En cas d'erreur, utiliser des coordonnées par défaut (Paris) ET l'indiquer clairement
-        System.out.println("ATTENTION: Utilisation des coordonnées par défaut (Paris) pour le code postal " + postalCode);
-        GeoLocation defaultLocation = new GeoLocation(48.8566, 2.3522);
-
-        // NE PAS mettre en cache les coordonnées par défaut pour éviter les erreurs persistantes
-        System.out.println("=== FIN GEOCODING SERVICE ===");
-
-        return defaultLocation;
+        // *** CHANGEMENT CRITIQUE : Retourner null au lieu des coordonnées de Paris ***
+        System.err.println("⚠️  ÉCHEC: Code postal '" + postalCode + "' introuvable même après correction");
+        return null; // ← CHANGEMENT : ne plus retourner Paris par défaut
     }
 
     public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

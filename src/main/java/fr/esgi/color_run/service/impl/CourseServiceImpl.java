@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Comparator;
+import fr.esgi.color_run.util.PostalCodeMapper;
+
 
 public class CourseServiceImpl implements CourseService {
 
@@ -80,35 +82,69 @@ public class CourseServiceImpl implements CourseService {
     public List<Course> findCoursesByPostalCodeAndDate(String postalCode, String dateFilter, int radiusInKm,
                                                        String startDate, String endDate) {
         System.out.println("=== CourseServiceImpl.findCoursesByPostalCodeAndDate ===");
-        System.out.println("Paramètres:");
-        System.out.println("  - postalCode: '" + postalCode + "'");
+        System.out.println("🔍 DEBUG - PARAMÈTRES REÇUS:");
+        System.out.println("  - postalCode: '" + postalCode + "' (type: " + (postalCode != null ? postalCode.getClass().getSimpleName() : "null") + ")");
         System.out.println("  - dateFilter: '" + dateFilter + "'");
-        System.out.println("  - radiusInKm: " + radiusInKm);
+        System.out.println("  - radiusInKm: " + radiusInKm + " (type: " + Integer.class.getSimpleName() + ")");
         System.out.println("  - startDate: '" + startDate + "'");
         System.out.println("  - endDate: '" + endDate + "'");
+
+        // Tests de conditions
+        System.out.println("🔍 DEBUG - TESTS DE CONDITIONS:");
+        System.out.println("  - postalCode != null: " + (postalCode != null));
+        System.out.println("  - !postalCode.isEmpty(): " + (postalCode != null && !postalCode.isEmpty()));
+        System.out.println("  - !postalCode.equals('null'): " + (postalCode != null && !postalCode.equals("null")));
+        System.out.println("  - radiusInKm > 0: " + (radiusInKm > 0));
+
+        boolean conditionProximity = postalCode != null && !postalCode.isEmpty() && !postalCode.equals("null") && radiusInKm > 0;
+        boolean conditionExact = postalCode != null && !postalCode.isEmpty() && !postalCode.equals("null");
+
+        System.out.println("  - CONDITION PROXIMITÉ: " + conditionProximity);
+        System.out.println("  - CONDITION EXACTE: " + conditionExact);
 
         List<Course> filteredCourses;
 
         // Si radiusInKm > 0, utiliser la recherche par proximité
         if (postalCode != null && !postalCode.isEmpty() && !postalCode.equals("null") && radiusInKm > 0) {
-            System.out.println("Recherche par proximité (rayon: " + radiusInKm + " km)");
+            System.out.println("🔍 Recherche par proximité (rayon: " + radiusInKm + " km)");
 
-            // Convertir le code postal en coordonnées géographiques
+            // Convertir le code postal en coordonnées géographiques (avec correction automatique)
             GeoLocation location = geocodingService.getCoordinatesFromPostalCode(postalCode);
-            System.out.println("Coordonnées du code postal " + postalCode + ": " + location.getLatitude() + ", " + location.getLongitude());
+
+            // *** NOUVEAU : Vérifier si le geocoding a réussi ***
+            if (location == null) {
+                System.err.println("❌ ERREUR: Impossible de trouver les coordonnées pour le code postal: " + postalCode);
+                System.err.println("💡 Suggestion: Vérifiez que le code postal existe (ex: 69001 au lieu de 69000)");
+                return new ArrayList<>(); // Retourner une liste vide au lieu de chercher à Paris
+            }
+
+            System.out.println("📍 Coordonnées trouvées pour " + postalCode + ": " + location.getLatitude() + ", " + location.getLongitude());
 
             filteredCourses = courseRepository.findByProximity(
                     location.getLatitude(), location.getLongitude(), radiusInKm);
-            System.out.println("Courses trouvées par proximité: " + filteredCourses.size());
+            System.out.println("🎯 Courses trouvées par proximité: " + filteredCourses.size());
+
         } else if (postalCode != null && !postalCode.isEmpty() && !postalCode.equals("null")) {
-            System.out.println("Recherche classique par code postal exacte");
-            // Sinon recherche classique par code postal
-            filteredCourses = courseRepository.findByPostalCode(postalCode);
-            System.out.println("Courses trouvées par code postal: " + filteredCourses.size());
+            System.out.println("🔍 Recherche classique par code postal exact");
+
+            // *** SUPPRIMER cette ligne qui utilise l'ancienne logique ***
+            // String correctedPostalCode = PostalCodeMapper.correctPostalCode(postalCode);
+
+            // *** NOUVEAU : Passer directement le code postal original ***
+            // Le CourseRepositoryImpl va maintenant gérer l'expansion automatiquement
+            try {
+                filteredCourses = courseRepository.findByPostalCode(postalCode); // ← Passer le code original (69000)
+                System.out.println("🎯 Courses trouvées par code postal: " + filteredCourses.size());
+            } catch (NumberFormatException e) {
+                System.err.println("❌ Code postal invalide: " + postalCode);
+                return new ArrayList<>();
+            }
+
+
         } else {
-            System.out.println("Recherche de toutes les courses (aucun code postal fourni)");
+            System.out.println("🔍 Recherche de toutes les courses (aucun code postal fourni)");
             filteredCourses = courseRepository.findAll();
-            System.out.println("Toutes les courses: " + filteredCourses.size());
+            System.out.println("📊 Toutes les courses: " + filteredCourses.size());
         }
 
         System.out.println("Courses avant filtrage par date:");
