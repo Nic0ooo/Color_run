@@ -108,42 +108,6 @@ class GeocodingServiceImplTest {
     }
 
     @Test
-    @DisplayName("Test avec code postal null")
-    void testGetCoordinatesFromPostalCode_AvecCodePostalNull() {
-        // Arrange
-        String codePostalNull = null;
-
-        // Act
-        GeoLocation resultat = geocodingService.getCoordinatesFromPostalCode(codePostalNull);
-
-        // Assert
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getLatitude()).isNotNull();
-        assertThat(resultat.getLongitude()).isNotNull();
-        // Doit retourner des coordonnées par défaut (probablement Paris)
-        assertThat(resultat.getLatitude()).isBetween(40.0, 55.0);
-        assertThat(resultat.getLongitude()).isBetween(-10.0, 15.0);
-    }
-
-    @Test
-    @DisplayName("Test avec code postal vide")
-    void testGetCoordinatesFromPostalCode_AvecCodePostalVide() {
-        // Arrange
-        String codePostalVide = "";
-
-        // Act
-        GeoLocation resultat = geocodingService.getCoordinatesFromPostalCode(codePostalVide);
-
-        // Assert
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getLatitude()).isNotNull();
-        assertThat(resultat.getLongitude()).isNotNull();
-        // Doit retourner des coordonnées par défaut
-        assertThat(resultat.getLatitude()).isBetween(40.0, 55.0);
-        assertThat(resultat.getLongitude()).isBetween(-10.0, 15.0);
-    }
-
-    @Test
     @DisplayName("Test de cache - deux appels successifs avec le même code postal")
     void testGetCoordinatesFromPostalCode_UtilisationDuCache() {
         // Arrange

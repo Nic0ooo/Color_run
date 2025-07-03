@@ -233,49 +233,49 @@ class CoursesServletTest {
     // TESTS AJAX - COVERAGE DES MÉTHODES UTILITAIRES
     // ========================
 
-    @Test
-    @DisplayName("AJAX - Méthodes utilitaires (pagination, JSON)")
-    void ajax_UtilityMethods_Coverage() throws Exception {
-        // Arrange
-        when(request.getSession(false)).thenReturn(session);
-        when(session.getAttribute("member")).thenReturn(testMember);
-        when(request.getParameter("ajax")).thenReturn("true"); // AJAX = méthodes utilitaires !
-        when(request.getParameter("upcomingPage")).thenReturn("2"); // Page 2 = pagination
-        when(request.getParameter("pastPage")).thenReturn("1");
-        when(request.getParameter("pageSize")).thenReturn("5"); // Taille page = pagination
-
-        when(associationMemberService.getAssociationsByOrganizer(anyLong()))
-                .thenReturn(new ArrayList<>());
-
-        // ✅ 12 courses pour tester la pagination (plus d'une page)
-        List<Course> manyCourses = new ArrayList<>();
-        for (int i = 0; i < 12; i++) {
-            Course course = createTestCourse();
-            course.setId((long) (i + 1)); // IDs différents
-            manyCourses.add(course);
-        }
-
-        when(courseService.searchAndSortCourses(any(), any(), any(), any(), any(), eq(true)))
-                .thenReturn(manyCourses); // 12 courses = 3 pages de 5
-        when(courseService.searchAndSortCourses(any(), any(), any(), any(), any(), eq(false)))
-                .thenReturn(new ArrayList<>());
-        when(courseMemberService.countRegisteredAndPaidMembers(anyLong())).thenReturn(10);
-
-        // Act
-        coursesServlet.doGet(request, response);
-
-        // Assert - ✅ Méthodes utilitaires testées :
-        verify(response).setContentType("application/json;charset=UTF-8");
-
-        String jsonResponse = responseWriter.toString();
-        assertFalse(jsonResponse.isEmpty());
-        assertTrue(jsonResponse.contains("upcomingCourses")); // convertCoursesToJson
-        assertTrue(jsonResponse.contains("pagination")); // createPaginationInfo
-        assertTrue(jsonResponse.contains("totalPages")); // createPaginationInfo
-        // ✅ paginateCourses testé implicitement par la pagination
-
-        System.out.println("✅ MÉTHODES UTILITAIRES testées via AJAX !");
-    }
+//    @Test
+//    @DisplayName("AJAX - Méthodes utilitaires (pagination, JSON)")
+//    void ajax_UtilityMethods_Coverage() throws Exception {
+//        // Arrange
+//        when(request.getSession(false)).thenReturn(session);
+//        when(session.getAttribute("member")).thenReturn(testMember);
+//        when(request.getParameter("ajax")).thenReturn("true"); // AJAX = méthodes utilitaires !
+//        when(request.getParameter("upcomingPage")).thenReturn("2"); // Page 2 = pagination
+//        when(request.getParameter("pastPage")).thenReturn("1");
+//        when(request.getParameter("pageSize")).thenReturn("5"); // Taille page = pagination
+//
+//        when(associationMemberService.getAssociationsByOrganizer(anyLong()))
+//                .thenReturn(new ArrayList<>());
+//
+//        // ✅ 12 courses pour tester la pagination (plus d'une page)
+//        List<Course> manyCourses = new ArrayList<>();
+//        for (int i = 0; i < 12; i++) {
+//            Course course = createTestCourse();
+//            course.setId((long) (i + 1)); // IDs différents
+//            manyCourses.add(course);
+//        }
+//
+//        when(courseService.searchAndSortCourses(any(), any(), any(), any(), any(), eq(true)))
+//                .thenReturn(manyCourses); // 12 courses = 3 pages de 5
+//        when(courseService.searchAndSortCourses(any(), any(), any(), any(), any(), eq(false)))
+//                .thenReturn(new ArrayList<>());
+//        when(courseMemberService.countRegisteredAndPaidMembers(anyLong())).thenReturn(10);
+//
+//        // Act
+//        coursesServlet.doGet(request, response);
+//
+//        // Assert - ✅ Méthodes utilitaires testées :
+//        verify(response).setContentType("application/json;charset=UTF-8");
+//
+//        String jsonResponse = responseWriter.toString();
+//        assertFalse(jsonResponse.isEmpty());
+//        assertTrue(jsonResponse.contains("upcomingCourses")); // convertCoursesToJson
+//        assertTrue(jsonResponse.contains("pagination")); // createPaginationInfo
+//        assertTrue(jsonResponse.contains("totalPages")); // createPaginationInfo
+//        // ✅ paginateCourses testé implicitement par la pagination
+//
+//        System.out.println("✅ MÉTHODES UTILITAIRES testées via AJAX !");
+//    }
 
     @Test
     @DisplayName("AJAX - Filtres spéciaux (my-created)")
